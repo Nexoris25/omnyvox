@@ -1,0 +1,11 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: omnyvox
+      POSTGRES_PASSWORD: omnyvox
+      POSTGRES_DB: omnyvox
+    ports: ["5432:5432"]
+    volumes: ["postgres:/var/lib/postgresql"]
+volumes:
+  postgres:
