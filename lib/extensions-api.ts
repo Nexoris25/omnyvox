@@ -1,4 +1,5 @@
 import { manageMedia } from "./media-management";
+import { createMedia } from "./media-storage";
 import { platformAdmin } from "./admin-api";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -174,7 +175,7 @@ export async function extensionsApi(
       if (req.method === "GET")
         return response(
           await query(
-            "SELECT id,alt,octet_length(bytes) AS size FROM media WHERE site_id IS NULL ORDER BY created_at DESC",
+            "SELECT id,alt,size,name,folder FROM media WHERE site_id IS NULL ORDER BY created_at DESC",
           ),
         );
       if (req.method === "POST") {
@@ -201,15 +202,17 @@ export async function extensionsApi(
           })
           .webp({ quality: 82 })
           .toBuffer();
-        const [m] = await query<{ id: string }>(
-          "INSERT INTO media(bytes,alt) VALUES($1,$2) RETURNING id",
-          [bytes, String(f.get("alt") || "").slice(0, 300)],
+        const m = await createMedia(
+          null,
+          bytes,
+          String(f.get("alt") || "").slice(0, 300),
+          file.name,
         );
         await audit(u.id, "marketing.media.uploaded", m.id);
         return response({ url: `/api/media/${m.id}` }, 201);
       }
     }
-    if (!["articles", "categories", "authors", "legal"].includes(kind))
+    if (!["pages", "articles", "categories", "authors", "legal"].includes(kind))
       return response({ error: "Not found" }, 404);
     if (req.method === "GET")
       return response(

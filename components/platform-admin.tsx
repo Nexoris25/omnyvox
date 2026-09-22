@@ -5,6 +5,8 @@ import { Brand } from "./brand";
 import { RichTextEditor, MediaPicker } from "./rich-text-editor";
 import { MediaLibrary } from "./media-library";
 import { Admin } from "./admin";
+import { StorageSettings } from "./storage-settings";
+import { AIOperations } from "./ai-operations";
 type Item = {
   id: string;
   user_id?: string;
@@ -47,13 +49,16 @@ const tabs = [
   ["merchants", "Merchant payments"],
   ["domains", "Domains"],
   ["articles", "Insights"],
+  ["pages", "Marketing pages"],
   ["categories", "Categories"],
   ["authors", "Authors"],
   ["legal", "Legal pages"],
   ["media", "Media library"],
+  ["storage", "Media storage"],
+  ["ai", "Local AI operations"],
   ["settings", "Marketing settings"],
 ];
-const cms = ["articles", "categories", "authors", "legal"];
+const cms = ["pages", "articles", "categories", "authors", "legal"];
 export function PlatformAdmin() {
   const [tab, setTab] = useState("overview"),
     [rows, setRows] = useState<Item[]>([]),
@@ -79,7 +84,7 @@ export function PlatformAdmin() {
     return b;
   }
   async function load() {
-    if (tab === "overview") return;
+    if (["overview", "storage", "ai"].includes(tab)) return;
     const b = await call(endpoint);
     if (tab === "settings") setSettings(b);
     else setRows(b);
@@ -128,6 +133,10 @@ export function PlatformAdmin() {
               <Admin />
               <AnnualOffers />
             </>
+          ) : tab === "ai" ? (
+            <AIOperations />
+          ) : tab === "storage" ? (
+            <StorageSettings />
           ) : tab === "settings" ? (
             <form
               className="panel panel-body"

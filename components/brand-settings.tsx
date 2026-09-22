@@ -1,6 +1,7 @@
 "use client";
 import { Brand } from "@/lib/model";
 import { legalRecommendations } from "@/lib/content";
+import { palettes } from "@/lib/theme";
 export function BrandSettings({
   brand,
   onChange,
@@ -12,19 +13,36 @@ export function BrandSettings({
     <div className="panel panel-body">
       <h2>Contact, social & legal settings</h2>
       <label className="field">
-        Contact form recipient
-        <input
-          type="email"
-          value={brand.notificationEmail || ""}
-          placeholder={brand.email}
-          onChange={(e) =>
-            onChange({ ...brand, notificationEmail: e.target.value })
-          }
-        />
-        <small>
-          New enquiries are sent here. Leave blank to use your business email.
-        </small>
+        Approved colour palette
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            const p = palettes.find((p) => p.id === e.target.value);
+            if (p)
+              onChange({
+                ...brand,
+                primary: p.primary,
+                secondary: p.secondary,
+                background: p.background,
+                text: p.text,
+              });
+          }}
+        >
+          <option value="" disabled>
+            Choose a palette
+          </option>
+          {palettes.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       </label>
+      <p>
+        Manage and verify your private contact recipient in{" "}
+        <a href="/dashboard/enquiries">Forms & enquiries</a>. Your public
+        business email is configured separately.
+      </p>
       <label className="field">
         Nature of business
         <select

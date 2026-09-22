@@ -16,14 +16,21 @@ export async function manageMedia(
   if (!m)
     return NextResponse.json({ error: "Image not found" }, { status: 404 });
   if (req.method === "PATCH") {
-    const { alt } = z
-      .object({ alt: z.string().max(300) })
+    const { alt, name, folder } = z
+      .object({
+        alt: z.string().max(300),
+        name: z.string().max(160).optional(),
+        folder: z.string().trim().max(80).optional(),
+      })
       .parse(await req.json());
-    await query("UPDATE media SET alt=$1 WHERE id=$2", [alt, id]);
+    await query(
+      "UPDATE media SET alt=$1,name=COALESCE($3,name),folder=COALESCE($4,folder) WHERE id=$2",
+      [alt, id, name, folder],
+    );
   } else if (req.method === "DELETE") {
     const used = siteId
       ? await query(
-          "SELECT id FROM sites WHERE id=$1 AND (data::text LIKE $2 OR published::text LIKE $2) UNION SELECT id FROM records WHERE site_id=$1 AND data::text LIKE $2",
+          "SELECT id FROM sites WHERE id=$1 AND (data::text LIKE $2 OR published::text LIKE $2) UNION SELECT id FROM records WHERE site_id=$1 AND data::text LIKE $2 UNION SELECT id FROM record_versions WHERE site_id=$1 AND data::text LIKE $2 UNION SELECT id FROM site_versions WHERE site_id=$1 AND data::text LIKE $2",
           [siteId, "%" + id + "%"],
         )
       : await query(
@@ -38,7 +45,10 @@ export async function manageMedia(
         },
         { status: 409 },
       );
-    await query("DELETE FROM media WHERE id=$1", [id]);
+    await query(
+      "WITH removed AS (DELETE FROM media WHERE id=$1 RETURNING provider_id,object_key) INSERT INTO storage_cleanup(provider_id,object_key) SELECT provider_id,object_key FROM removed WHERE provider_id IS NOT NULL ON CONFLICT DO NOTHING",
+      [id],
+    );
   }
   await audit(
     actor,

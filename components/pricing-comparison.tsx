@@ -13,8 +13,14 @@ export type PricingPlan = {
   bonus_months: number;
   entitlements?: { pages?: number; articles?: number; products?: number };
 };
-export function PricingComparison({ plans }: { plans: PricingPlan[] }) {
-  const [category, setCategory] = useState("corporate"),
+export function PricingComparison({
+  plans,
+  initialCategory = "corporate",
+}: {
+  plans: PricingPlan[];
+  initialCategory?: string;
+}) {
+  const [category, setCategory] = useState(initialCategory),
     [annual, setAnnual] = useState(false);
   return (
     <>

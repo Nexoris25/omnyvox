@@ -1,6 +1,12 @@
 "use client";
 import { useState } from "react";
-export function EnquiryForm({ site }: { site: string }) {
+export function EnquiryForm({
+  site,
+  formId,
+}: {
+  site: string;
+  formId: string;
+}) {
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   return (
@@ -19,11 +25,12 @@ export function EnquiryForm({ site }: { site: string }) {
               body: JSON.stringify({
                 ...Object.fromEntries(new FormData(form)),
                 site,
+                formId,
               }),
             });
             const b = await r.json();
             if (!r.ok) throw new Error(b.error);
-            setMessage("Thank you. Your message has been sent.");
+            setMessage("Thank you. Your enquiry has been received.");
             form.reset();
           } catch (e) {
             setMessage((e as Error).message);
@@ -53,6 +60,11 @@ export function EnquiryForm({ site }: { site: string }) {
             <input name="website" tabIndex={-1} autoComplete="off" />
           </label>
         </div>
+        <label>
+          <input name="consent" type="checkbox" required /> I agree that this
+          business may use my details to respond to this enquiry. See the
+          privacy policy in the footer.
+        </label>
         <button disabled={busy} className="button" style={{ marginTop: 20 }}>
           Send message ↗
         </button>

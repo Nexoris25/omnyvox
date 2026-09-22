@@ -1,3 +1,23 @@
+import { aiApi } from "@/lib/ai-api";
+import { provisionBlueprint } from "@/lib/blueprints";
+import { templateIds, templateManifests } from "@/lib/templates";
+import { businessSettings } from "@/lib/business";
+import { readiness } from "@/lib/readiness";
+import { formSettings, submitEnquiry } from "@/lib/forms";
+import {
+  availableModules,
+  industryFor,
+  collectionKinds,
+  reservedSlugs,
+  pageClass,
+} from "@/lib/industry";
+import {
+  createMedia,
+  mediaResponse,
+  mediaUsage,
+  StorageQuotaError,
+  type StoredMedia,
+} from "@/lib/media-storage";
 import { billingQuote } from "@/lib/billing-quote";
 import { manageMedia } from "@/lib/media-management";
 import { passwordSchema } from "@/lib/password";
@@ -278,82 +298,29 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     if (area === "media" && method === "GET") {
       if (!z.uuid().safeParse(id).success) return fail("Not found", 404);
-      const [marketingImage] = await query<{ bytes: Buffer }>(
-        "SELECT m.bytes FROM media m WHERE m.id=$1 AND m.site_id IS NULL AND EXISTS(SELECT 1 FROM marketing_records r WHERE r.data->>'status'='published' AND r.data::text LIKE '%' || m.id::text || '%')",
+      const [marketingImage] = await query<StoredMedia>(
+        "SELECT m.* FROM media m WHERE m.id=$1 AND m.site_id IS NULL AND EXISTS(SELECT 1 FROM marketing_records r WHERE r.data->>'status'='published' AND r.data::text LIKE '%' || m.id::text || '%')",
         [id],
       );
-      if (marketingImage)
-        return new Response(new Uint8Array(marketingImage.bytes), {
-          headers: {
-            "Content-Type": "image/webp",
-            "Cache-Control": "public,max-age=3600",
-          },
-        });
+      if (marketingImage) return await mediaResponse(marketingImage);
 
-      const [m] = await query<{ bytes: Buffer }>(
-        "SELECT m.bytes FROM media m JOIN effective_sites s ON s.id=m.site_id WHERE m.id=$1 AND s.status=$2 AND s.subscription=$3 AND s.service_until>now() AND (s.published::text LIKE '%'||m.id::text||'%' OR EXISTS(SELECT 1 FROM records r WHERE r.site_id=s.id AND r.data->>'status'='published' AND r.kind IN ('pages','articles','products','legal') AND r.data::text LIKE '%'||m.id::text||'%'))",
+      const [m] = await query<StoredMedia>(
+        "SELECT m.* FROM media m JOIN effective_sites s ON s.id=m.site_id WHERE m.id=$1 AND s.status=$2 AND s.subscription=$3 AND s.service_until>now() AND (s.published::text LIKE '%'||m.id::text||'%' OR EXISTS(SELECT 1 FROM records r WHERE r.site_id=s.id AND r.data->>'status'='published' AND (r.kind IN ('pages','legal') OR (r.kind IN ('articles','authors') AND s.tier<>'basic') OR (r.kind IN ('products','categories') AND s.category='commerce') OR EXISTS(SELECT 1 FROM industries i WHERE i.id=s.industry_id AND i.collections ? r.kind)) AND r.data::text LIKE '%'||m.id::text||'%'))",
         [id, "published", "active"],
       );
-      if (m)
-        return new Response(new Uint8Array(m.bytes), {
-          headers: {
-            "Content-Type": "image/webp",
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
+      if (m) return await mediaResponse(m);
       const u = await user();
       if (!u) return fail("Not found", 404);
-      const [privateMedia] = await query<{ bytes: Buffer }>(
-        "SELECT m.bytes FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (s.owner_id=$2 OR (m.site_id IS NULL AND $3=\'super_admin\'))",
+      const [privateMedia] = await query<StoredMedia>(
+        "SELECT m.* FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (s.owner_id=$2 OR (m.site_id IS NULL AND $3=\'super_admin\'))",
         [id, u.id, u.role],
       );
       return privateMedia
-        ? new Response(new Uint8Array(privateMedia.bytes), {
-            headers: {
-              "Content-Type": "image/webp",
-              "Cache-Control": "private, no-store",
-            },
-          })
+        ? await mediaResponse(privateMedia)
         : fail("Not found", 404);
     }
-    if (area === "enquiries" && method === "POST") {
-      const b = z
-        .object({
-          site: z.uuid(),
-          name: z.string().min(2).max(100),
-          email: z.email(),
-          message: z.string().min(5).max(4000),
-          website: z.string().max(0),
-        })
-        .parse(await req.json());
-      await rateLimit(`enquiry:${b.email}`);
-      const [s] = await query(
-        "SELECT id,published FROM effective_sites WHERE id=$1 AND status='published' AND subscription='active' AND service_until>now()",
-        [b.site],
-      );
-      if (!s) return fail("Website unavailable", 404);
-      const recipient = (
-        s as {
-          published?: {
-            brand?: { notificationEmail?: string; email?: string };
-          };
-        }
-      ).published?.brand;
-      if (recipient?.notificationEmail || recipient?.email)
-        await query(
-          "INSERT INTO email_outbox(recipient,subject,body) VALUES($1,$2,$3)",
-          [
-            recipient.notificationEmail || recipient.email,
-            "New website enquiry",
-            `${b.name} (${b.email})\n\n${b.message}`,
-          ],
-        );
-      await query(
-        "INSERT INTO records(site_id,kind,data) VALUES($1,'enquiries',$2)",
-        [b.site, JSON.stringify({ ...b, status: "new" })],
-      );
-      return ok({ success: true }, 201);
-    }
+    if (area === "enquiries" && method === "POST")
+      return await submitEnquiry(req);
     const u = await user();
     if (!u) return fail("Please sign in", 401);
     const extension = await extensionsApi(req, u, path);
@@ -384,12 +351,19 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
                 products: z.number().int().min(0).max(100000),
                 articles: z.number().int().min(0).max(100000),
                 team: z.number().int().min(1).max(1000),
+                storageBytes: z
+                  .number()
+                  .int()
+                  .min(1048576)
+                  .max(1099511627776)
+                  .optional(),
+                collections: z.number().int().min(1).max(100000).optional(),
               })
               .optional(),
           })
           .parse(await req.json());
         await query(
-          "UPDATE plans SET monthly=$1,annual=$2,entitlements=COALESCE($4,entitlements) WHERE id=$3",
+          "UPDATE plans SET monthly=$1,annual=$2,entitlements=COALESCE(entitlements,'{}')||COALESCE($4::jsonb,'{}') WHERE id=$3",
           [
             b.monthly,
             b.annual,
@@ -410,6 +384,12 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
       return fail("Not found", 404);
     }
+    if (area === "industries" && method === "GET")
+      return ok(
+        await query(
+          "SELECT id,label,category,core_pages FROM industries WHERE enabled=true ORDER BY label",
+        ),
+      );
     if (area !== "sites") return fail("Not found", 404);
     if (!id && method === "GET")
       return ok(
@@ -420,6 +400,20 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
     if (!id && method === "POST") {
       const b = siteSchema.parse(await req.json());
+      b.template ||= b.category === "commerce" ? "catalogue" : "studio";
+      if (templateManifests[b.template].category !== b.category)
+        return fail("Choose a template for your website type.");
+      const industry =
+        b.industry || (b.category === "commerce" ? "retail" : "general");
+      if (
+        !(
+          await query(
+            "SELECT id FROM industries WHERE id=$1 AND category=$2 AND enabled=true",
+            [industry, b.category],
+          )
+        ).length
+      )
+        return fail("Choose an industry matching your website type");
       const brand = {
         name: b.name,
         businessNature: b.category === "commerce" ? "commerce" : "general",
@@ -454,7 +448,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           );
         }
         const result = await client.query(
-          "INSERT INTO sites(owner_id,name,slug,category,tier,data,subscription_site_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+          "INSERT INTO sites(owner_id,name,slug,category,tier,data,subscription_site_id,industry_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
           [
             u.id,
             b.name,
@@ -467,9 +461,15 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
               template: b.template,
             }),
             root?.id || null,
+            root && root.category !== b.category
+              ? root.category === "commerce"
+                ? "retail"
+                : "general"
+              : industry,
           ],
         );
         s = result.rows[0];
+        await provisionBlueprint(client, s);
         await client.query("COMMIT");
       } catch (e) {
         await client.query("ROLLBACK");
@@ -486,18 +486,55 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       [id, u.id],
     );
     if (!site) return fail("Website not found", 404);
+    if (kind === "ai") return aiApi(req, site, u.id, recordId);
+    if (kind === "business") return businessSettings(req, id);
+    if (kind === "readiness" && method === "GET")
+      return ok(await readiness(site));
+    if (kind === "modules" && method === "GET")
+      return ok(await availableModules(site));
+    if (kind === "forms") return formSettings(req, id, u.id, recordId);
+    if (
+      collectionKinds.includes(kind) &&
+      !(await industryFor(site))?.collections[kind]
+    )
+      return fail("Module not available for this industry", 404);
+    if (
+      ["orders", "merchant", "products"].includes(kind) &&
+      site.category !== "commerce"
+    )
+      return fail("Module not available for corporate websites", 404);
     if (!kind && method === "GET") return ok(site);
     if (!kind && method === "PATCH") {
       const b = z
         .object({
           brand: brandSchema,
           sections: z.array(sectionSchema).max(15),
-          template: z.enum(["studio", "atelier", "horizon"]),
+          template: z.enum(templateIds),
         })
         .parse(await req.json());
       b.sections?.forEach((section) => {
         section.body = safeHtml(section.body);
       });
+      if (
+        templateManifests[b.template].category !== site.category &&
+        b.template !== site.data.template
+      )
+        return fail("Choose a template for your website type.");
+      for (const link of (b.brand.navigation || []).flatMap((n) => [
+        n,
+        ...(n.children || []),
+      ])) {
+        if (
+          link.pageId &&
+          !(
+            await query(
+              "SELECT id FROM records WHERE id=$1 AND site_id=$2 AND kind='pages'",
+              [link.pageId, id],
+            )
+          ).length
+        )
+          return fail("Choose a page from this website", 403);
+      }
       for (const assetId of referencedMediaIds(b)) {
         if (
           !(
@@ -527,11 +564,47 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Activate your subscription before publishing.", 403);
       if (site.status === "suspended")
         return fail("This website is suspended. Contact support.", 403);
-      await query(
-        "UPDATE sites SET published=data,status='published' WHERE id=$1",
-        [id],
-      );
-      await audit(u.id, "site.published", id);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT id FROM sites WHERE id=$1 FOR UPDATE", [id]);
+        const {
+          rows: [current],
+        } = await client.query<Site>(
+          "SELECT * FROM effective_sites WHERE id=$1",
+          [id],
+        );
+        const preflight = await readiness(current);
+        if (!preflight.ready) {
+          await client.query("ROLLBACK");
+          return ok(
+            {
+              error: preflight.issues.join(" "),
+              code: "PUBLISH_NOT_READY",
+              issues: preflight.issues,
+            },
+            409,
+          );
+        }
+        await client.query(
+          "INSERT INTO site_versions(site_id,data) SELECT id,published FROM sites WHERE id=$1 AND published IS NOT NULL",
+          [id],
+        );
+        await client.query(
+          "UPDATE sites SET published=data,status='published' WHERE id=$1",
+          [id],
+        );
+        await client.query(
+          "INSERT INTO audit(actor,action,target) VALUES($1,'site.published',$2)",
+          [u.id, id],
+        );
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
       return ok({ success: true });
     }
     if (kind === "billing" && method === "POST") {
@@ -583,12 +656,14 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Payment provider is unavailable", 502);
       return ok({ url: result.data.authorization_url });
     }
+    if (kind === "media-usage" && method === "GET")
+      return ok(await mediaUsage(id));
     if (kind === "media" && ["PATCH", "DELETE"].includes(method))
       return manageMedia(req, recordId, id, u.id);
     if (kind === "media" && method === "GET")
       return ok(
         await query(
-          "SELECT id,alt,octet_length(bytes) AS size FROM media WHERE site_id=$1 ORDER BY created_at DESC",
+          "SELECT id,alt,size,name,folder FROM media WHERE site_id=$1 ORDER BY created_at DESC",
           [id],
         ),
       );
@@ -611,9 +686,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         })
         .webp({ quality: 82 })
         .toBuffer();
-      const [m] = await query<{ id: string }>(
-        "INSERT INTO media(site_id,bytes,alt) VALUES($1,$2,$3) RETURNING id",
-        [id, buffer, String(form.get("alt") || "").slice(0, 300)],
+      const m = await createMedia(
+        id,
+        buffer,
+        String(form.get("alt") || "").slice(0, 300),
+        file.name,
       );
       return ok({ url: `/api/media/${m.id}` }, 201);
     }
@@ -761,6 +838,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         ),
       });
     const kinds = [
+      ...collectionKinds,
       "pages",
       "articles",
       "products",
@@ -771,6 +849,17 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       "authors",
       "categories",
     ];
+    if (kind === "versions" && method === "GET") {
+      if (site.tier !== "advanced")
+        return fail("Version history requires Advanced.", 403);
+      if (!z.uuid().safeParse(recordId).success) return fail("Not found", 404);
+      return ok(
+        await query(
+          "SELECT id,data,created_at FROM record_versions WHERE record_id=$1 AND site_id=$2 ORDER BY created_at DESC LIMIT 50",
+          [recordId, id],
+        ),
+      );
+    }
     if (!kinds.includes(kind)) return fail("Not found", 404);
     if (kind === "articles" && !entitled(site.tier, "blog"))
       return fail("Blog publishing is available on Growth and Advanced.", 403);
@@ -796,6 +885,33 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (method === "POST" || method === "PATCH") {
       if (kind === "enquiries") return fail("Read only", 403);
       const b = contentSchema.parse(await req.json());
+      if (
+        ["published", "scheduled"].includes(b.status) &&
+        /\[Required:|lorem ipsum/i.test(b.body)
+      )
+        return fail("Replace required placeholder content before publishing.");
+      if (
+        kind === "legal" &&
+        ["published", "scheduled"].includes(b.status) &&
+        !b.policyReviewed
+      )
+        return fail("Review and accept this policy before publishing.");
+      if (kind === "pages" && reservedSlugs.has(b.slug))
+        return fail("This URL is reserved for a system page");
+      if (
+        b.status === "scheduled" &&
+        (site.tier === "basic" ||
+          !["pages", "articles", "legal"].includes(kind))
+      )
+        return fail(
+          "Scheduled publishing is available for pages and Insights on Growth and Advanced.",
+          403,
+        );
+      if (
+        b.status === "scheduled" &&
+        (!b.publishAt || new Date(b.publishAt) <= new Date())
+      )
+        return fail("Choose a future publication time.");
       b.sections?.forEach((section) => {
         section.body = safeHtml(section.body);
       });
@@ -821,6 +937,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
       const data = {
         ...b,
+        pageClass: pageClass(kind),
         body: safeHtml(b.body),
         author,
         updatedAt: new Date().toISOString(),
@@ -829,19 +946,61 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       try {
         await client.query("BEGIN");
         await client.query("SELECT id FROM sites WHERE id=$1 FOR UPDATE", [id]);
-        if (method === "POST") {
+        if (["pages", "legal"].includes(kind)) {
+          const collision = await client.query(
+            "SELECT id FROM records WHERE site_id=$1 AND kind IN ('pages','legal') AND data->>'slug'=$2 AND id IS DISTINCT FROM $3::uuid",
+            [id, b.slug, recordId || null],
+          );
+          if (collision.rowCount) {
+            await client.query("ROLLBACK");
+            return fail("This page address is already in use", 409);
+          }
+        }
+        if (b.status === "published") {
           const cap = (await siteEntitlements(site)).limits[
             kind as "pages" | "articles" | "products"
           ];
           const {
             rows: [count],
           } = await client.query(
-            "SELECT count(*)::int AS total FROM records WHERE site_id=$1 AND kind=$2",
-            [id, kind],
+            "SELECT count(*)::int AS total FROM records WHERE site_id=$1 AND kind=$2 AND data->>'status'='published' AND id IS DISTINCT FROM $3::uuid",
+            [id, kind, recordId || null],
           );
-          if (cap !== undefined && count.total >= cap) {
+          const homepage = kind === "pages" ? 1 : 0;
+          if (cap !== undefined && count.total + homepage >= cap) {
             await client.query("ROLLBACK");
-            return fail(`Your ${site.tier} plan allows ${cap} ${kind}.`, 403);
+            return ok(
+              {
+                error:
+                  "Published content limit reached. Unpublish content or change your plan.",
+                code: "RESOURCE_LIMIT_REACHED",
+                limit: cap,
+              },
+              403,
+            );
+          }
+        }
+        if (method === "POST") {
+          if (collectionKinds.includes(kind)) {
+            const maximum =
+              (await siteEntitlements(site)).limits.collections || 100;
+            const {
+              rows: [count],
+            } = await client.query(
+              "SELECT count(*)::int AS total FROM records WHERE site_id=$1 AND kind=$2",
+              [id, kind],
+            );
+            if (count.total >= maximum) {
+              await client.query("ROLLBACK");
+              return ok(
+                {
+                  error: "Collection record allowance reached",
+                  code: "RESOURCE_LIMIT_REACHED",
+                  limit: maximum,
+                },
+                403,
+              );
+            }
           }
           await client.query(
             "INSERT INTO records(site_id,kind,data) VALUES($1,$2,$3)",
@@ -869,6 +1028,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     return fail("Method not allowed", 405);
   } catch (error) {
+    if (error instanceof StorageQuotaError) return fail(error.message, 413);
     if (error instanceof z.ZodError)
       return fail(error.issues[0]?.message || "Invalid input");
     if ((error as { code?: string }).code === "23505")

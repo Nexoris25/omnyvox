@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { query, pool, audit } from "./db";
+import { storageAdmin } from "./storage-admin";
+import { aiSettingsSchema } from "./local-ai";
 export async function platformAdmin(
   req: NextRequest,
   u: { id: string; role: string },
@@ -12,6 +14,43 @@ export async function platformAdmin(
   if (u.role !== "super_admin")
     return response({ error: "Administrator access required" }, 403);
   const [, kind, id] = path;
+  if (kind === "storage") return storageAdmin(req, u.id, id);
+  if (kind === "ai") {
+    if (req.method === "GET") {
+      const [s] = await query("SELECT data FROM ai_settings WHERE id=true");
+      return response({
+        settings: s.data,
+        environmentEnabled:
+          process.env.AI_ENABLED === "true" &&
+          process.env.OLLAMA_NO_CLOUD === "1",
+        jobs: await query(
+          "SELECT state,count(*)::int AS count FROM ai_jobs GROUP BY state",
+        ),
+      });
+    }
+    if (req.method === "PATCH") {
+      const data = aiSettingsSchema.parse(await req.json());
+      if (
+        data.enabled &&
+        (!data.readinessApproved ||
+          !data.digest ||
+          !data.licence ||
+          data.readinessNotes.length < 30)
+      )
+        return response(
+          {
+            error:
+              "Record readiness, model digest and licence before enabling AI.",
+          },
+          400,
+        );
+      await query("UPDATE ai_settings SET data=$1 WHERE id=true", [
+        JSON.stringify(data),
+      ]);
+      await audit(u.id, "ai.settings.updated", "platform");
+      return response({ success: true });
+    }
+  }
   if (req.method === "GET") {
     if (kind === "support")
       return response(

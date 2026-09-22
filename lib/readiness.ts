@@ -1,0 +1,89 @@
+import { query } from "./db";
+import type { Site } from "./model";
+import { siteEntitlements } from "./entitlements";
+export async function readiness(site: Site) {
+  const issues: string[] = [];
+  const [profile] = await query<{
+    data: {
+      summary?: string;
+      phone?: string;
+      factsConfirmed?: boolean;
+      fulfilment?: string;
+    };
+  }>("SELECT data FROM business_profiles WHERE site_id=$1", [site.id]);
+  if (
+    !profile?.data.factsConfirmed ||
+    !profile.data.summary?.trim() ||
+    !profile.data.phone?.trim()
+  )
+    issues.push(
+      "Complete and confirm your business summary and contact phone in Business information.",
+    );
+  const [form] = await query<{ active_email: string }>(
+    "SELECT active_email FROM site_forms WHERE site_id=$1 AND verified_at IS NOT NULL",
+    [site.id],
+  );
+  if (!form?.active_email)
+    issues.push("Verify your enquiry recipient in Forms & enquiries.");
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM)
+    issues.push("The platform administrator must configure email delivery.");
+  const policy = await query<{
+    data: { policyType?: string; policyReviewed?: boolean };
+  }>(
+    "SELECT data FROM records WHERE site_id=$1 AND kind='legal' AND data->>'status'='published'",
+    [site.id],
+  );
+  const required = [
+    "terms",
+    "privacy",
+    "cookies",
+    ...(site.category === "commerce"
+      ? [
+          "refund",
+          profile?.data.fulfilment === "physical" ? "shipping" : "fulfilment",
+        ]
+      : []),
+  ];
+  for (const type of required)
+    if (
+      !policy.some((p) => p.data.policyType === type && p.data.policyReviewed)
+    )
+      issues.push(`Publish your reviewed ${type} policy.`);
+  if (site.category === "commerce") {
+    if (
+      !(
+        await query(
+          "SELECT site_id FROM merchant_accounts WHERE site_id=$1 AND verified=true",
+          [site.id],
+        )
+      ).length
+    )
+      issues.push("Complete merchant payment approval.");
+    if (
+      !(
+        await query(
+          "SELECT id FROM records WHERE site_id=$1 AND kind='products' AND data->>'status'='published' LIMIT 1",
+          [site.id],
+        )
+      ).length
+    )
+      issues.push("Add at least one real published product.");
+  }
+  const [count] = await query<{ total: number }>(
+    "SELECT count(*)::int AS total FROM records WHERE site_id=$1 AND kind='pages' AND data->>'status'='published'",
+    [site.id],
+  );
+  if (count.total + 1 > (await siteEntitlements(site)).limits.pages)
+    issues.push(
+      "The homepage and published custom pages exceed your plan allowance.",
+    );
+  if (
+    site.data.sections.some(
+      (s) =>
+        s.visible &&
+        /tell your customers|share your story|lorem ipsum/i.test(s.body),
+    )
+  )
+    issues.push("Replace instructional template text before publishing.");
+  return { ready: issues.length === 0, issues, contentPages: count.total + 1 };
+}

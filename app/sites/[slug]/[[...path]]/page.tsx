@@ -12,6 +12,7 @@ import { jsonLd } from "@/lib/model";
 import { SiteRenderer, RenderSections } from "@/components/site-renderer";
 import { StoreCheckout } from "@/components/checkout";
 import { query } from "@/lib/db";
+import { industryFor } from "@/lib/industry";
 import { EnquiryForm } from "@/components/enquiry-form";
 type Props = {
   params: Promise<{ slug: string; path?: string[] }>;
@@ -26,18 +27,28 @@ export async function generateMetadata({
   const site = await getSite(slug, preview);
   if (!site) return { title: "Website unavailable", robots: { index: false } };
   const base = await siteBase(site);
-  const content = await publicContent(site);
+  const content = await publicContent(site, preview);
   const record = content.find(
     (r) =>
       contentPath(r, site.view.brand.categoryUrls) === "/" + path.join("/"),
   );
-  const title = record?.data.title || site.view.brand.name;
+  const title =
+    record?.data.seoTitle || record?.data.title || site.view.brand.name;
   const description = record
-    ? plainText(record.data.body).slice(0, 160)
+    ? record.data.description || plainText(record.data.body).slice(0, 160)
     : site.view.brand.description;
   const url =
-    base + (record ? contentPath(record, site.view.brand.categoryUrls) : "");
-  const image = record?.data.image || site.view.brand.logo || "/social.webp";
+    base +
+    (record
+      ? contentPath(record, site.view.brand.categoryUrls)
+      : path.length
+        ? "/" + path.join("/")
+        : "");
+  const image =
+    record?.data.socialImage ||
+    record?.data.image ||
+    site.view.brand.logo ||
+    "/social.webp";
   return {
     title: { absolute: title },
     description,
@@ -66,7 +77,10 @@ export async function generateMetadata({
       description,
       images: [image],
     },
-    icons: { icon: site.view.brand.logo || "/brand-icon.webp" },
+    icons: {
+      icon:
+        site.view.brand.favicon || site.view.brand.logo || "/brand-icon.webp",
+    },
   };
 }
 export default async function Page({ params, searchParams }: Props) {
@@ -75,15 +89,27 @@ export default async function Page({ params, searchParams }: Props) {
   const site = await getSite(slug, preview);
   if (!site) notFound();
   const base = await siteBase(site);
-  const content = await publicContent(site);
+  const content = await publicContent(site, preview);
+  const [contactForm] = await query<{ id: string }>(
+    "SELECT id FROM site_forms WHERE site_id=$1 AND active_email IS NOT NULL AND verified_at IS NOT NULL",
+    [site.id],
+  );
   const pathname = "/" + path.join("/");
+  const industry = await industryFor(site);
+  const indexKinds: Record<string, string> = {
+    ...(site.tier !== "basic" ? { insights: "articles" } : {}),
+    ...(site.category === "commerce" ? { shop: "products" } : {}),
+    ...Object.fromEntries(
+      Object.keys(industry?.collections || {}).map((k) => [k, k]),
+    ),
+  };
   const record = content.find(
     (r) => contentPath(r, site.view.brand.categoryUrls) === pathname,
   );
   if (
     !record &&
     path.length &&
-    !["insights", "shop"].includes(pathname.slice(1))
+    !Object.keys(indexKinds).includes(pathname.slice(1))
   ) {
     const alternate = content.find(
       (r) =>
@@ -161,13 +187,24 @@ export default async function Page({ params, searchParams }: Props) {
         </div>
       )}
       <SiteRenderer
+        preview={preview}
         data={site.view}
         base={base}
+        navigationPages={content.map((r) => ({
+          id: r.id,
+          href:
+            base +
+            contentPath(r, site.view.brand.categoryUrls) +
+            (preview ? "?preview=1" : ""),
+        }))}
         legal={content
           .filter((r) => r.kind === "legal")
           .map((r) => ({
             title: r.data.title,
-            href: base + contentPath(r, site.view.brand.categoryUrls),
+            href:
+              base +
+              contentPath(r, site.view.brand.categoryUrls) +
+              (preview ? "?preview=1" : ""),
           }))}
         insights={
           <div className="template-grid">
@@ -177,7 +214,11 @@ export default async function Page({ params, searchParams }: Props) {
               .map((r) => (
                 <a
                   key={r.id}
-                  href={base + contentPath(r, site.view.brand.categoryUrls)}
+                  href={
+                    base +
+                    contentPath(r, site.view.brand.categoryUrls) +
+                    (preview ? "?preview=1" : "")
+                  }
                 >
                   <h3>{r.data.title}</h3>
                   <p>{plainText(r.data.body).slice(0, 120)}</p>
@@ -191,7 +232,9 @@ export default async function Page({ params, searchParams }: Props) {
             <>
               {site.category === "commerce" && (
                 <StoreCheckout
+                  preview={preview}
                   site={site.id}
+                  base={base}
                   products={content.filter((r) => r.kind === "products")}
                   delivery={merchant?.delivery || 0}
                 />
@@ -204,7 +247,9 @@ export default async function Page({ params, searchParams }: Props) {
                       <Link
                         className="panel panel-body"
                         href={
-                          base + contentPath(r, site.view.brand.categoryUrls)
+                          base +
+                          contentPath(r, site.view.brand.categoryUrls) +
+                          (preview ? "?preview=1" : "")
                         }
                         key={r.id}
                       >
@@ -224,15 +269,27 @@ export default async function Page({ params, searchParams }: Props) {
                     ))}
                 </div>
               </section>
-              {!preview && <EnquiryForm site={site.id} />}
+              {!preview && contactForm && (
+                <EnquiryForm site={site.id} formId={contactForm.id} />
+              )}
             </>
           )
         }
       >
         {record ? (
           <article className="rendered-section">
-            <Link href={base}>Home</Link>
+            <Link href={base + (preview ? "?preview=1" : "")}>Home</Link>
             <h1 style={{ marginTop: 25 }}>{record.data.title}</h1>
+            {!!record.data.details?.length && (
+              <dl className="record-facts">
+                {record.data.details.map((d, i) => (
+                  <div key={i}>
+                    <dt>{d.label}</dt>
+                    <dd>{d.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
             {record.kind === "articles" && (
               <p>
                 By {record.data.author} ·{" "}
@@ -253,9 +310,14 @@ export default async function Page({ params, searchParams }: Props) {
             />
             {record.data.sections && (
               <RenderSections
+                base={base}
+                preview={preview}
                 sections={record.data.sections}
                 email={site.view.brand.email}
               />
+            )}
+            {record.data.slug === "contact" && !preview && contactForm && (
+              <EnquiryForm site={site.id} formId={contactForm.id} />
             )}
             {record.kind === "products" && (
               <>
@@ -267,8 +329,11 @@ export default async function Page({ params, searchParams }: Props) {
                 </h2>
                 <p>{record.data.stock ? "In stock" : "Out of stock"}</p>
                 <StoreCheckout
+                  preview={preview}
                   site={site.id}
+                  base={base}
                   products={[record]}
+                  hideImages
                   delivery={merchant?.delivery || 0}
                 />
               </>
@@ -276,17 +341,32 @@ export default async function Page({ params, searchParams }: Props) {
           </article>
         ) : path.length ? (
           <section className="rendered-section">
-            <h1>{path[0] === "shop" ? "Shop" : "Insights"}</h1>
+            <h1>
+              {industry?.collections[path[0]] ||
+                (path[0] === "shop" ? "Shop" : "Insights")}
+            </h1>
+            {path[0] === "shop" && (
+              <StoreCheckout
+                preview={preview}
+                site={site.id}
+                base={base}
+                products={content.filter((r) => r.kind === "products")}
+                delivery={merchant?.delivery || 0}
+              />
+            )}
             <div className="template-grid">
               {content
                 .filter(
-                  (r) =>
-                    r.kind === (path[0] === "shop" ? "products" : "articles"),
+                  (r) => path[0] !== "shop" && r.kind === indexKinds[path[0]],
                 )
                 .map((r) => (
                   <Link
                     className="panel panel-body"
-                    href={base + contentPath(r, site.view.brand.categoryUrls)}
+                    href={
+                      base +
+                      contentPath(r, site.view.brand.categoryUrls) +
+                      (preview ? "?preview=1" : "")
+                    }
                     key={r.id}
                   >
                     <h2>{r.data.title}</h2>

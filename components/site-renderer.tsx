@@ -2,14 +2,28 @@ import type { CSSProperties } from "react";
 import type { Site, Section } from "@/lib/model";
 import { safeHtml } from "@/lib/content";
 import { SocialLinks } from "./social-links";
+import { foreground } from "@/lib/theme";
+function localHref(base: string, path: string, preview: boolean) {
+  const [pathname, hash] = path.split("#", 2);
+  return (
+    base +
+    pathname +
+    (preview ? (pathname.includes("?") ? "&" : "?") + "preview=1" : "") +
+    (hash === undefined ? "" : "#" + hash)
+  );
+}
 export function RenderSections({
   sections,
   email,
   insights,
+  base = "",
+  preview = false,
 }: {
   sections: Section[];
   email: string;
   insights?: React.ReactNode;
+  base?: string;
+  preview?: boolean;
 }) {
   return (
     <>
@@ -56,7 +70,15 @@ export function RenderSections({
                         ]
                       : []
                   ).map((c, i) => (
-                    <a key={i} href={c.href} className="button">
+                    <a
+                      key={i}
+                      href={
+                        c.href.startsWith("/")
+                          ? localHref(base, c.href, preview)
+                          : c.href
+                      }
+                      className="button"
+                    >
                       {c.label} ↗
                     </a>
                   ))}
@@ -85,6 +107,8 @@ export function SiteRenderer({
   base = "",
   legal = [],
   insights,
+  navigationPages = [],
+  preview = false,
 }: {
   data: Site["data"];
   children?: React.ReactNode;
@@ -92,14 +116,60 @@ export function SiteRenderer({
   base?: string;
   legal?: { title: string; href: string }[];
   insights?: React.ReactNode;
+  navigationPages?: { id: string; href: string }[];
+  preview?: boolean;
 }) {
   const { brand, sections, template } = data;
+  function href(n: { pageId?: string; href: string }) {
+    return n.pageId
+      ? navigationPages.find((p) => p.id === n.pageId)?.href
+      : n.href.startsWith("/") || n.href.startsWith("#")
+        ? localHref(base, n.href, preview)
+        : n.href;
+  }
+  function links(footer: boolean) {
+    const entries =
+      brand.navigation === undefined
+        ? [
+            { label: "What we do", href: "#services", footer: false },
+            { label: "Our story", href: "#about", footer: false },
+            { label: "Get in touch", href: "#contact", footer: false },
+          ]
+        : brand.navigation;
+    return entries
+      .filter((n) => n.footer === footer)
+      .map((n, i) => {
+        const url = href(n);
+        if (!url) return null;
+        const children = "children" in n ? n.children : undefined;
+        return children?.length ? (
+          <details className="site-dropdown" key={i}>
+            <summary>{n.label}</summary>
+            <div>
+              <a href={url}>{n.label}</a>
+              {children.map((c, j) =>
+                href(c) ? (
+                  <a key={j} href={href(c)}>
+                    {c.label}
+                  </a>
+                ) : null,
+              )}
+            </div>
+          </details>
+        ) : (
+          <a key={i} href={url}>
+            {n.label}
+          </a>
+        );
+      });
+  }
   return (
     <div
       className={`rendered-site ${template}`}
       style={
         {
           "--site-primary": brand.primary,
+          "--site-primary-fg": foreground(brand.primary),
           "--site-secondary": brand.secondary,
           "--site-bg": brand.background,
           "--site-text": brand.text,
@@ -116,21 +186,26 @@ export function SiteRenderer({
             <b>{brand.name}</b>
           )}
         </a>
-        <nav aria-label="Website navigation">
-          <a href={`${base}#services`}>What we do</a>
-          <a href={`${base}#about`}>Our story</a>
-          <a href={`${base}#contact`}>Get in touch</a>
+        <nav className="site-desktop-menu" aria-label="Website navigation">
+          {links(false)}
         </nav>
+        <details className="site-mobile-menu">
+          <summary>Menu</summary>
+          <nav aria-label="Mobile website navigation">{links(false)}</nav>
+        </details>
       </header>
       {children || (
         <RenderSections
           sections={sections}
           email={brand.email}
           insights={insights}
+          base={base}
+          preview={preview}
         />
       )}
       {after}
       <footer className="rendered-footer">
+        <nav aria-label="Footer navigation">{links(true)}</nav>
         <div>
           <span>
             © {new Date().getFullYear()} {brand.name}

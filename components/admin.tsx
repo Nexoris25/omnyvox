@@ -13,6 +13,8 @@ type Plan = {
     products: number;
     articles: number;
     team: number;
+    storageBytes?: number;
+    collections?: number;
   };
 };
 type AdminData = {
@@ -130,6 +132,10 @@ export function Admin() {
                           pages: Number(f.get("pages")),
                           products: Number(f.get("products")),
                           articles: Number(f.get("articles")),
+                          storageBytes: Math.round(
+                            Number(f.get("storageGB")) * 1024 ** 3,
+                          ),
+                          collections: Number(f.get("collections")),
                           team:
                             p.entitlements?.team ?? limits[p.tier as Tier].team,
                         },
@@ -181,6 +187,32 @@ export function Admin() {
                         ),
                       )}
                       <button className="button small">Save plan</button>
+                      <label className="field">
+                        Storage per website (GB)
+                        <input
+                          type="number"
+                          name="storageGB"
+                          required
+                          min="0.001"
+                          max="1024"
+                          step="0.001"
+                          defaultValue={
+                            (p.entitlements?.storageBytes || 1073741824) /
+                            1024 ** 3
+                          }
+                        />
+                      </label>
+                      <label className="field">
+                        Records per industry collection
+                        <input
+                          type="number"
+                          name="collections"
+                          required
+                          min={1}
+                          max={100000}
+                          defaultValue={p.entitlements?.collections || 100}
+                        />
+                      </label>
                     </div>
                   </form>
                 ))}

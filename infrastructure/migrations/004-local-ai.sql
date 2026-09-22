@@ -1,0 +1,5 @@
+CREATE TABLE ai_settings(id boolean PRIMARY KEY DEFAULT true CHECK(id),data jsonb NOT NULL);
+INSERT INTO ai_settings VALUES(true,'{"enabled":false,"model":"qwen3:4b-instruct","digest":"","licence":"","readinessNotes":"","readinessApproved":false,"monthly":{"basic":5,"growth":20,"advanced":50}}');
+CREATE TABLE ai_jobs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),site_id uuid NOT NULL REFERENCES sites(id),actor uuid NOT NULL REFERENCES users(id),request_key uuid NOT NULL,slot text NOT NULL,base_hash text NOT NULL,state text NOT NULL DEFAULT 'queued',result jsonb,error text,model_digest text,prompt_version text NOT NULL DEFAULT 'omnyvox-content-v1',created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,UNIQUE(site_id,request_key));
+CREATE INDEX ai_jobs_queue ON ai_jobs(state,created_at);
+CREATE TABLE site_versions(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),site_id uuid NOT NULL REFERENCES sites(id),data jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());

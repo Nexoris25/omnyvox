@@ -38,12 +38,18 @@ import {
 import { BillingSummary } from "./billing-summary";
 import { BrandSettings, RobotsSettings } from "./brand-settings";
 import { RecordExtras } from "./record-extras";
+import { NavigationEditor } from "./navigation-editor";
+import { ContentHistory } from "./content-history";
+import { FormRouting } from "./form-routing";
+import { BusinessProfile } from "./business-profile";
+import type { Module } from "@/lib/industry";
 import { SectionEditor } from "./section-editor";
 import { RichTextEditor } from "./rich-text-editor";
 import { MediaLibrary } from "./media-library";
 import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
+import { templates, templateManifests, templateIds } from "@/lib/templates";
 import { Site, initialSections, limits, entitled } from "@/lib/model";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
@@ -131,6 +137,11 @@ export function Dashboard({ section }: { section: string }) {
     [editRow, setEditRow] = useState<Row | null>(null),
     [recordModal, setRecordModal] = useState(false),
     [filter, setFilter] = useState(""),
+    [modules, setModules] = useState<Module[]>([]),
+    [industries, setIndustries] = useState<
+      { id: string; label: string; category: string }[]
+    >([]),
+    [creationCategory, setCreationCategory] = useState("corporate"),
     [preview, setPreview] = useState(0),
     [startPreferences, setStartPreferences] = useState<{
       template?: string;
@@ -141,6 +152,18 @@ export function Dashboard({ section }: { section: string }) {
     if (selected) sessionStorage.setItem("omnyvox-selected-site", selected);
   }, [selected]);
   const site = sites.find((s) => s.id === selected) || sites[0];
+  useEffect(() => {
+    if (site && !demo)
+      api(`sites/${site.id}/modules`)
+        .then((b) => setModules(b.modules))
+        .catch((e) => setMessage(e.message));
+  }, [site?.id, site?.tier, demo]);
+  useEffect(() => {
+    if (!demo)
+      api("industries")
+        .then(setIndustries)
+        .catch(() => {});
+  }, [demo]);
   const isRecords = [
     "pages",
     "articles",
@@ -151,6 +174,13 @@ export function Dashboard({ section }: { section: string }) {
     "legal",
     "authors",
     "categories",
+    "offerings",
+    "projects",
+    "people",
+    "properties",
+    "facilities",
+    "programmes",
+    "locations",
   ].includes(section);
   async function api(path: string, method = "GET", body?: unknown) {
     const r = await fetch(`/api/${path}`, {
@@ -165,8 +195,12 @@ export function Dashboard({ section }: { section: string }) {
   useEffect(() => {
     setSelected(sessionStorage.getItem("omnyvox-selected-site") || "");
     try {
-      setStartPreferences(
-        JSON.parse(sessionStorage.getItem("omnyvox-start") || "{}"),
+      const preferences = JSON.parse(
+        sessionStorage.getItem("omnyvox-start") || "{}",
+      );
+      setStartPreferences(preferences);
+      setCreationCategory(
+        preferences.category === "commerce" ? "commerce" : "corporate",
       );
     } catch {}
     const isDemo = new URLSearchParams(location.search).get("demo") === "1";
@@ -333,10 +367,27 @@ export function Dashboard({ section }: { section: string }) {
                 Website category
                 <select
                   name="category"
+                  onChange={(e) => setCreationCategory(e.target.value)}
                   defaultValue={startPreferences.category || "corporate"}
                 >
                   <option value="corporate">Corporate website</option>
                   <option value="commerce">e-Commerce store</option>
+                </select>
+              </label>
+              <label className="field">
+                Industry
+                <select
+                  name="industry"
+                  key={creationCategory}
+                  aria-label="Industry"
+                >
+                  {industries
+                    .filter((i) => i.category === creationCategory)
+                    .map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.label}
+                      </option>
+                    ))}
                 </select>
               </label>
               <label className="field">
@@ -354,17 +405,24 @@ export function Dashboard({ section }: { section: string }) {
                 Starting template
                 <select
                   name="template"
-                  defaultValue={startPreferences.template || "studio"}
+                  key={creationCategory}
+                  defaultValue={
+                    startPreferences.template ||
+                    (creationCategory === "commerce" ? "catalogue" : "studio")
+                  }
                 >
-                  <option value="studio">
-                    Business Studio — services & consulting
-                  </option>
-                  <option value="atelier">
-                    Boutique Store — retail & brands
-                  </option>
-                  <option value="horizon">
-                    Modern Company — companies & teams
-                  </option>
+                  {templates
+                    .filter(
+                      (t) =>
+                        templateManifests[
+                          t.id as keyof typeof templateManifests
+                        ].category === creationCategory,
+                    )
+                    .map((t) => (
+                      <option value={t.id} key={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
                 </select>
               </label>
             </div>
@@ -409,10 +467,19 @@ export function Dashboard({ section }: { section: string }) {
     const form = Object.fromEntries(new FormData(e.currentTarget));
     const data = {
       ...form,
+      policyReviewed: form.policyReviewed === "on",
+      title: String(form.title || ""),
+      slug: String(form.slug || ""),
+      body: String(form.body || ""),
+      status: String(form.status || "draft"),
+      publishAt: form.publishAt
+        ? new Date(String(form.publishAt) + "Z").toISOString()
+        : "",
       price: Math.round(Number(form.price || 0) * 100),
       stock: Number(form.stock || 0),
       indexing: { index: form.index === "on", follow: form.follow === "on" },
       sections: form.sections ? JSON.parse(String(form.sections)) : undefined,
+      details: form.details ? JSON.parse(String(form.details)) : undefined,
     };
     await action(async () => {
       if (demo) {
@@ -442,6 +509,7 @@ export function Dashboard({ section }: { section: string }) {
     });
   }
   const title =
+    modules.find((m) => m.key === section)?.label ||
     nav.find((n) => n[0] === section)?.[1] ||
     (
       {
@@ -474,17 +542,28 @@ export function Dashboard({ section }: { section: string }) {
         </div>
         <div className="nav-group">WORKSPACE</div>
         <nav>
-          {nav.map(([key, label, Icon]) => (
-            <Link
-              href={href(key)}
-              className={section === key ? "active" : ""}
-              key={key}
-              onClick={() => setMenu(false)}
-            >
-              <Icon />
-              {label}
-            </Link>
-          ))}
+          {(demo || !site
+            ? nav.map(([key, label]) => ({
+                key,
+                label,
+                state: "enabled" as const,
+              }))
+            : modules
+          ).map(({ key, label, state }) => {
+            const Icon = nav.find((n) => n[0] === key)?.[2] || FileText;
+            return (
+              <Link
+                href={href(key)}
+                className={section === key ? "active" : ""}
+                key={key}
+                onClick={() => setMenu(false)}
+              >
+                <Icon />
+                {label}
+                {state === "upgrade" && <small>Growth+</small>}
+              </Link>
+            );
+          })}
         </nav>
         <div className="sidebar-bottom">
           <Link href={href("services")}>
@@ -666,7 +745,32 @@ export function Dashboard({ section }: { section: string }) {
                   </select>
                 </label>
               )}
-              {!site && !["templates", "billing"].includes(section) ? (
+              {site && section === "enquiries" && !demo && (
+                <FormRouting siteId={site.id} />
+              )}
+              {site && section === "business" && !demo ? (
+                <BusinessProfile siteId={site.id} />
+              ) : site &&
+                !demo &&
+                modules.length > 0 &&
+                !["support", "services"].includes(section) &&
+                (!modules.find((m) => m.key === section) ||
+                  modules.find((m) => m.key === section)?.state ===
+                    "upgrade") ? (
+                <section className="panel panel-body">
+                  <h2>
+                    {modules.find((m) => m.key === section)?.state === "upgrade"
+                      ? "Available on Growth and Advanced"
+                      : "This module does not apply to your website"}
+                  </h2>
+                  <p>
+                    {modules.find((m) => m.key === section)?.state === "upgrade"
+                      ? "Compare plans to enable this feature. Your existing content is preserved."
+                      : "Use the menu to manage the features for your business."}
+                  </p>
+                  <Link href={href("billing")}>View subscription</Link>
+                </section>
+              ) : !site && !["templates", "billing"].includes(section) ? (
                 <div className="panel empty">
                   <Globe2 />
                   <h2>Your next chapter is a website.</h2>
@@ -1122,6 +1226,14 @@ export function Dashboard({ section }: { section: string }) {
                     </div>
                   )}
                   {section === "branding" && site && (
+                    <NavigationEditor
+                      siteId={site.id}
+                      brand={site.data.brand}
+                      onChange={(brand) => updateSite({ ...site.data, brand })}
+                      demo={demo}
+                    />
+                  )}
+                  {section === "branding" && site && (
                     <BrandSettings
                       brand={site.data.brand}
                       onChange={(brand) => updateSite({ ...site.data, brand })}
@@ -1298,59 +1410,65 @@ export function Dashboard({ section }: { section: string }) {
                         change.
                       </div>
                       <div className="template-grid">
-                        {["studio", "atelier", "horizon"].map((t) => (
-                          <article className="template-card panel" key={t}>
-                            <div className={`template-art ${t}`}>
-                              <div className="tiny-nav">
-                                {t}. <span>Menu ↗</span>
+                        {templateIds
+                          .filter(
+                            (t) =>
+                              !site ||
+                              templateManifests[t].category === site.category,
+                          )
+                          .map((t) => (
+                            <article className="template-card panel" key={t}>
+                              <div className={`template-art ${t}`}>
+                                <div className="tiny-nav">
+                                  {t}. <span>Menu ↗</span>
+                                </div>
+                                <h3>
+                                  {t === "studio"
+                                    ? "Ideas worth bringing to life."
+                                    : t === "atelier"
+                                      ? "Objects for everyday living."
+                                      : "A clearer view of what’s next."}
+                                </h3>
+                                <span className="template-line" />
+                                <span className="template-line short" />
                               </div>
-                              <h3>
-                                {t === "studio"
-                                  ? "Ideas worth bringing to life."
-                                  : t === "atelier"
-                                    ? "Objects for everyday living."
-                                    : "A clearer view of what’s next."}
-                              </h3>
-                              <span className="template-line" />
-                              <span className="template-line short" />
-                            </div>
-                            <div className="panel-body">
-                              <h3
-                                style={{
-                                  fontSize: 18,
-                                  textTransform: "capitalize",
-                                }}
-                              >
-                                {t}
-                              </h3>
-                              <p className="muted" style={{ fontSize: 12 }}>
-                                {t === "atelier"
-                                  ? "A considered storefront for curated collections."
-                                  : t === "studio"
-                                    ? "A confident canvas for creative businesses."
-                                    : "A professional foundation for expert services."}
-                              </p>
-                              <button
-                                className="button small"
-                                onClick={() => {
-                                  if (!site) {
-                                    setModal(true);
-                                    return;
-                                  }
-                                  updateSite({ ...site.data, template: t });
-                                  setMessage(
-                                    `${{ studio: "Business Studio", atelier: "Boutique Store", horizon: "Modern Company" }[t]} applied to your draft. Open the editor to preview and save.`,
-                                  );
-                                }}
-                              >
-                                {site?.data.template === t
-                                  ? "Selected template"
-                                  : "Use this template"}{" "}
-                                <Check size={13} />
-                              </button>
-                            </div>
-                          </article>
-                        ))}
+                              <div className="panel-body">
+                                <h3
+                                  style={{
+                                    fontSize: 18,
+                                    textTransform: "capitalize",
+                                  }}
+                                >
+                                  {templates.find((p) => p.id === t)?.name}
+                                </h3>
+                                <p className="muted" style={{ fontSize: 12 }}>
+                                  {t === "atelier"
+                                    ? "A considered storefront for curated collections."
+                                    : t === "studio"
+                                      ? "A confident canvas for creative businesses."
+                                      : "A professional foundation for expert services."}
+                                </p>
+                                <button
+                                  className="button small"
+                                  onClick={() => {
+                                    if (!site) {
+                                      setModal(true);
+                                      return;
+                                    }
+                                    updateSite({ ...site.data, template: t });
+                                    setMessage(
+                                      `${templates.find((p) => p.id === t)?.name} applied to your draft. Open the editor to preview and save.`,
+                                    );
+                                  }}
+                                >
+                                  {site?.data.template === t
+                                    ? "Selected template"
+                                    : "Use this template"}{" "}
+                                  <Check size={13} />
+                                </button>
+                              </div>
+                            </article>
+                          ))}
                       </div>
                     </>
                   )}
@@ -1705,6 +1823,17 @@ export function Dashboard({ section }: { section: string }) {
                 <X />
               </button>
             </div>
+            {editRow && site.tier === "advanced" && !demo && (
+              <ContentHistory
+                siteId={site.id}
+                recordId={editRow.id}
+                onRestore={(data) => {
+                  setRecordModal(false);
+                  setEditRow({ ...editRow, data: data as Row["data"] });
+                  setTimeout(() => setRecordModal(true), 0);
+                }}
+              />
+            )}
             <form onSubmit={saveRecord}>
               <div className="form-grid">
                 <label className="field full">
@@ -1787,6 +1916,11 @@ export function Dashboard({ section }: { section: string }) {
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                    {site.tier !== "basic" &&
+                      ["pages", "articles", "legal"].includes(section) && (
+                        <option value="scheduled">Scheduled</option>
+                      )}
                   </select>
                 </label>
               </div>

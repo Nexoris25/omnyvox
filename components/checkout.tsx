@@ -8,67 +8,172 @@ type Product = {
     stock?: number;
     image?: string;
     body: string;
+    category?: string;
+    slug?: string;
   };
 };
 export function StoreCheckout({
   site,
   products,
   delivery = 0,
+  base = "",
+  hideImages = false,
+  preview = false,
 }: {
   site: string;
   products: Product[];
   delivery?: number;
+  base?: string;
+  hideImages?: boolean;
+  preview?: boolean;
 }) {
   const [cart, setCart] = useState<Record<string, number>>({}),
     [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [search, setSearch] = useState(""),
+    [category, setCategory] = useState(""),
+    [sort, setSort] = useState("name");
   const selected = products.filter((p) => cart[p.id] > 0);
+  if (preview)
+    return (
+      <section className="rendered-section">
+        <h2>Shop preview</h2>
+        <p>Checkout is available on your published website.</p>
+        {products.map((p) => (
+          <article key={p.id}>
+            <h3>{p.data.title}</h3>
+            <p>{p.data.body.replace(/<[^>]*>/g, "")}</p>
+          </article>
+        ))}
+      </section>
+    );
   const format = (amount: number) =>
     new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
     }).format(amount / 100);
   return (
-    <section className="rendered-section">
-      <h2>Your next favourite, right here.</h2>
-      <div className="template-grid">
-        {products.map((p) => (
-          <article className="panel panel-body" key={p.id}>
-            {p.data.image && (
-              <img
-                src={p.data.image}
-                alt={p.data.title}
-                width={400}
-                height={300}
-              />
-            )}
-            <h3 style={{ fontSize: 23, marginTop: 18 }}>{p.data.title}</h3>
-            <p>{p.data.body.slice(0, 150)}</p>
-            <strong>{format(p.data.price || 0)}</strong>
-            <label className="field" style={{ marginTop: 20 }}>
-              Quantity
-              <input
-                type="number"
-                min={0}
-                max={Math.min(p.data.stock || 0, 50)}
-                value={cart[p.id] || 0}
-                onChange={(e) =>
-                  setCart({
-                    ...cart,
-                    [p.id]: Math.min(
-                      p.data.stock || 0,
-                      Math.max(0, Number(e.target.value)),
-                    ),
-                  })
-                }
-              />
-              <small>{p.data.stock || 0} available</small>
-            </label>
-          </article>
-        ))}
+    <section className="rendered-section storefront" id="shop">
+      <div className="store-heading">
+        <div>
+          <span className="eyebrow">THE COLLECTION</span>
+          <h2>Find your everyday essentials.</h2>
+        </div>
+        <a className="button" href="#cart">
+          Cart · {Object.values(cart).reduce((a, b) => a + b, 0)}
+        </a>
       </div>
+      <div className="store-tools">
+        <label className="field">
+          Search products
+          <input
+            type="search"
+            value={search}
+            placeholder="What are you looking for?"
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          Category
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {[
+              ...new Set(products.map((p) => p.data.category).filter(Boolean)),
+            ].map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Sort by
+          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="name">Product name</option>
+            <option value="low">Price: low to high</option>
+            <option value="high">Price: high to low</option>
+          </select>
+        </label>
+      </div>
+      {!products.length && (
+        <p className="panel panel-body">
+          The catalogue is being prepared. Contact the business for product
+          enquiries.
+        </p>
+      )}
+      {!!products.length &&
+        !products.some(
+          (p) =>
+            p.data.title.toLowerCase().includes(search.toLowerCase()) &&
+            (!category || p.data.category === category),
+        ) && <p>No matching products. Try another search or category.</p>}
+      <div className="template-grid">
+        {products
+          .filter(
+            (p) =>
+              p.data.title.toLowerCase().includes(search.toLowerCase()) &&
+              (!category || p.data.category === category),
+          )
+          .sort((a, b) =>
+            sort === "name"
+              ? a.data.title.localeCompare(b.data.title)
+              : sort === "low"
+                ? (a.data.price || 0) - (b.data.price || 0)
+                : (b.data.price || 0) - (a.data.price || 0),
+          )
+          .map((p) => (
+            <article className="panel panel-body" key={p.id}>
+              {p.data.image && !hideImages && (
+                <img
+                  src={p.data.image}
+                  alt={p.data.title}
+                  width={400}
+                  height={300}
+                />
+              )}
+              <h3 style={{ fontSize: 23, marginTop: 18 }}>
+                {p.data.slug ? (
+                  <a href={`${base}/shop/${p.data.slug}`}>{p.data.title}</a>
+                ) : (
+                  p.data.title
+                )}
+              </h3>
+              <p>{p.data.body.replace(/<[^>]*>/g, "").slice(0, 150)}</p>
+              <strong>{format(p.data.price || 0)}</strong>
+              <label className="field" style={{ marginTop: 20 }}>
+                Quantity
+                <input
+                  type="number"
+                  min={0}
+                  max={Math.min(p.data.stock || 0, 50)}
+                  value={cart[p.id] || 0}
+                  onChange={(e) =>
+                    setCart({
+                      ...cart,
+                      [p.id]: Math.min(
+                        p.data.stock || 0,
+                        Math.max(0, Number(e.target.value)),
+                      ),
+                    })
+                  }
+                />
+                <small>{p.data.stock || 0} available</small>
+              </label>
+            </article>
+          ))}
+      </div>
+      {!selected.length && (
+        <div id="cart" className="panel panel-body">
+          <h3>Your cart is empty</h3>
+          <p>Choose a product quantity above to start your order.</p>
+        </div>
+      )}
       {selected.length > 0 && (
         <form
+          id="cart"
           className="panel panel-body"
           style={{ maxWidth: 650, marginTop: 30 }}
           onSubmit={async (e) => {

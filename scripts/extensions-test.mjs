@@ -241,16 +241,25 @@ try {
     ).status === 200,
     "Media description can be updated",
   );
+  const legalDrafts = await call(
+    "sites/" + s.data.id + "/legal",
+    "GET",
+    undefined,
+    a.cookie,
+  );
+  const privacyDraft = legalDrafts.data.find((r) => r.data.slug === "privacy");
   check(
     (
       await call(
-        "sites/" + s.data.id + "/legal",
-        "POST",
+        "sites/" + s.data.id + "/legal/" + privacyDraft.id,
+        "PATCH",
         {
           title: "Privacy policy",
           slug: "privacy",
           body: "Our privacy information.",
           status: "published",
+          policyReviewed: true,
+          policyType: "privacy",
         },
         a.cookie,
       )
@@ -364,10 +373,18 @@ try {
       home.includes("https://www.instagram.com/example"),
     "Published footer includes legal policy and social link",
   );
+  const {
+    rows: [verifiedForm],
+  } = await db.query(
+    "UPDATE site_forms SET active_email=$2,verified_at=now() WHERE site_id=$1 RETURNING id",
+    [s.data.id, prefix + "notify@example.test"],
+  );
   check(
     (
       await call("enquiries", "POST", {
         site: s.data.id,
+        formId: verifiedForm.id,
+        consent: "on",
         name: "Visitor QA",
         email: prefix + "enquiry@example.test",
         message: "Please contact me about your service.",

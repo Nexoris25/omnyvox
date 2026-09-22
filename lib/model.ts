@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { contrast } from "./theme";
+import { templateIds } from "./templates";
 export const tiers = ["basic", "growth", "advanced"] as const;
 export type Tier = (typeof tiers)[number];
 export const limits = {
@@ -58,6 +60,10 @@ export const sectionSchema = z.object({
     .optional(),
 });
 export const siteSchema = z.object({
+  industry: z
+    .string()
+    .regex(/^[a-z-]+$/)
+    .optional(),
   name: z.string().min(2).max(100),
   slug: z
     .string()
@@ -67,52 +73,80 @@ export const siteSchema = z.object({
     ),
   category: z.enum(["corporate", "commerce"]),
   tier: z.enum(tiers),
-  template: z.enum(["studio", "atelier", "horizon"]).default("studio"),
+  template: z.enum(templateIds).optional(),
 });
-export const brandSchema = z.object({
-  name: z.string().min(2).max(100),
-  description: z.string().max(300),
-  primary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  background: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  text: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  font: z.enum(["sans", "serif"]),
-  email: z.union([z.email(), z.literal("")]),
-  notificationEmail: z.union([z.email(), z.literal("")]).optional(),
-  categoryUrls: z.boolean(),
-  logo: z
-    .string()
-    .regex(/^\/api\/media\/[a-f0-9-]+$/)
-    .or(z.literal(""))
-    .default(""),
-  businessNature: z
-    .enum(["general", "commerce", "services", "healthcare", "education"])
-    .optional(),
-  socials: z
-    .object({
-      facebook: safeLink.optional(),
-      instagram: safeLink.optional(),
-      linkedin: safeLink.optional(),
-      x: safeLink.optional(),
-      youtube: safeLink.optional(),
-      tiktok: safeLink.optional(),
-      whatsapp: safeLink.optional(),
-    })
-    .optional(),
-  robots: z
-    .object({
-      index: z.boolean(),
-      follow: z.boolean(),
-      rules: z
-        .string()
-        .max(4000)
-        .refine((v) => !/[\u0000-\u0008]/.test(v)),
-    })
-    .optional(),
-});
+export const brandSchema = z
+  .object({
+    favicon: imagePath.optional(),
+    navigation: z
+      .array(
+        z.object({
+          label: z.string().min(1).max(60),
+          href: safeLink,
+          pageId: z.uuid().or(z.literal("")).optional(),
+          footer: z.boolean().default(false),
+          children: z
+            .array(
+              z.object({
+                label: z.string().min(1).max(60),
+                href: safeLink,
+                pageId: z.uuid().or(z.literal("")).optional(),
+              }),
+            )
+            .max(8)
+            .optional(),
+        }),
+      )
+      .max(12)
+      .optional(),
+    name: z.string().min(2).max(100),
+    description: z.string().max(300),
+    primary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    background: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    text: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    font: z.enum(["sans", "serif"]),
+    email: z.union([z.email(), z.literal("")]),
+    notificationEmail: z.union([z.email(), z.literal("")]).optional(),
+    categoryUrls: z.boolean(),
+    logo: z
+      .string()
+      .regex(/^\/api\/media\/[a-f0-9-]+$/)
+      .or(z.literal(""))
+      .default(""),
+    businessNature: z
+      .enum(["general", "commerce", "services", "healthcare", "education"])
+      .optional(),
+    socials: z
+      .object({
+        facebook: safeLink.optional(),
+        instagram: safeLink.optional(),
+        linkedin: safeLink.optional(),
+        x: safeLink.optional(),
+        youtube: safeLink.optional(),
+        tiktok: safeLink.optional(),
+        whatsapp: safeLink.optional(),
+      })
+      .optional(),
+    robots: z
+      .object({
+        index: z.boolean(),
+        follow: z.boolean(),
+        rules: z
+          .string()
+          .max(4000)
+          .refine((v) => !/[\u0000-\u0008]/.test(v)),
+      })
+      .optional(),
+  })
+  .refine(
+    (b) => contrast(b.text, b.background) >= 4.5,
+    "Choose text and background colours with at least 4.5:1 contrast.",
+  );
 export type Brand = z.infer<typeof brandSchema>;
 export type Section = z.infer<typeof sectionSchema>;
 export type Site = {
+  industry_id?: string;
   id: string;
   owner_id: string;
   name: string;

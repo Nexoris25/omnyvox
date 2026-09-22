@@ -7,6 +7,8 @@ export async function siteEntitlements(site: Site) {
       products?: number;
       articles?: number;
       team?: number;
+      storageBytes?: number;
+      collections?: number;
     } | null;
   }>("SELECT entitlements FROM plans WHERE id=$1", [
     `${site.category}-${site.tier}`,

@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { query } from "@/lib/db";
 import { Site } from "@/lib/model";
 import { publicContent, contentPath, siteBase } from "@/lib/public-site";
+import { marketingPages } from "@/lib/marketing-pages";
 export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.APP_URL || "http://localhost:3000";
@@ -15,6 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   else {
     for (const path of ["/pricing", "/templates", "/contact", "/insights"])
       result.push({ url: base + path });
+    const overrides = await marketingContent("pages");
+    for (const path of Object.keys(marketingPages))
+      if (
+        overrides.find((r) => r.data.slug === path.replaceAll("/", "-"))?.data
+          .indexing?.index !== false
+      )
+        result.push({ url: base + "/" + path });
     for (const r of await marketingContent())
       if (
         ["articles", "legal"].includes(r.kind) &&

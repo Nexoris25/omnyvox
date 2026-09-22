@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { query } from "./db";
 import { user } from "./auth";
 import { Site, articlePath, entitled } from "./model";
+import { industryFor, collectionKinds } from "./industry";
 export type Content = {
   id: string;
   kind: string;
@@ -20,6 +21,10 @@ export type Content = {
     sections?: import("./model").Section[];
     indexing?: { index: boolean; follow: boolean };
     imageAlt?: string;
+    seoTitle?: string;
+    description?: string;
+    socialImage?: string;
+    details?: { label: string; value: string }[];
   };
 };
 export const getSite = cache(async (slug: string, preview = false) => {
@@ -43,14 +48,20 @@ export const getSite = cache(async (slug: string, preview = false) => {
     return null;
   return { ...site, view: site.published };
 });
-export async function publicContent(site: Site) {
+export async function publicContent(site: Site, preview = false) {
+  const industry = await industryFor(site);
   return query<Content>(
-    "SELECT * FROM records WHERE site_id=$1 AND data->>'status'='published' AND kind=ANY($2)",
+    "SELECT * FROM records WHERE site_id=$1 AND (data->>'status'='published' OR ($3::boolean AND data->>'status'<>'archived')) AND kind=ANY($2)",
     [
       site.id,
-      entitled(site.tier, "blog")
-        ? ["pages", "articles", "products", "legal"]
-        : ["pages", "products", "legal"],
+      [
+        "pages",
+        "legal",
+        ...(site.category === "commerce" ? ["products", "categories"] : []),
+        ...(entitled(site.tier, "blog") ? ["articles", "authors"] : []),
+        ...Object.keys(industry?.collections || {}),
+      ],
+      preview,
     ],
   );
 }
@@ -69,6 +80,11 @@ export async function siteBase(site: Site) {
   return `${process.env.APP_URL || "http://localhost:3000"}/sites/${site.slug}`;
 }
 export function contentPath(record: Content, categoryUrls: boolean) {
+  if (
+    collectionKinds.includes(record.kind) ||
+    ["authors", "categories"].includes(record.kind)
+  )
+    return `/${record.kind}/${record.data.slug}`;
   return record.kind === "articles"
     ? articlePath(record.data.slug, record.data.category, categoryUrls)
     : record.kind === "products"

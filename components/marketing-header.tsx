@@ -25,6 +25,7 @@ export function MarketingHeader() {
         {[
           ["/", "Overview"],
           ["/templates", "Templates"],
+          ["/features", "Features"],
           ["/pricing", "Pricing"],
           ["/insights", "Insights"],
           ["/contact", "Contact"],

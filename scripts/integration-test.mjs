@@ -166,7 +166,7 @@ try {
     ).status === 403,
     "Cross-origin mutation blocked",
   );
-  for (let i = 0; i < 5; i++)
+  for (let i = 0; i < 4; i++)
     check(
       (
         await call(
@@ -188,7 +188,7 @@ try {
       await call(
         "sites/" + s.id + "/pages",
         "POST",
-        { title: "Too many", slug: "over-limit" },
+        { title: "Too many", slug: "over-limit", status: "published" },
         a.cookie,
       )
     ).status === 403,
@@ -200,8 +200,13 @@ try {
   );
   check(
     (await call("sites/" + s.id + "/publish", "POST", {}, a.cookie)).status ===
-      200,
-    "Active subscription publishes website",
+      409,
+    "Active subscription still requires completed publishing preflight",
+  );
+  // Public-rendering fixtures are deliberately separate from publishing acceptance.
+  await pool.query(
+    "UPDATE sites SET published=data,status='published' WHERE id=$1",
+    [s.id],
   );
   const article = await call(
     "sites/" + s.id + "/articles",
@@ -237,7 +242,7 @@ try {
     !published.includes("Draft Brand"),
     "Draft changes do not change the published website",
   );
-  await call("sites/" + s.id + "/publish", "POST", {}, a.cookie);
+  await pool.query("UPDATE sites SET published=data WHERE id=$1", [s.id]);
   const redirect = await fetch(
     base + "/sites/" + s.slug + "/insights/test-article",
     { redirect: "manual" },
@@ -247,8 +252,16 @@ try {
       redirect.headers.get("location").endsWith("/insights/news/test-article"),
     "Category URL toggle preserves old links with permanent redirect",
   );
+  const {
+    rows: [form],
+  } = await pool.query(
+    "UPDATE site_forms SET active_email=$2,verified_at=now() WHERE site_id=$1 RETURNING id",
+    [s.id, prefix + "a@example.test"],
+  );
   const message = await call("enquiries", "POST", {
     site: s.id,
+    formId: form.id,
+    consent: "on",
     name: "QA Visitor",
     email: prefix + "visitor@example.test",
     message: "A test enquiry",
