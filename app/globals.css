@@ -600,6 +600,19 @@ summary:focus-visible {
   background: #ecf0e6;
   color: #303a26;
 }
+.template-art.trust {
+  background: #e9e4da;
+  color: #33291c;
+}
+.template-art.trust h3 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.template-art.care {
+  background: #e3eee8;
+  color: #1f4536;
+  border-radius: 24px;
+}
 .template-art.atelier {
   background: #efe1cf;
   color: #6b432d;
@@ -611,6 +624,78 @@ summary:focus-visible {
 .template-art.horizon {
   background: #1b3445;
   color: #fff;
+}
+.template-art.catalogue {
+  background: #e9eef5;
+  color: #14253c;
+  border-top: 6px solid #14253c;
+}
+.template-art.essentials {
+  background: #eef3e2;
+  color: #33421c;
+  border-radius: 20px;
+}
+.template-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 10px 0 4px;
+}
+.template-card-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.template-art-compact {
+  display: flex;
+  align-items: flex-end;
+  height: 78px;
+  padding: 10px;
+  border-radius: 9px;
+  border: 2px solid transparent;
+  position: relative;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.template-art-compact .tiny-nav {
+  font-size: 10px;
+}
+.template-card-compact:hover .template-art-compact {
+  transform: translateY(-2px);
+}
+.template-card-selected .template-art-compact,
+.template-card-compact[aria-pressed="true"] .template-art-compact {
+  border-color: var(--primary);
+}
+.template-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: white;
+  color: var(--primary);
+  opacity: 0;
+  box-shadow: 0 2px 6px #0002;
+}
+.template-card-compact[aria-pressed="true"] .template-check {
+  opacity: 1;
+}
+.template-compact-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+.template-compact-type {
+  font-size: 10.5px;
+  color: var(--muted);
 }
 .template-line {
   display: block;
@@ -1510,14 +1595,140 @@ summary:focus-visible {
   border: 1px solid #8883;
   border-radius: 8px;
 }
+/* ---- Template family design languages ---- */
+/* Studio — technology & software agencies: bold editorial sans, tight
+   letter-spacing, sharp accent rule under the nav. */
+.rendered-site.studio .rendered-nav {
+  border-bottom: 2px solid var(--site-text);
+}
+.rendered-site.studio h1,
+.rendered-site.studio h2 {
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.rendered-site.studio .hero-section {
+  background: var(--site-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--site-text) 12%, transparent);
+}
+.rendered-site.studio .rendered-section .button {
+  border-radius: 4px;
+}
+
+/* Trust — law, accounting & consulting: reserved serif headings, square
+   corners, thin structural rules instead of shadows. */
+.rendered-site.trust h1,
+.rendered-site.trust h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.rendered-site.trust .rendered-nav {
+  padding-block: 30px;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.rendered-site.trust .rendered-nav nav {
+  letter-spacing: 0.08em;
+}
+.rendered-site.trust .hero-section {
+  background: var(--site-bg);
+  border-top: 1px solid color-mix(in srgb, var(--site-text) 18%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--site-text) 18%, transparent);
+}
+.rendered-site.trust .rendered-section .button {
+  border-radius: 0;
+}
+.rendered-site.trust .rendered-footer {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* Care — clinics & healthcare: soft rounded warmth, pill actions. */
+.rendered-site.care {
+  --site-radius: 22px;
+}
+.rendered-site.care .hero-section {
+  background: color-mix(in srgb, var(--site-primary) 10%, var(--site-bg));
+  border-radius: 0 0 32px 32px;
+}
+.rendered-site.care h1,
+.rendered-site.care h2 {
+  letter-spacing: -0.01em;
+}
+.rendered-site.care .rendered-section .button {
+  border-radius: 999px;
+  padding-inline: 26px;
+}
+.rendered-site.care .rendered-nav {
+  border-radius: 0 0 18px 18px;
+}
+
+/* Horizon — the general-purpose "modern company" family. */
+.rendered-site.horizon .hero-section {
+  background: var(--site-secondary);
+  color: white;
+}
+.rendered-site.horizon .hero-section .button {
+  border-radius: 6px;
+}
+.rendered-site.horizon .rendered-nav {
+  font-weight: 600;
+}
+
+/* Atelier — fashion, beauty & home boutique: editorial serif, square
+   full-bleed shapes, generous breathing room. */
 .rendered-site.atelier h1,
 .rendered-site.atelier h2 {
   font-family: Georgia, serif;
   font-weight: 400;
 }
-.rendered-site.horizon .hero-section {
-  background: var(--site-secondary);
-  color: white;
+.rendered-site.atelier .rendered-nav {
+  padding-block: 30px;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  border-bottom: none;
+}
+.rendered-site.atelier .hero-section {
+  min-height: 420px;
+  background: var(--site-bg);
+}
+.rendered-site.atelier .rendered-section .button {
+  border-radius: 0;
+  padding-inline: 30px;
+}
+.rendered-site.atelier .rendered-footer {
+  border-top: none;
+  background: color-mix(in srgb, var(--site-primary) 5%, var(--site-bg));
+}
+
+/* Catalogue — electronics, books & general retail: dense utility grid. */
+.rendered-site.catalogue .rendered-section .button {
+  border-radius: 4px;
+}
+.rendered-site.catalogue .rendered-nav {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Essentials — grocery & household: fast, friendly, rounded chips. */
+.rendered-site.essentials .hero-section {
+  background: color-mix(in srgb, var(--site-primary) 12%, var(--site-bg));
+  min-height: 260px;
+}
+.rendered-site.essentials .rendered-nav {
+  border-bottom: 1px solid color-mix(in srgb, var(--site-primary) 30%, transparent);
+}
+.rendered-site.essentials .rendered-section .button {
+  border-radius: 999px;
+}
+.rendered-site.essentials .rendered-section h2 {
+  font-size: clamp(20px, 2.6vw, 30px);
+}
+.rendered-site.essentials .rendered-section {
+  padding-block: 38px;
 }
 .rendered-footer {
   padding: 30px 8%;
@@ -2670,6 +2881,18 @@ summary:focus-visible {
 .template-snapshot.atelier {
   font-family: Georgia, serif;
 }
+.template-snapshot.trust {
+  font-family: Georgia, serif;
+}
+.template-snapshot.trust h2 {
+  font-weight: 400;
+}
+.template-snapshot.care {
+  border-radius: 26px;
+}
+.template-snapshot.essentials {
+  border-radius: 18px;
+}
 .template-snapshot p {
   font-size: 11px;
 }
@@ -2862,9 +3085,10 @@ summary:focus-visible {
   text-decoration: underline;
 }
 .rich-content blockquote {
-  border-left: 3px solid #540cda;
+  border-left: 3px solid var(--site-primary, var(--primary));
   margin: 20px 0;
   padding-left: 20px;
+  opacity: 0.85;
 }
 .rich-content table {
   width: 100%;
@@ -2892,18 +3116,77 @@ summary:focus-visible {
 }
 .rich-toolbar {
   display: flex;
-  gap: 4px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding: 7px;
+  align-items: center;
+  padding: 8px;
   border-bottom: 1px solid #e8e3ef;
   background: #f8f6fb;
 }
-.rich-toolbar button {
-  padding: 7px;
-  border: 1px solid #e5dfed;
+.rich-toolbar-group {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
   background: white;
-  border-radius: 4px;
-  font-size: 11px;
+  border: 1px solid #e5dfed;
+  border-radius: 7px;
+}
+.rich-toolbar-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  color: #4b465a;
+}
+.rich-toolbar-btn:hover:not(:disabled) {
+  background: #f0ecf9;
+}
+.rich-toolbar-btn[aria-pressed="true"] {
+  background: var(--primary);
+  color: white;
+}
+.rich-toolbar-btn:disabled {
+  opacity: 0.35;
+}
+.callout {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--site-primary, var(--primary)) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--site-primary, var(--primary)) 25%, white);
+}
+.callout > *:last-child {
+  margin-bottom: 0;
+}
+.cta-button {
+  display: inline-block;
+  margin: 14px 0;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--site-primary, var(--primary));
+  color: var(--site-primary-fg, white);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none !important;
+}
+.rich-embed {
+  position: relative;
+  margin: 20px 0;
+  padding-top: 56.25%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #10121a;
+}
+.rich-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 .rich-editor .tiptap {
   min-height: 160px;
@@ -3281,8 +3564,9 @@ summary:focus-visible {
     padding-left: 18px;
     padding-right: 18px;
   }
-  .rich-toolbar button {
-    font-size: 10px;
+  .rich-toolbar-btn {
+    width: 26px;
+    height: 26px;
   }
   .hero h1 {
     font-size: 42px;

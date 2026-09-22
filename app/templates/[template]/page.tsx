@@ -57,7 +57,7 @@ export default async function Page({
             secondary: "#182820",
             background: t.color,
             text: "#172033",
-            font: t.id === "atelier" ? "serif" : "sans",
+            font: t.id === "atelier" || t.id === "trust" ? "serif" : "sans",
             email: "hello@example.com",
             categoryUrls: false,
             logo: "",

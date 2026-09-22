@@ -50,6 +50,7 @@ import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { templates, templateManifests, templateIds } from "@/lib/templates";
+import { TemplateCard, TemplatePickerGrid } from "./template-picker";
 import { Site, initialSections, limits, entitled } from "@/lib/model";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
@@ -142,6 +143,8 @@ export function Dashboard({ section }: { section: string }) {
       { id: string; label: string; category: string }[]
     >([]),
     [creationCategory, setCreationCategory] = useState("corporate"),
+    [creationIndustry, setCreationIndustry] = useState(""),
+    [creationTemplate, setCreationTemplate] = useState("studio"),
     [preview, setPreview] = useState(0),
     [startPreferences, setStartPreferences] = useState<{
       template?: string;
@@ -164,6 +167,15 @@ export function Dashboard({ section }: { section: string }) {
         .then(setIndustries)
         .catch(() => {});
   }, [demo]);
+  useEffect(() => {
+    const belongs = industries.some(
+      (i) => i.id === creationIndustry && i.category === creationCategory,
+    );
+    if (!belongs) {
+      const match = industries.find((i) => i.category === creationCategory);
+      setCreationIndustry(match ? match.id : "");
+    }
+  }, [industries, creationCategory, creationIndustry]);
   const isRecords = [
     "pages",
     "articles",
@@ -199,8 +211,12 @@ export function Dashboard({ section }: { section: string }) {
         sessionStorage.getItem("omnyvox-start") || "{}",
       );
       setStartPreferences(preferences);
-      setCreationCategory(
-        preferences.category === "commerce" ? "commerce" : "corporate",
+      const startCategory =
+        preferences.category === "commerce" ? "commerce" : "corporate";
+      setCreationCategory(startCategory);
+      setCreationTemplate(
+        preferences.template ||
+          (startCategory === "commerce" ? "catalogue" : "studio"),
       );
     } catch {}
     const isDemo = new URLSearchParams(location.search).get("demo") === "1";
@@ -367,7 +383,13 @@ export function Dashboard({ section }: { section: string }) {
                 Website category
                 <select
                   name="category"
-                  onChange={(e) => setCreationCategory(e.target.value)}
+                  onChange={(e) => {
+                    const cat = e.target.value;
+                    setCreationCategory(cat);
+                    setCreationTemplate(
+                      cat === "commerce" ? "catalogue" : "studio",
+                    );
+                  }}
                   defaultValue={startPreferences.category || "corporate"}
                 >
                   <option value="corporate">Corporate website</option>
@@ -380,6 +402,8 @@ export function Dashboard({ section }: { section: string }) {
                   name="industry"
                   key={creationCategory}
                   aria-label="Industry"
+                  value={creationIndustry}
+                  onChange={(e) => setCreationIndustry(e.target.value)}
                 >
                   {industries
                     .filter((i) => i.category === creationCategory)
@@ -401,30 +425,19 @@ export function Dashboard({ section }: { section: string }) {
                   <option value="advanced">Advanced</option>
                 </select>
               </label>
-              <label className="field full">
-                Starting template
-                <select
-                  name="template"
-                  key={creationCategory}
-                  defaultValue={
-                    startPreferences.template ||
-                    (creationCategory === "commerce" ? "catalogue" : "studio")
-                  }
-                >
-                  {templates
-                    .filter(
-                      (t) =>
-                        templateManifests[
-                          t.id as keyof typeof templateManifests
-                        ].category === creationCategory,
-                    )
-                    .map((t) => (
-                      <option value={t.id} key={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
+              <div className="field full">
+                <span className="field-label">Starting template</span>
+                <p className="muted" style={{ fontSize: 12, margin: "0 0 4px" }}>
+                  Matched to your industry — change it any time later.
+                </p>
+                <TemplatePickerGrid
+                  category={creationCategory as "corporate" | "commerce"}
+                  industry={creationIndustry}
+                  value={creationTemplate}
+                  onChange={setCreationTemplate}
+                />
+                <input type="hidden" name="template" value={creationTemplate} />
+              </div>
             </div>
             <p className="muted" style={{ fontSize: 11, marginTop: 18 }}>
               Start with a draft. Subscription payment is required before your
@@ -1417,57 +1430,21 @@ export function Dashboard({ section }: { section: string }) {
                               templateManifests[t].category === site.category,
                           )
                           .map((t) => (
-                            <article className="template-card panel" key={t}>
-                              <div className={`template-art ${t}`}>
-                                <div className="tiny-nav">
-                                  {t}. <span>Menu ↗</span>
-                                </div>
-                                <h3>
-                                  {t === "studio"
-                                    ? "Ideas worth bringing to life."
-                                    : t === "atelier"
-                                      ? "Objects for everyday living."
-                                      : "A clearer view of what’s next."}
-                                </h3>
-                                <span className="template-line" />
-                                <span className="template-line short" />
-                              </div>
-                              <div className="panel-body">
-                                <h3
-                                  style={{
-                                    fontSize: 18,
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  {templates.find((p) => p.id === t)?.name}
-                                </h3>
-                                <p className="muted" style={{ fontSize: 12 }}>
-                                  {t === "atelier"
-                                    ? "A considered storefront for curated collections."
-                                    : t === "studio"
-                                      ? "A confident canvas for creative businesses."
-                                      : "A professional foundation for expert services."}
-                                </p>
-                                <button
-                                  className="button small"
-                                  onClick={() => {
-                                    if (!site) {
-                                      setModal(true);
-                                      return;
-                                    }
-                                    updateSite({ ...site.data, template: t });
-                                    setMessage(
-                                      `${templates.find((p) => p.id === t)?.name} applied to your draft. Open the editor to preview and save.`,
-                                    );
-                                  }}
-                                >
-                                  {site?.data.template === t
-                                    ? "Selected template"
-                                    : "Use this template"}{" "}
-                                  <Check size={13} />
-                                </button>
-                              </div>
-                            </article>
+                            <TemplateCard
+                              key={t}
+                              id={t}
+                              selected={site?.data.template === t}
+                              onSelect={() => {
+                                if (!site) {
+                                  setModal(true);
+                                  return;
+                                }
+                                updateSite({ ...site.data, template: t });
+                                setMessage(
+                                  `${templates.find((p) => p.id === t)?.name} applied to your draft. Open the editor to preview and save.`,
+                                );
+                              }}
+                            />
                           ))}
                       </div>
                     </>
