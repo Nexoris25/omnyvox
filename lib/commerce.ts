@@ -48,7 +48,7 @@ export async function checkout(input: unknown) {
   if (new Set(b.items.map((i) => i.id)).size !== b.items.length)
     throw new Error("Duplicate cart items are not allowed.");
   const [merchant] = await query<{ secret: string; delivery: number }>(
-    "SELECT m.secret,m.delivery FROM merchant_accounts m JOIN sites s ON s.id=m.site_id WHERE m.site_id=$1 AND m.verified=true AND s.status='published' AND s.subscription='active' AND s.paid_until>now() AND s.category='commerce'",
+    "SELECT m.secret,m.delivery FROM merchant_accounts m JOIN effective_sites s ON s.id=m.site_id WHERE m.site_id=$1 AND m.verified=true AND s.status='published' AND s.subscription='active' AND s.service_until>now() AND s.category='commerce'",
     [b.site],
   );
   if (!merchant)

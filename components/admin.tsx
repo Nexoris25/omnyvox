@@ -1,13 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Brand } from "./brand";
+import { limits, Tier } from "@/lib/model";
 type Plan = {
   id: string;
   category: string;
   tier: string;
   monthly: number | null;
   annual: number | null;
+  entitlements?: {
+    pages: number;
+    products: number;
+    articles: number;
+    team: number;
+  };
 };
 type AdminData = {
   sites: {
@@ -58,14 +64,7 @@ export function Admin() {
   }
   return (
     <>
-      <header className="marketing-nav">
-        <Brand />
-        <b>Platform administration</b>
-        <Link href="/dashboard" className="button secondary small">
-          Subscriber workspace
-        </Link>
-      </header>
-      <main id="main" className="section" style={{ paddingTop: 35 }}>
+      <section className="section" style={{ paddingTop: 35 }}>
         <div className="page-heading">
           <div>
             <span className="eyebrow">NEXORIS TECHNOLOGIES</span>
@@ -127,6 +126,13 @@ export function Admin() {
                         id: p.id,
                         monthly: Math.round(Number(f.get("monthly")) * 100),
                         annual: Math.round(Number(f.get("annual")) * 100),
+                        entitlements: {
+                          pages: Number(f.get("pages")),
+                          products: Number(f.get("products")),
+                          articles: Number(f.get("articles")),
+                          team:
+                            p.entitlements?.team ?? limits[p.tier as Tier].team,
+                        },
                       });
                     }}
                   >
@@ -156,7 +162,25 @@ export function Admin() {
                           defaultValue={p.annual ? p.annual / 100 : ""}
                         />
                       </label>
-                      <button className="button small">Save prices</button>
+                      {(["pages", "products", "articles"] as const).map(
+                        (key) => (
+                          <label className="field" key={key}>
+                            {key} per website
+                            <input
+                              name={key}
+                              type="number"
+                              min={key === "pages" ? 1 : 0}
+                              max={key === "pages" ? 10000 : 100000}
+                              required
+                              defaultValue={
+                                p.entitlements?.[key] ??
+                                limits[p.tier as Tier][key]
+                              }
+                            />
+                          </label>
+                        ),
+                      )}
+                      <button className="button small">Save plan</button>
                     </div>
                   </form>
                 ))}
@@ -241,7 +265,7 @@ export function Admin() {
             )}
           </>
         )}
-      </main>
+      </section>
     </>
   );
 }

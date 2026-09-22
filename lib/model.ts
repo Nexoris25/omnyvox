@@ -2,9 +2,15 @@ import { z } from "zod";
 export const tiers = ["basic", "growth", "advanced"] as const;
 export type Tier = (typeof tiers)[number];
 export const limits = {
-  basic: { pages: 5, products: 25, articles: 0, team: 1 },
-  growth: { pages: 15, products: 250, articles: 100, team: 3 },
-  advanced: { pages: 100, products: 2000, articles: 1000, team: 10 },
+  basic: { websites: 1, pages: 5, products: 25, articles: 0, team: 1 },
+  growth: { websites: 1, pages: 15, products: 250, articles: 100, team: 3 },
+  advanced: {
+    websites: 3,
+    pages: 100,
+    products: 2000,
+    articles: 1000,
+    team: 10,
+  },
 };
 export function entitled(tier: Tier, feature: string) {
   return feature === "blog" || feature === "domains"
@@ -13,12 +19,43 @@ export function entitled(tier: Tier, feature: string) {
       ? tier === "advanced"
       : true;
 }
+export const safeLink = z
+  .string()
+  .max(2000)
+  .refine(
+    (v) => v === "" || /^(https?:\/\/|mailto:|tel:|\/(?!\/)|#)/i.test(v),
+    "Use a website URL, email, phone, or relative link",
+  );
+export const imagePath = z
+  .string()
+  .regex(/^\/api\/media\/[a-f0-9-]+$/)
+  .or(z.literal(""));
+export const indexingSchema = z.object({
+  index: z.boolean().default(true),
+  follow: z.boolean().default(true),
+});
 export const sectionSchema = z.object({
   id: z.string(),
-  type: z.enum(["hero", "text", "services", "cta", "faq"]),
+  type: z.enum(["hero", "text", "services", "cta", "faq", "insights"]),
   title: z.string().max(160),
   body: z.string().max(10000),
   visible: z.boolean().default(true),
+  image: imagePath.optional(),
+  imageAlt: z.string().max(300).optional(),
+  layout: z.enum(["column", "row", "row-reverse", "column-reverse"]).optional(),
+  ctas: z
+    .array(z.object({ label: z.string().min(1).max(60), href: safeLink }))
+    .max(3)
+    .optional(),
+  faqs: z
+    .array(
+      z.object({
+        question: z.string().min(1).max(300),
+        answer: z.string().max(5000),
+      }),
+    )
+    .max(30)
+    .optional(),
 });
 export const siteSchema = z.object({
   name: z.string().min(2).max(100),
@@ -41,12 +78,37 @@ export const brandSchema = z.object({
   text: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   font: z.enum(["sans", "serif"]),
   email: z.union([z.email(), z.literal("")]),
+  notificationEmail: z.union([z.email(), z.literal("")]).optional(),
   categoryUrls: z.boolean(),
   logo: z
     .string()
     .regex(/^\/api\/media\/[a-f0-9-]+$/)
     .or(z.literal(""))
     .default(""),
+  businessNature: z
+    .enum(["general", "commerce", "services", "healthcare", "education"])
+    .optional(),
+  socials: z
+    .object({
+      facebook: safeLink.optional(),
+      instagram: safeLink.optional(),
+      linkedin: safeLink.optional(),
+      x: safeLink.optional(),
+      youtube: safeLink.optional(),
+      tiktok: safeLink.optional(),
+      whatsapp: safeLink.optional(),
+    })
+    .optional(),
+  robots: z
+    .object({
+      index: z.boolean(),
+      follow: z.boolean(),
+      rules: z
+        .string()
+        .max(4000)
+        .refine((v) => !/[\u0000-\u0008]/.test(v)),
+    })
+    .optional(),
 });
 export type Brand = z.infer<typeof brandSchema>;
 export type Section = z.infer<typeof sectionSchema>;
@@ -60,6 +122,9 @@ export type Site = {
   status: string;
   subscription: string;
   paid_until?: string;
+  service_until?: string;
+  billing_interval?: string;
+  subscription_site_id?: string | null;
   data: { brand: Brand; sections: Section[]; template: string };
   published: Site["data"] | null;
 };

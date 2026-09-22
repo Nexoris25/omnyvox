@@ -35,6 +35,11 @@ import {
   Smartphone,
   Tablet,
 } from "lucide-react";
+import { BillingSummary } from "./billing-summary";
+import { BrandSettings, RobotsSettings } from "./brand-settings";
+import { RecordExtras } from "./record-extras";
+import { SectionEditor } from "./section-editor";
+import { RichTextEditor } from "./rich-text-editor";
 import { MediaLibrary } from "./media-library";
 import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
@@ -48,6 +53,9 @@ const nav = [
   ["branding", "Brand & appearance", Palette],
   ["media", "Media library", ImageIcon],
   ["articles", "Blog / Insights", FileText],
+  ["authors", "Authors", FileText],
+  ["categories", "Categories", FileText],
+  ["legal", "Legal pages", FileText],
   ["products", "Products", ShoppingBag],
   ["orders", "Orders", ShoppingBag],
   ["merchant", "Store payments", CreditCard],
@@ -95,6 +103,10 @@ type Row = {
     price?: number;
     stock?: number;
     image?: string;
+    imageAlt?: string;
+    authorId?: string;
+    sections?: import("@/lib/model").Section[];
+    indexing?: { index: boolean; follow: boolean };
     name?: string;
     email?: string;
     message?: string;
@@ -119,7 +131,12 @@ export function Dashboard({ section }: { section: string }) {
     [editRow, setEditRow] = useState<Row | null>(null),
     [recordModal, setRecordModal] = useState(false),
     [filter, setFilter] = useState(""),
-    [preview, setPreview] = useState(0);
+    [preview, setPreview] = useState(0),
+    [startPreferences, setStartPreferences] = useState<{
+      template?: string;
+      category?: string;
+      tier?: string;
+    }>({});
   useEffect(() => {
     if (selected) sessionStorage.setItem("omnyvox-selected-site", selected);
   }, [selected]);
@@ -131,6 +148,9 @@ export function Dashboard({ section }: { section: string }) {
     "enquiries",
     "support",
     "services",
+    "legal",
+    "authors",
+    "categories",
   ].includes(section);
   async function api(path: string, method = "GET", body?: unknown) {
     const r = await fetch(`/api/${path}`, {
@@ -144,6 +164,11 @@ export function Dashboard({ section }: { section: string }) {
   }
   useEffect(() => {
     setSelected(sessionStorage.getItem("omnyvox-selected-site") || "");
+    try {
+      setStartPreferences(
+        JSON.parse(sessionStorage.getItem("omnyvox-start") || "{}"),
+      );
+    } catch {}
     const isDemo = new URLSearchParams(location.search).get("demo") === "1";
     if (isDemo) {
       setDemo(true);
@@ -306,14 +331,20 @@ export function Dashboard({ section }: { section: string }) {
               </label>
               <label className="field">
                 Website category
-                <select name="category">
+                <select
+                  name="category"
+                  defaultValue={startPreferences.category || "corporate"}
+                >
                   <option value="corporate">Corporate website</option>
                   <option value="commerce">e-Commerce store</option>
                 </select>
               </label>
               <label className="field">
                 Your plan
-                <select name="tier">
+                <select
+                  name="tier"
+                  defaultValue={startPreferences.tier || "basic"}
+                >
                   <option value="basic">Basic</option>
                   <option value="growth">Growth</option>
                   <option value="advanced">Advanced</option>
@@ -321,11 +352,18 @@ export function Dashboard({ section }: { section: string }) {
               </label>
               <label className="field full">
                 Starting template
-                <select name="template">
-                  <option value="studio">Studio — creative business</option>
-                  <option value="atelier">Atelier — curated store</option>
+                <select
+                  name="template"
+                  defaultValue={startPreferences.template || "studio"}
+                >
+                  <option value="studio">
+                    Business Studio — services & consulting
+                  </option>
+                  <option value="atelier">
+                    Boutique Store — retail & brands
+                  </option>
                   <option value="horizon">
-                    Horizon — professional services
+                    Modern Company — companies & teams
                   </option>
                 </select>
               </label>
@@ -373,6 +411,8 @@ export function Dashboard({ section }: { section: string }) {
       ...form,
       price: Math.round(Number(form.price || 0) * 100),
       stock: Number(form.stock || 0),
+      indexing: { index: form.index === "on", follow: form.follow === "on" },
+      sections: form.sections ? JSON.parse(String(form.sections)) : undefined,
     };
     await action(async () => {
       if (demo) {
@@ -519,7 +559,8 @@ export function Dashboard({ section }: { section: string }) {
           )}
           {!demo && account.email_verified === false && (
             <div className="notice">
-              Check your email to verify your account before publishing.{" "}
+              Enter your email code to complete verification.{" "}
+              <Link href="/onboarding">Verify email & business →</Link>{" "}
               <button
                 className="button secondary small"
                 disabled={busy}
@@ -1080,6 +1121,18 @@ export function Dashboard({ section }: { section: string }) {
                       </section>
                     </div>
                   )}
+                  {section === "branding" && site && (
+                    <BrandSettings
+                      brand={site.data.brand}
+                      onChange={(brand) => updateSite({ ...site.data, brand })}
+                    />
+                  )}
+                  {section === "seo" && site && (
+                    <RobotsSettings
+                      brand={site.data.brand}
+                      onChange={(brand) => updateSite({ ...site.data, brand })}
+                    />
+                  )}
                   {section === "seo" && site && (
                     <section className="panel">
                       <div className="panel-header">
@@ -1207,149 +1260,22 @@ export function Dashboard({ section }: { section: string }) {
                           <Tablet size={13} /> Tablet
                         </button>
                         <button
-                          className={preview === 280 ? "active" : ""}
-                          onClick={() => setPreview(280)}
+                          className={preview === 375 ? "active" : ""}
+                          onClick={() => setPreview(375)}
                         >
-                          <Smartphone size={13} /> 280px mobile
+                          <Smartphone size={13} /> 375px mobile
                         </button>
                       </div>
                       <div className="editor-grid">
-                        <div className="editor-sections">
-                          {site.data.sections.map((s, i) => (
-                            <details
-                              className="section-editor"
-                              key={s.id}
-                              open={i === 0}
-                            >
-                              <summary>
-                                {i + 1}.{" "}
-                                {s.type.charAt(0).toUpperCase() +
-                                  s.type.slice(1)}{" "}
-                                section
-                              </summary>
-                              <label className="field">
-                                Heading
-                                <input
-                                  value={s.title}
-                                  onChange={(e) =>
-                                    updateSite({
-                                      ...site.data,
-                                      sections: site.data.sections.map((v) =>
-                                        v.id === s.id
-                                          ? { ...v, title: e.target.value }
-                                          : v,
-                                      ),
-                                    })
-                                  }
-                                />
-                              </label>
-                              <label className="field">
-                                Content
-                                <textarea
-                                  value={s.body}
-                                  onChange={(e) =>
-                                    updateSite({
-                                      ...site.data,
-                                      sections: site.data.sections.map((v) =>
-                                        v.id === s.id
-                                          ? { ...v, body: e.target.value }
-                                          : v,
-                                      ),
-                                    })
-                                  }
-                                />
-                              </label>
-                              <div className="section-tools">
-                                <button
-                                  onClick={() =>
-                                    updateSite({
-                                      ...site.data,
-                                      sections: site.data.sections.map((v) =>
-                                        v.id === s.id
-                                          ? { ...v, visible: !v.visible }
-                                          : v,
-                                      ),
-                                    })
-                                  }
-                                >
-                                  {s.visible ? "Hide" : "Show"}
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    updateSite({
-                                      ...site.data,
-                                      sections: [
-                                        ...site.data.sections.slice(0, i + 1),
-                                        { ...s, id: crypto.randomUUID() },
-                                        ...site.data.sections.slice(i + 1),
-                                      ],
-                                    })
-                                  }
-                                >
-                                  Duplicate
-                                </button>
-                                <button
-                                  disabled={i === 0}
-                                  onClick={() => {
-                                    const list = [...site.data.sections];
-                                    [list[i - 1], list[i]] = [
-                                      list[i],
-                                      list[i - 1],
-                                    ];
-                                    updateSite({
-                                      ...site.data,
-                                      sections: list,
-                                    });
-                                  }}
-                                >
-                                  Move up
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    updateSite({
-                                      ...site.data,
-                                      sections: site.data.sections.filter(
-                                        (v) => v.id !== s.id,
-                                      ),
-                                    })
-                                  }
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </details>
-                          ))}
-                          <label className="field">
-                            Add section
-                            <select
-                              defaultValue=""
-                              onChange={(e) => {
-                                if (e.target.value)
-                                  updateSite({
-                                    ...site.data,
-                                    sections: [
-                                      ...site.data.sections,
-                                      {
-                                        id: crypto.randomUUID(),
-                                        type: e.target.value as "text",
-                                        title: "Your new section",
-                                        body: "Tell your story here.",
-                                        visible: true,
-                                      },
-                                    ],
-                                  });
-                                e.target.value = "";
-                              }}
-                            >
-                              <option value="">Choose section type…</option>
-                              <option value="hero">Hero</option>
-                              <option value="text">Text & story</option>
-                              <option value="services">Services</option>
-                              <option value="cta">Call to action</option>
-                              <option value="faq">Questions & answers</option>
-                            </select>
-                          </label>
-                        </div>
+                        <SectionEditor
+                          sections={site.data.sections}
+                          onChange={(sections) =>
+                            updateSite({ ...site.data, sections })
+                          }
+                          mediaEndpoint={
+                            demo ? undefined : `/api/sites/${site.id}/media`
+                          }
+                        />
                         <div className="preview-wrap">
                           <div
                             style={{
@@ -1413,7 +1339,7 @@ export function Dashboard({ section }: { section: string }) {
                                   }
                                   updateSite({ ...site.data, template: t });
                                   setMessage(
-                                    `${t.charAt(0).toUpperCase() + t.slice(1)} applied to your draft. Open the editor to preview and save.`,
+                                    `${{ studio: "Business Studio", atelier: "Boutique Store", horizon: "Modern Company" }[t]} applied to your draft. Open the editor to preview and save.`,
                                   );
                                 }}
                               >
@@ -1658,8 +1584,7 @@ export function Dashboard({ section }: { section: string }) {
                             </h2>
                             <p className="muted" style={{ fontSize: 13 }}>
                               {limits[site.tier].pages} content pages ·{" "}
-                              {limits[site.tier].team} team member
-                              {limits[site.tier].team > 1 ? "s" : ""} ·{" "}
+                              {limits[site.tier].websites} website(s) ·{" "}
                               {site.tier === "basic"
                                 ? "Omnyvox subdomain"
                                 : "Custom domain and Blog / Insights"}
@@ -1670,6 +1595,9 @@ export function Dashboard({ section }: { section: string }) {
                               subscription activates only after payment
                               verification.
                             </div>
+                            <BillingSummary
+                              planId={`${site.category}-${site.tier}`}
+                            />
                             <div className="form-actions">
                               {["monthly", "annual"].map((interval) => (
                                 <button
@@ -1802,10 +1730,13 @@ export function Dashboard({ section }: { section: string }) {
                 </label>
                 <label className="field full">
                   {section === "products" ? "Product description" : "Content"}
-                  <textarea
+                  <RichTextEditor
+                    key={editRow?.id || "new"}
                     name="body"
-                    rows={7}
-                    defaultValue={editRow?.data.body}
+                    value={editRow?.data.body || ""}
+                    mediaEndpoint={
+                      demo ? undefined : `/api/sites/${site?.id}/media`
+                    }
                   />
                 </label>
                 {section === "products" && (
@@ -1832,22 +1763,18 @@ export function Dashboard({ section }: { section: string }) {
                     </label>
                   </>
                 )}
-                <label className="field full">
-                  Featured image path
-                  <input
-                    name="image"
-                    placeholder="/api/media/…"
-                    defaultValue={editRow?.data.image || ""}
-                  />
-                  <small>
-                    Upload an image in the Media library, then paste its path
-                    here.
-                  </small>
-                </label>
+                <RecordExtras
+                  key={editRow?.id || "new"}
+                  siteId={site?.id || ""}
+                  kind={section}
+                  initial={editRow?.data}
+                  demo={demo}
+                />
                 <label className="field">
                   Category
                   <input
                     name="category"
+                    list="site-category-options"
                     pattern="[a-z0-9-]+"
                     defaultValue={editRow?.data.category || "general"}
                   />

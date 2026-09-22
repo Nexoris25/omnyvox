@@ -1,13 +1,34 @@
 "use client";
 import { useEffect, useState } from "react";
 type Media = { id: string; alt: string; size: number };
-export function MediaLibrary({ site, demo }: { site: string; demo: boolean }) {
+export function MediaLibrary({
+  site,
+  demo,
+  marketing = false,
+}: {
+  site: string;
+  demo: boolean;
+  marketing?: boolean;
+}) {
   const [media, setMedia] = useState<Media[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const endpoint = marketing
+    ? "/api/marketing/media"
+    : `/api/sites/${site}/media`;
+  async function mutate(id: string, method: string, body?: unknown) {
+    const r = await fetch(endpoint + "/" + id, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const b = await r.json();
+    setMessage(r.ok ? "Image updated." : b.error);
+    if (r.ok) await load();
+  }
   async function load() {
     if (demo) return;
-    const r = await fetch(`/api/sites/${site}/media`);
+    const r = await fetch(endpoint);
     const b = await r.json();
     if (r.ok) setMedia(b);
     else setMessage(b.error);
@@ -38,7 +59,7 @@ export function MediaLibrary({ site, demo }: { site: string; demo: boolean }) {
             const form = new FormData(e.currentTarget);
             setBusy(true);
             try {
-              const r = await fetch(`/api/sites/${site}/media`, {
+              const r = await fetch(endpoint, {
                 method: "POST",
                 body: form,
               });
@@ -87,7 +108,31 @@ export function MediaLibrary({ site, demo }: { site: string; demo: boolean }) {
               width={400}
               height={280}
             />
-            <p style={{ fontSize: 13, marginTop: 15 }}>{m.alt}</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                mutate(m.id, "PATCH", {
+                  alt: new FormData(e.currentTarget).get("alt"),
+                });
+              }}
+            >
+              <label className="field">
+                Image description
+                <input name="alt" defaultValue={m.alt} maxLength={300} />
+              </label>
+              <button className="button secondary small">
+                Save description
+              </button>
+            </form>
+            <button
+              className="button secondary small"
+              onClick={() => {
+                if (confirm("Delete this unused image?"))
+                  mutate(m.id, "DELETE");
+              }}
+            >
+              Delete image
+            </button>
             <small className="muted">
               WebP · {Math.ceil(m.size / 1024)} KB
             </small>

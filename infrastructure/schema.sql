@@ -19,3 +19,16 @@ CREATE TABLE IF NOT EXISTS orders(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified boolean DEFAULT false;
 CREATE TABLE IF NOT EXISTS auth_tokens(token text PRIMARY KEY,user_id uuid REFERENCES users(id) ON DELETE CASCADE,purpose text NOT NULL,expires timestamptz NOT NULL);
 CREATE TABLE IF NOT EXISTS email_outbox(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),recipient text NOT NULL,subject text NOT NULL,body text NOT NULL,sent_at timestamptz,created_at timestamptz DEFAULT now());
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS subscription_site_id uuid REFERENCES sites(id);
+CREATE TABLE IF NOT EXISTS email_otps(user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,hash text NOT NULL,salt text NOT NULL,expires timestamptz NOT NULL,attempts integer DEFAULT 0,sent_at timestamptz DEFAULT now());
+CREATE TABLE IF NOT EXISTS business_verifications(user_id uuid PRIMARY KEY REFERENCES users(id),business_name text NOT NULL,cac_number text NOT NULL,status text NOT NULL DEFAULT 'pending',registered_name text,review_note text,reviewed_by uuid REFERENCES users(id),reviewed_at timestamptz,submitted_at timestamptz DEFAULT now());
+CREATE TABLE IF NOT EXISTS marketing_records(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),kind text NOT NULL,data jsonb NOT NULL,created_at timestamptz DEFAULT now());
+CREATE UNIQUE INDEX IF NOT EXISTS marketing_slug ON marketing_records(kind,(data->>'slug'));
+CREATE TABLE IF NOT EXISTS marketing_settings(id boolean PRIMARY KEY DEFAULT true CHECK(id),data jsonb NOT NULL DEFAULT '{}');
+INSERT INTO marketing_settings(id) VALUES(true) ON CONFLICT DO NOTHING;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS annual_discount integer NOT NULL DEFAULT 0 CHECK(annual_discount BETWEEN 0 AND 90);
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS bonus_months integer NOT NULL DEFAULT 0 CHECK(bonus_months BETWEEN 0 AND 12);
+ALTER TABLE billing ADD COLUMN IF NOT EXISTS bonus_months integer NOT NULL DEFAULT 0;
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS billing_interval text NOT NULL DEFAULT 'monthly';
+CREATE TABLE IF NOT EXISTS platform_tickets(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),name text NOT NULL,email text NOT NULL,topic text NOT NULL,message text NOT NULL,status text NOT NULL DEFAULT 'new',reply text,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
+CREATE OR REPLACE VIEW effective_sites AS SELECT s.id,s.owner_id,s.name,s.slug,s.category,COALESCE(root.tier,s.tier) AS tier,s.status,CASE WHEN root.status='suspended' THEN 'suspended' ELSE COALESCE(root.subscription,s.subscription) END AS subscription,s.data,s.published,s.created_at,COALESCE(root.paid_until,s.paid_until) AS paid_until,s.subscription_site_id,COALESCE(root.billing_interval,s.billing_interval) AS billing_interval,COALESCE(root.paid_until,s.paid_until)+CASE WHEN COALESCE(root.billing_interval,s.billing_interval)='annual' THEN interval '7 days' ELSE interval '1 day' END AS service_until FROM sites s LEFT JOIN sites root ON root.id=s.subscription_site_id AND root.owner_id=s.owner_id;

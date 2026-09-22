@@ -47,7 +47,7 @@ export function AccountRecovery({
             ? "Confirm your email to unlock website publishing."
             : mode === "forgot"
               ? "Enter the email address you use for Omnyvox."
-              : "Use at least 12 characters for your new password."}
+              : "Use at least 8 characters, a capital letter, a number and a special character."}
         </p>
         {mode === "forgot" && (
           <label className="field">
@@ -63,8 +63,20 @@ export function AccountRecovery({
               type="password"
               autoComplete="new-password"
               required
-              minLength={12}
+              minLength={8}
               maxLength={128}
+            />
+          </label>
+        )}
+        {mode === "reset" && (
+          <label className="field">
+            Confirm password
+            <input
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              required
             />
           </label>
         )}

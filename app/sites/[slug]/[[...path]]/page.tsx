@@ -1,3 +1,4 @@
+import { safeHtml, plainText } from "@/lib/content";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,7 +9,7 @@ import {
   siteBase,
 } from "@/lib/public-site";
 import { jsonLd } from "@/lib/model";
-import { SiteRenderer } from "@/components/site-renderer";
+import { SiteRenderer, RenderSections } from "@/components/site-renderer";
 import { StoreCheckout } from "@/components/checkout";
 import { query } from "@/lib/db";
 import { EnquiryForm } from "@/components/enquiry-form";
@@ -31,8 +32,9 @@ export async function generateMetadata({
       contentPath(r, site.view.brand.categoryUrls) === "/" + path.join("/"),
   );
   const title = record?.data.title || site.view.brand.name;
-  const description =
-    record?.data.body.slice(0, 160) || site.view.brand.description;
+  const description = record
+    ? plainText(record.data.body).slice(0, 160)
+    : site.view.brand.description;
   const url =
     base + (record ? contentPath(record, site.view.brand.categoryUrls) : "");
   const image = record?.data.image || site.view.brand.logo || "/social.webp";
@@ -40,7 +42,16 @@ export async function generateMetadata({
     title: { absolute: title },
     description,
     alternates: { canonical: url },
-    robots: { index: !preview, follow: !preview },
+    robots: {
+      index:
+        !preview &&
+        site.view.brand.robots?.index !== false &&
+        record?.data.indexing?.index !== false,
+      follow:
+        !preview &&
+        site.view.brand.robots?.follow !== false &&
+        record?.data.indexing?.follow !== false,
+    },
     openGraph: {
       title,
       description,
@@ -112,7 +123,7 @@ export default async function Page({ params, searchParams }: Props) {
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           headline: record.data.title,
-          description: record.data.body.slice(0, 160),
+          description: plainText(record.data.body).slice(0, 160),
           datePublished: record.created_at,
           dateModified: record.data.updatedAt,
           author: { "@type": "Person", name: record.data.author },
@@ -152,6 +163,29 @@ export default async function Page({ params, searchParams }: Props) {
       <SiteRenderer
         data={site.view}
         base={base}
+        legal={content
+          .filter((r) => r.kind === "legal")
+          .map((r) => ({
+            title: r.data.title,
+            href: base + contentPath(r, site.view.brand.categoryUrls),
+          }))}
+        insights={
+          <div className="template-grid">
+            {content
+              .filter((r) => r.kind === "articles")
+              .slice(0, 6)
+              .map((r) => (
+                <a
+                  key={r.id}
+                  href={base + contentPath(r, site.view.brand.categoryUrls)}
+                >
+                  <h3>{r.data.title}</h3>
+                  <p>{plainText(r.data.body).slice(0, 120)}</p>
+                </a>
+              ))}
+          </div>
+        }
+
         after={
           !path.length && (
             <>
@@ -165,7 +199,7 @@ export default async function Page({ params, searchParams }: Props) {
               <section className="rendered-section">
                 <div className="template-grid">
                   {content
-                    .filter((r) => r.kind !== "products")
+                    .filter((r) => r.kind === "pages")
                     .map((r) => (
                       <Link
                         className="panel panel-body"
@@ -184,7 +218,7 @@ export default async function Page({ params, searchParams }: Props) {
                         <h2 style={{ fontSize: 24, marginTop: 16 }}>
                           {r.data.title}
                         </h2>
-                        <p>{r.data.body.slice(0, 100)}</p>
+                        <p>{plainText(r.data.body).slice(0, 100)}</p>
                         <span>Discover more ↗</span>
                       </Link>
                     ))}
@@ -213,7 +247,16 @@ export default async function Page({ params, searchParams }: Props) {
                 height={600}
               />
             )}
-            <p>{record.data.body}</p>
+            <div
+              className="rich-content"
+              dangerouslySetInnerHTML={{ __html: safeHtml(record.data.body) }}
+            />
+            {record.data.sections && (
+              <RenderSections
+                sections={record.data.sections}
+                email={site.view.brand.email}
+              />
+            )}
             {record.kind === "products" && (
               <>
                 <h2>

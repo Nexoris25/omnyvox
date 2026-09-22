@@ -17,10 +17,16 @@ export type Content = {
     image?: string;
     price?: number;
     stock?: number;
+    sections?: import("./model").Section[];
+    indexing?: { index: boolean; follow: boolean };
+    imageAlt?: string;
   };
 };
 export const getSite = cache(async (slug: string, preview = false) => {
-  const [site] = await query<Site>("SELECT * FROM sites WHERE slug=$1", [slug]);
+  const [site] = await query<Site>(
+    "SELECT * FROM effective_sites WHERE slug=$1",
+    [slug],
+  );
   if (!site) return null;
   if (preview) {
     const u = await user();
@@ -30,8 +36,8 @@ export const getSite = cache(async (slug: string, preview = false) => {
   if (
     site.status !== "published" ||
     site.subscription !== "active" ||
-    !site.paid_until ||
-    new Date(site.paid_until) <= new Date() ||
+    !site.service_until ||
+    new Date(site.service_until) <= new Date() ||
     !site.published
   )
     return null;
@@ -43,8 +49,8 @@ export async function publicContent(site: Site) {
     [
       site.id,
       entitled(site.tier, "blog")
-        ? ["pages", "articles", "products"]
-        : ["pages", "products"],
+        ? ["pages", "articles", "products", "legal"]
+        : ["pages", "products", "legal"],
     ],
   );
 }

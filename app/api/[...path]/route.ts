@@ -1,3 +1,10 @@
+import { billingQuote } from "@/lib/billing-quote";
+import { manageMedia } from "@/lib/media-management";
+import { passwordSchema } from "@/lib/password";
+import { queueOtp } from "@/lib/otp";
+import { extensionsApi } from "@/lib/extensions-api";
+import { contentSchema } from "@/lib/cms-schema";
+import { safeHtml, referencedMediaIds } from "@/lib/content";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -59,6 +66,23 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
       return ok({ received: true });
     }
+    if (area === "contact" && method === "POST") {
+      const b = z
+        .object({
+          name: z.string().min(2).max(100),
+          email: z.email(),
+          topic: z.string().min(2).max(120),
+          message: z.string().min(10).max(5000),
+          website: z.string().max(0),
+        })
+        .parse(await req.json());
+      await rateLimit("contact:" + b.email.toLowerCase());
+      await query(
+        "INSERT INTO platform_tickets(name,email,topic,message) VALUES($1,$2,$3,$4)",
+        [b.name, b.email, b.topic, b.message],
+      );
+      return ok({ success: true }, 201);
+    }
     if (area === "health") {
       await query("SELECT 1");
       return ok({ status: "ready" });
@@ -83,8 +107,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         const account = await user();
         if (!account) return fail("Please sign in", 401);
         await rateLimit(`verification:${account.id}`);
-        if (!account.email_verified)
-          await queueAccountEmail(account.id, account.email, "verify");
+        if (
+          !account.email_verified &&
+          !(await queueOtp(account.id, account.email))
+        )
+          return fail("Wait 60 seconds before requesting a new code", 429);
         return ok({
           message: "A verification email has been queued for delivery.",
         });
@@ -109,10 +136,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         const b = z
           .object({
             token: z.string().regex(/^[a-f0-9]{64}$/),
-            password: z.string().min(12).max(128).optional(),
+            password: passwordSchema.optional(),
+            confirmPassword: z.string().optional(),
           })
           .parse(await req.json());
-        if (id === "reset" && !b.password)
+        if (id === "reset" && (!b.password || b.password !== b.confirmPassword))
           return fail("A new password is required");
         const client = await pool.connect();
         try {
@@ -162,18 +190,22 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       const body = z
         .object({
           email: z.email().transform((v) => v.toLowerCase().trim()),
-          password: z.string().min(12).max(128),
+          password: z.string().min(1).max(128),
+          confirmPassword: z.string().optional(),
           name: z.string().min(2).max(100).optional(),
         })
         .parse(await req.json());
       await rateLimit(`auth:${body.email}`);
       if (id === "register") {
         if (!body.name) return fail("Your name is required");
+        passwordSchema.parse(body.password);
+        if (body.password !== body.confirmPassword)
+          return fail("Passwords must match");
         const [u] = await query<{ id: string }>(
           "INSERT INTO users(name,email,password,role) VALUES($1,$2,$3,$4) RETURNING id",
           [body.name, body.email, hashPassword(body.password), "owner"],
         );
-        await queueAccountEmail(u.id, body.email, "verify");
+        await queueOtp(u.id, body.email);
         await session(u.id);
         await audit(u.id, "account.created", u.id);
         return ok({ success: true }, 201);
@@ -227,8 +259,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
             [payment.reference],
           );
           await client.query(
-            "UPDATE sites SET subscription='active',paid_until=GREATEST(COALESCE(paid_until,now()),now())+CASE WHEN $2='annual' THEN interval '1 year' ELSE interval '1 month' END WHERE id=$1",
-            [payment.site_id, payment.interval],
+            "UPDATE sites SET subscription='active',billing_interval=$2,paid_until=GREATEST(COALESCE(paid_until,now()),now())+CASE WHEN $2='annual' THEN interval '1 year'+$3*interval '1 month' ELSE interval '1 month' END WHERE id=$1",
+            [payment.site_id, payment.interval, payment.bonus_months],
           );
           await client.query(
             "INSERT INTO audit(actor,action,target) VALUES($1,$2,$3)",
@@ -245,8 +277,21 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
     }
     if (area === "media" && method === "GET") {
+      if (!z.uuid().safeParse(id).success) return fail("Not found", 404);
+      const [marketingImage] = await query<{ bytes: Buffer }>(
+        "SELECT m.bytes FROM media m WHERE m.id=$1 AND m.site_id IS NULL AND EXISTS(SELECT 1 FROM marketing_records r WHERE r.data->>'status'='published' AND r.data::text LIKE '%' || m.id::text || '%')",
+        [id],
+      );
+      if (marketingImage)
+        return new Response(new Uint8Array(marketingImage.bytes), {
+          headers: {
+            "Content-Type": "image/webp",
+            "Cache-Control": "public,max-age=3600",
+          },
+        });
+
       const [m] = await query<{ bytes: Buffer }>(
-        "SELECT m.bytes FROM media m JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND s.status=$2 AND s.subscription=$3 AND s.paid_until>now()",
+        "SELECT m.bytes FROM media m JOIN effective_sites s ON s.id=m.site_id WHERE m.id=$1 AND s.status=$2 AND s.subscription=$3 AND s.service_until>now() AND (s.published::text LIKE '%'||m.id::text||'%' OR EXISTS(SELECT 1 FROM records r WHERE r.site_id=s.id AND r.data->>'status'='published' AND r.kind IN ('pages','articles','products','legal') AND r.data::text LIKE '%'||m.id::text||'%'))",
         [id, "published", "active"],
       );
       if (m)
@@ -259,8 +304,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       const u = await user();
       if (!u) return fail("Not found", 404);
       const [privateMedia] = await query<{ bytes: Buffer }>(
-        "SELECT m.bytes FROM media m JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND s.owner_id=$2",
-        [id, u.id],
+        "SELECT m.bytes FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (s.owner_id=$2 OR (m.site_id IS NULL AND $3=\'super_admin\'))",
+        [id, u.id, u.role],
       );
       return privateMedia
         ? new Response(new Uint8Array(privateMedia.bytes), {
@@ -283,10 +328,26 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         .parse(await req.json());
       await rateLimit(`enquiry:${b.email}`);
       const [s] = await query(
-        "SELECT id FROM sites WHERE id=$1 AND status='published' AND subscription='active' AND paid_until>now()",
+        "SELECT id,published FROM effective_sites WHERE id=$1 AND status='published' AND subscription='active' AND service_until>now()",
         [b.site],
       );
       if (!s) return fail("Website unavailable", 404);
+      const recipient = (
+        s as {
+          published?: {
+            brand?: { notificationEmail?: string; email?: string };
+          };
+        }
+      ).published?.brand;
+      if (recipient?.notificationEmail || recipient?.email)
+        await query(
+          "INSERT INTO email_outbox(recipient,subject,body) VALUES($1,$2,$3)",
+          [
+            recipient.notificationEmail || recipient.email,
+            "New website enquiry",
+            `${b.name} (${b.email})\n\n${b.message}`,
+          ],
+        );
       await query(
         "INSERT INTO records(site_id,kind,data) VALUES($1,'enquiries',$2)",
         [b.site, JSON.stringify({ ...b, status: "new" })],
@@ -295,6 +356,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     const u = await user();
     if (!u) return fail("Please sign in", 401);
+    const extension = await extensionsApi(req, u, path);
+    if (extension) return extension;
     if (area === "me") return ok(u);
     if (area === "admin") {
       if (u.role !== "super_admin")
@@ -351,7 +414,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (!id && method === "GET")
       return ok(
         await query(
-          "SELECT * FROM sites WHERE owner_id=$1 ORDER BY created_at",
+          "SELECT * FROM effective_sites WHERE owner_id=$1 ORDER BY created_at",
           [u.id],
         ),
       );
@@ -359,6 +422,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       const b = siteSchema.parse(await req.json());
       const brand = {
         name: b.name,
+        businessNature: b.category === "commerce" ? "commerce" : "general",
         description: "Your business, beautifully online.",
         primary: "#540CDA",
         secondary: "#111827",
@@ -369,27 +433,56 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         categoryUrls: false,
         logo: "",
       };
-      const [s] = await query<Site>(
-        "INSERT INTO sites(owner_id,name,slug,category,tier,data) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",
-        [
+      const client = await pool.connect();
+      let s: Site;
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT id FROM users WHERE id=$1 FOR UPDATE", [
           u.id,
-          b.name,
-          b.slug,
-          b.category,
-          b.tier,
-          JSON.stringify({
-            brand,
-            sections: initialSections,
-            template: b.template,
-          }),
-        ],
-      );
+        ]);
+        const { rows: owned } = await client.query(
+          "SELECT * FROM sites WHERE owner_id=$1 ORDER BY created_at",
+          [u.id],
+        );
+        const root = owned[0];
+        const tier = root?.tier || b.tier;
+        if (owned.length >= limits[tier as keyof typeof limits].websites) {
+          await client.query("ROLLBACK");
+          return fail(
+            `Your ${tier} plan allows ${limits[tier as keyof typeof limits].websites} website(s).`,
+            403,
+          );
+        }
+        const result = await client.query(
+          "INSERT INTO sites(owner_id,name,slug,category,tier,data,subscription_site_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+          [
+            u.id,
+            b.name,
+            b.slug,
+            root?.category || b.category,
+            tier,
+            JSON.stringify({
+              brand,
+              sections: initialSections,
+              template: b.template,
+            }),
+            root?.id || null,
+          ],
+        );
+        s = result.rows[0];
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
       await audit(u.id, "site.created", s.id);
       return ok(s, 201);
     }
     if (!z.uuid().safeParse(id).success) return fail("Website not found", 404);
     const [site] = await query<Site>(
-      "SELECT * FROM sites WHERE id=$1 AND owner_id=$2",
+      "SELECT * FROM effective_sites WHERE id=$1 AND owner_id=$2",
       [id, u.id],
     );
     if (!site) return fail("Website not found", 404);
@@ -398,10 +491,24 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       const b = z
         .object({
           brand: brandSchema,
-          sections: z.array(sectionSchema).max(40),
+          sections: z.array(sectionSchema).max(15),
           template: z.enum(["studio", "atelier", "horizon"]),
         })
         .parse(await req.json());
+      b.sections?.forEach((section) => {
+        section.body = safeHtml(section.body);
+      });
+      for (const assetId of referencedMediaIds(b)) {
+        if (
+          !(
+            await query("SELECT id FROM media WHERE id=$1 AND site_id=$2", [
+              assetId,
+              id,
+            ])
+          ).length
+        )
+          return fail("Choose images from this website’s media library", 403);
+      }
       await query(
         "UPDATE sites SET data=$1,name=$2 WHERE id=$3 AND owner_id=$4",
         [JSON.stringify(b), b.brand.name, id, u.id],
@@ -414,8 +521,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Verify your email address before publishing.", 403);
       if (
         site.subscription !== "active" ||
-        !site.paid_until ||
-        new Date(site.paid_until) <= new Date()
+        !site.service_until ||
+        new Date(site.service_until) <= new Date()
       )
         return fail("Activate your subscription before publishing.", 403);
       if (site.status === "suspended")
@@ -431,11 +538,16 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       const { interval } = z
         .object({ interval: z.enum(["monthly", "annual"]) })
         .parse(await req.json());
-      const [plan] = await query<{ monthly: number; annual: number }>(
-        "SELECT monthly,annual FROM plans WHERE id=$1",
+      const [plan] = await query<{
+        monthly: number;
+        annual: number;
+        annual_discount: number;
+        bonus_months: number;
+      }>(
+        "SELECT monthly,annual,annual_discount,bonus_months FROM plans WHERE id=$1",
         [`${site.category}-${site.tier}`],
       );
-      const amount = plan?.[interval];
+      const amount = plan ? billingQuote(plan, interval).amount : null;
       if (!amount || !process.env.PAYSTACK_SECRET_KEY)
         return fail(
           "Subscriptions are not open yet. Contact Nexoris for launch pricing.",
@@ -443,8 +555,14 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         );
       const reference = `sub_${randomUUID()}`;
       await query(
-        "INSERT INTO billing(reference,site_id,amount,interval) VALUES($1,$2,$3,$4)",
-        [reference, id, amount, interval],
+        "INSERT INTO billing(reference,site_id,amount,interval,bonus_months) VALUES($1,$2,$3,$4,$5)",
+        [
+          reference,
+          site.subscription_site_id || id,
+          amount,
+          interval,
+          interval === "annual" ? plan.bonus_months : 0,
+        ],
       );
       const r = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
@@ -465,6 +583,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Payment provider is unavailable", 502);
       return ok({ url: result.data.authorization_url });
     }
+    if (kind === "media" && ["PATCH", "DELETE"].includes(method))
+      return manageMedia(req, recordId, id, u.id);
     if (kind === "media" && method === "GET")
       return ok(
         await query(
@@ -647,6 +767,9 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       "enquiries",
       "support",
       "services",
+      "legal",
+      "authors",
+      "categories",
     ];
     if (!kinds.includes(kind)) return fail("Not found", 404);
     if (kind === "articles" && !entitled(site.tier, "blog"))
@@ -672,31 +795,34 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     if (method === "POST" || method === "PATCH") {
       if (kind === "enquiries") return fail("Read only", 403);
-      const b = z
-        .object({
-          title: z.string().min(2).max(160),
-          slug: z
-            .string()
-            .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-            .max(100),
-          body: z.string().max(20000).default(""),
-          status: z.enum(["draft", "published"]).default("draft"),
-          category: z
-            .string()
-            .regex(/^[a-z0-9-]+$/)
-            .default("general"),
-          price: z.number().int().nonnegative().default(0),
-          stock: z.number().int().nonnegative().default(0),
-          image: z
-            .string()
-            .regex(/^\/api\/media\/[a-f0-9-]+$/)
-            .or(z.literal(""))
-            .default(""),
-        })
-        .parse(await req.json());
+      const b = contentSchema.parse(await req.json());
+      b.sections?.forEach((section) => {
+        section.body = safeHtml(section.body);
+      });
+      for (const assetId of referencedMediaIds(b)) {
+        if (
+          !(
+            await query("SELECT id FROM media WHERE id=$1 AND site_id=$2", [
+              assetId,
+              id,
+            ])
+          ).length
+        )
+          return fail("Choose images from this website’s media library", 403);
+      }
+      let author = u.name;
+      if (b.authorId) {
+        const [a] = await query<{ data: { title: string } }>(
+          "SELECT data FROM records WHERE id=$1 AND site_id=$2 AND kind='authors'",
+          [b.authorId, id],
+        );
+        if (!a) return fail("Choose an author from this website", 403);
+        author = a.data.title;
+      }
       const data = {
         ...b,
-        author: u.name,
+        body: safeHtml(b.body),
+        author,
         updatedAt: new Date().toISOString(),
       };
       const client = await pool.connect();

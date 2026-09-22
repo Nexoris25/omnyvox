@@ -9,7 +9,7 @@ export async function GET(
       headers: { "Content-Type": "text/plain" },
     });
   return new Response(
-    `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /*?preview=1\nDisallow: /order/\nSitemap: ${await siteBase(site)}/sitemap.xml\n`,
+    `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /*?preview=1\nDisallow: /order/\nSitemap: ${await siteBase(site)}/sitemap.xml\n${site.view.brand.robots?.rules || ""}\n`,
     { headers: { "Content-Type": "text/plain" } },
   );
 }

@@ -1,12 +1,12 @@
 # Omnyvox
 
-**Business websites. Fully managed.**
+**Business websites. Built for your next step.**
 
 Omnyvox is a pre-launch Websites-as-a-Service implementation for Nexoris Technologies Ltd. It includes a marketing site, subscriber workspace, shared corporate/storefront renderer, and protected platform administration. This repository is a working first release of the foundation and core website workflows, **not completion of every phase in the master requirements document**. See [implementation status](docs/IMPLEMENTATION.md) before treating it as commercially launch-ready.
 
 ## Stack
 
-Current stable package versions were resolved from npm on 21 September 2026 and pinned exactly in `package.json` and `package-lock.json`: Next.js 16.3.5, React 19.3.0, TypeScript 7.0.2, PostgreSQL driver 8.23.0, Zod 4.6.5, Sharp 0.35.4, and Lucide 1.47.0. Node.js 26.9.0 is the target runtime. Fonts are self-hosted. PostgreSQL 18 is the deployment database; local integration tests also ran on the available PostgreSQL 17 installation.
+Current stable package versions were resolved from npm on 21 September 2026 and pinned exactly in `package.json` and `package-lock.json`: Next.js 16.3.5, React 19.3.0, TypeScript 7.0.2, PostgreSQL driver 8.23.0, Zod 4.6.5, Sharp 0.35.4, and Lucide 1.98.0. Node.js 26.9.0 is the target runtime. Fonts are self-hosted. PostgreSQL 18 is the deployment database; local integration tests also ran on the available PostgreSQL 17 installation.
 
 The initial backend uses modular Next.js route handlers and PostgreSQL instead of introducing a separate NestJS service before the shared domain logic is established. `lib/` separates authentication, entitlements, commerce, database access, and public rendering. The recommended future NestJS/BullMQ/S3 split is recorded in the implementation status.
 
@@ -15,38 +15,42 @@ The initial backend uses modular Next.js route handlers and PostgreSQL instead o
 1. Install Node.js 26.9.0 and PostgreSQL 18, or start the database with `docker compose up -d`.
 2. Run `npm ci`.
 3. Copy `.env.example` to `.env.local`, and set `DATABASE_URL` and `APP_URL`.
-4. Run `npm run db:setup`.
+4. Run `npm run db:setup`, then `npm run db:seed-marketing`.
 5. Run `npm run dev`, then open [localhost:3000](http://localhost:3000).
 
 The database schema is idempotent for this initial release. Adopt ordered, versioned migrations before production schema evolution.
 
 The [interactive demo](http://localhost:3000/dashboard?demo=1) works without a database. Demo edits remain in session storage and cannot publish, upload media, or charge payments. Real accounts and websites use PostgreSQL; no demo data is inserted into production tables.
 
+See the [September update](docs/RELEASE-2026-09.md) for onboarding, CMS, platform administration, offers and verification details.
+
 ## Product routes
 
-| Route                                            | Purpose                                                      |
-| ------------------------------------------------ | ------------------------------------------------------------ |
-| `/`                                              | Marketing site, templates, configured corporate prices, FAQs |
-| `/register`, `/login`                            | Account creation and sign-in                                 |
-| `/verify`, `/forgot-password`, `/reset-password` | Single-use account verification and recovery                 |
-| `/dashboard`                                     | Subscriber overview and website creation                     |
-| `/dashboard/editor`                              | Structured section editor and device previews                |
-| `/dashboard/branding`                            | Logo, colours, typography, and contact email                 |
-| `/dashboard/pages`, `/dashboard/articles`        | Content publishing                                           |
-| `/dashboard/media`                               | WebP media library                                           |
-| `/dashboard/products`, `/dashboard/orders`       | Catalogue and fulfilment                                     |
-| `/dashboard/merchant`                            | Encrypted merchant payment configuration                     |
-| `/dashboard/domains`                             | Domain connection and DNS verification                       |
-| `/dashboard/seo`                                 | Metadata and category-in-URL preference                      |
-| `/dashboard/billing`                             | Subscription payment and website export                      |
-| `/dashboard/support`, `/dashboard/services`      | Initial support/setup request capture                        |
-| `/admin`                                         | Website suspension, six product prices, and audit log        |
-| `/sites/{slug}`                                  | Shared website renderer; local path fallback                 |
-| `/sites/{slug}?preview=1`                        | Private owner-only draft preview                             |
+| Route                                             | Purpose                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `/`                                               | Marketing site, templates, configured corporate prices, FAQs |
+| `/onboarding`                                     | Email OTP and manual CAC business review                     |
+| `/pricing`, `/templates`, `/contact`, `/insights` | Dedicated marketing and editorial pages                      |
+| `/register`, `/login`                             | Account creation and sign-in                                 |
+| `/verify`, `/forgot-password`, `/reset-password`  | Legacy verification links and password recovery              |
+| `/dashboard`                                      | Subscriber overview and website creation                     |
+| `/dashboard/editor`                               | Structured section editor and device previews                |
+| `/dashboard/branding`                             | Logo, colours, typography, and contact email                 |
+| `/dashboard/pages`, `/dashboard/articles`         | Content publishing                                           |
+| `/dashboard/media`                                | WebP media library                                           |
+| `/dashboard/products`, `/dashboard/orders`        | Catalogue and fulfilment                                     |
+| `/dashboard/merchant`                             | Encrypted merchant payment configuration                     |
+| `/dashboard/domains`                              | Domain connection and DNS verification                       |
+| `/dashboard/seo`                                  | Metadata and category-in-URL preference                      |
+| `/dashboard/billing`                              | Subscription payment and website export                      |
+| `/dashboard/support`, `/dashboard/services`       | Initial support/setup request capture                        |
+| `/admin`                                          | Platform operations, content, support, KYB, offers and audit |
+| `/sites/{slug}`                                   | Shared website renderer; local path fallback                 |
+| `/sites/{slug}?preview=1`                         | Private owner-only draft preview                             |
 
 ## Branding and media
 
-The supplied Omnyvox logo sheet is the source of the WebP icon and wordmark. The original tagline is omitted from the extracted wordmark and replaced in the product with “Business websites. Fully managed.” The primary colour is `#540CDA`.
+The supplied Omnyvox logo sheet is the source of the WebP icon and wordmark. The original tagline is omitted from the extracted wordmark and replaced in the product with “Business websites. Built for your next step.” The primary colour is `#540CDA`.
 
 Uploaded JPEG, PNG, and WebP images are decoded, auto-oriented, limited to 40 million input pixels, resized to a maximum 1920px edge, stripped of source metadata, and encoded as WebP. SVG upload is deliberately unavailable until a sanitisation pipeline exists. Media is tenant-scoped. Favicon and social images are WebP. Font files are served locally.
 
@@ -54,7 +58,7 @@ Uploaded JPEG, PNG, and WebP images are decoded, auto-oriented, limited to 40 mi
 
 Passwords use salted scrypt hashes. Session tokens are random, stored hashed, expire after seven days, and use HttpOnly/SameSite cookies (Secure in production). Password reset revokes all sessions. Auth and form endpoints have database-backed rate limits; mutations enforce origin checks.
 
-Verification and password-reset emails are written to `email_outbox`. Configure `RESEND_API_KEY` and a verified `EMAIL_FROM`, then run `node --env-file=.env.local scripts/send-email.mjs` on a scheduler. The worker uses row locks and provider idempotency keys. It does not run automatically during local development. No real emails were sent during tests. Email verification is required before publishing.
+Six-digit verification codes and password-reset emails are written to `email_outbox`. Configure `RESEND_API_KEY` and a verified `EMAIL_FROM`, then run `node --env-file=.env.local scripts/send-email.mjs` on a scheduler. The worker uses row locks and provider idempotency keys. It does not run automatically during local development. No real emails were sent during tests. Email verification is required before publishing.
 
 After registering an internal operator, assign administration explicitly:
 
@@ -70,9 +74,9 @@ All monetary values are integer minor units. The admin screen accepts NGN and co
 
 ### Omnyvox subscriptions
 
-Set the platform `PAYSTACK_SECRET_KEY`. Set the Paystack webhook to `APP_URL/api/webhooks/paystack`. Subscription checkout initializes server-side. An HMAC-verified successful webhook must match the stored reference, amount, and currency before access is activated. Duplicate webhooks do not extend access twice. Monthly/annual payments extend `paid_until`; expired sites stop serving publicly while retaining content.
+Set the platform `PAYSTACK_SECRET_KEY`. Set the Paystack webhook to `APP_URL/api/webhooks/paystack`. Subscription checkout initializes server-side. An HMAC-verified successful webhook must match the stored reference, amount, and currency before access is activated. Duplicate webhooks do not extend access twice. Monthly/annual payments extend `paid_until`. Annual offers can include a percentage discount and bonus months. After expiry, annual subscriptions retain access for seven days and monthly subscriptions for one day; these are internal rules, not marketed benefits. Websites retain their content after deactivation.
 
-This release supports **manual renewal payments**, not automatic recurring subscriptions, proration, refunds, invoices, or a configured grace-period policy. Do not advertise those capabilities until implemented and approved.
+This release supports **manual renewal payments**, not automatic recurring subscriptions, proration, refunds, invoices, or automatic renewal retries. Do not advertise those capabilities until implemented and approved.
 
 ### Subscriber store payments
 
@@ -113,6 +117,7 @@ With a running app and an isolated PostgreSQL database:
 ```sh
 # Set TEST_DATABASE_URL to the same isolated database used by the app.
 node scripts/integration-test.mjs
+node scripts/extensions-test.mjs
 # Commerce tests enforce the local test database port 55432.
 node --env-file=.env.local --import tsx scripts/commerce-test.ts
 ```

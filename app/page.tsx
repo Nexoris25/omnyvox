@@ -1,3 +1,5 @@
+import { marketingMetadata, marketingContent } from "@/lib/marketing";
+import { MarketingShell } from "@/components/marketing-shell";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -15,34 +17,25 @@ import {
 import { PlanPrice } from "@/components/plan-price";
 import { Brand } from "@/components/brand";
 import { jsonLd } from "@/lib/model";
-export default function Home() {
+export async function generateMetadata() {
+  return marketingMetadata(
+    "Business websites. Built for your next step.",
+    "Build and manage a business website or online store with your own brand, content and payments.",
+  );
+}
+export default async function Home() {
+  const articles = (await marketingContent("articles")).slice(0, 3);
   return (
-    <>
-      <header className="marketing-nav">
-        <Brand />
-        <nav aria-label="Main navigation">
-          <a href="#solutions">Solutions</a>
-          <a href="#templates">Templates</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#how-it-works">How it works</a>
-        </nav>
-        <div className="nav-actions">
-          <Link href="/login" className="login-link">
-            Log in
-          </Link>
-          <Link href="/register" className="button small">
-            Create your website <ArrowUpRight size={16} />
-          </Link>
-        </div>
-      </header>
+    <MarketingShell>
       <main id="main">
         <section className="hero">
           <div className="eyebrow">
             <span className="pulse" /> YOUR NEXT CHAPTER STARTS HERE
           </div>
           <h1>
-            Your business.
-            <br />A bigger <span>possibility.</span>
+            Your business, online.
+            <br />
+            Ready for <span>what’s next.</span>
           </h1>
           <p>
             A website you’re proud to share. An online store ready to grow.
@@ -53,7 +46,7 @@ export default function Home() {
             <Link href="/register" className="button">
               Let’s build your website <ArrowUpRight size={18} />
             </Link>
-            <a href="#templates" className="button secondary">
+            <a href="/templates" className="button secondary">
               Explore templates <ArrowRight size={18} />
             </a>
           </div>
@@ -242,15 +235,27 @@ export default function Home() {
                 Make it unmistakably you.
               </h2>
             </div>
-            <Link href="/dashboard/templates" className="button secondary">
+            <Link href="/templates" className="button secondary">
               Browse templates <ArrowUpRight size={16} />
             </Link>
           </div>
           <div className="template-grid">
             {[
-              ["Studio", "For bold ideas and creative businesses.", "studio"],
-              ["Atelier", "For carefully curated online stores.", "atelier"],
-              ["Horizon", "For expertise that speaks for itself.", "horizon"],
+              [
+                "Business Studio",
+                "For bold ideas and creative businesses.",
+                "studio",
+              ],
+              [
+                "Boutique Store",
+                "For carefully curated online stores.",
+                "atelier",
+              ],
+              [
+                "Modern Company",
+                "For expertise that speaks for itself.",
+                "horizon",
+              ],
             ].map(([name, desc, style]) => (
               <Link
                 className="template-card"
@@ -330,78 +335,22 @@ export default function Home() {
             ))}
           </div>
         </section>
-        <section className="section pricing-section" id="pricing">
-          <span className="eyebrow">ROOM FOR WHAT COMES NEXT</span>
-          <h2>A plan for every chapter.</h2>
-          <p>
-            Choose your website category when you sign up. All plans include
-            hosting, SSL, and your own content manager.
-          </p>
-          <div className="pricing-grid">
-            {[
-              [
-                "Basic",
-                "A confident first step.",
-                "5 content pages",
-                "Omnyvox subdomain",
-                "25 store products",
-              ],
-              [
-                "Growth",
-                "More room. More opportunity.",
-                "15 content pages",
-                "Connect your own domain",
-                "250 store products",
-              ],
-              [
-                "Advanced",
-                "Built for bigger ambitions.",
-                "100 content pages",
-                "Advanced team capabilities",
-                "2,000 store products",
-              ],
-            ].map(([name, desc, ...features]) => (
-              <article
-                className={`price-card ${name === "Growth" ? "featured" : ""}`}
-                key={name}
-              >
-                {name === "Growth" && (
-                  <span className="popular">ROOM TO GROW</span>
-                )}
-                <h3>{name}</h3>
-                <p>{desc}</p>
-                <PlanPrice tier={name.toLowerCase()} />
-                <Link
-                  href={`/register?plan=${name.toLowerCase()}`}
-                  className={`button ${name === "Growth" ? "" : "secondary"}`}
-                >
-                  Choose {name} <ArrowUpRight size={16} />
-                </Link>
-                <ul>
-                  {features.map((f) => (
-                    <li key={f}>
-                      <Check size={16} />
-                      {f}
-                    </li>
-                  ))}
-                  <li>
-                    <Check size={16} />
-                    Editable brand colours
-                  </li>
-                  <li>
-                    <Check size={16} />
-                    {name === "Basic"
-                      ? "Essential SEO tools"
-                      : "Blog & enhanced SEO"}
-                  </li>
-                </ul>
-              </article>
-            ))}
+        <section className="section pricing-section">
+          <div className="section-heading">
+            <span className="eyebrow">A PLAN FOR YOUR NEXT STEP</span>
+            <h2>
+              One website or room for three.
+              <br />
+              Choose the right fit.
+            </h2>
+            <p>
+              Compare business website and online store plans, with monthly and
+              annual options.
+            </p>
+            <Link href="/pricing" className="button">
+              Explore plans & compare features →
+            </Link>
           </div>
-          <small>
-            Product limits apply to e-Commerce websites. Commercial pricing will
-            be published before paid subscriptions open.
-          </small>
         </section>
         <section className="assistance section">
           <div>
@@ -415,7 +364,7 @@ export default function Home() {
               Prefer to leave the setup to someone else? Nexoris can help with
               your content, branding, and website configuration.
             </p>
-            <Link href="/dashboard/services" className="button">
+            <Link href="/contact" className="button">
               Explore professional setup <ArrowUpRight size={17} />
             </Link>
           </div>
@@ -431,6 +380,30 @@ export default function Home() {
               <br />
               separate from your subscription.
             </p>
+          </div>
+        </section>
+        <section className="section">
+          <div className="section-heading">
+            <span className="eyebrow">INSIGHTS & GUIDES</span>
+            <h2>Make your next step a clearer one.</h2>
+            <Link href="/insights" className="button secondary">
+              Explore the journal →
+            </Link>
+          </div>
+          <div className="insights-grid">
+            {articles.map((a) => (
+              <article className="insight-card" key={a.id}>
+                <Link href={"/insights/" + a.data.slug}>
+                  <div>
+                    <span className="eyebrow">
+                      {a.data.category.replaceAll("-", " ")}
+                    </span>
+                    <h2>{a.data.title}</h2>
+                    <small>By {a.data.author}</small>
+                  </div>
+                </Link>
+              </article>
+            ))}
           </div>
         </section>
         <section className="section faq">
@@ -467,6 +440,30 @@ export default function Home() {
             ))}
           </div>
         </section>
+        <section className="founder-story">
+          <img
+            src="/marketing-founders.webp"
+            alt="Entrepreneurs planning their business at a studio desk"
+            width={1440}
+            height={960}
+          />
+          <div>
+            <span className="eyebrow">MORE TIME FOR YOUR BUSINESS</span>
+            <h2>
+              Bring your ambition.
+              <br />
+              We’ll help you put it online.
+            </h2>
+            <p>
+              Explain what you do, share your expertise and give customers a
+              clear way to buy or get in touch. Keep your website and content
+              together in one workspace.
+            </p>
+            <Link href="/contact" className="button secondary">
+              Talk about your website →
+            </Link>
+          </div>
+        </section>
         <section className="final-cta">
           <span className="eyebrow">YOUR BUSINESS BELONGS HERE</span>
           <h2>
@@ -478,23 +475,6 @@ export default function Home() {
           </Link>
         </section>
       </main>
-      <footer className="footer">
-        <div>
-          <Brand />
-          <p>Business websites. Fully managed.</p>
-          <small>© {new Date().getFullYear()} Nexoris Technologies Ltd.</small>
-        </div>
-        <div>
-          <a href="#solutions">Solutions</a>
-          <a href="#templates">Templates</a>
-          <a href="#pricing">Plans</a>
-        </div>
-        <div>
-          <Link href="/dashboard/support">Get support</Link>
-          <Link href="/login">Your workspace</Link>
-          <Link href="/register">Get started</Link>
-        </div>
-      </footer>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -511,6 +491,6 @@ export default function Home() {
           }),
         }}
       />
-    </>
+    </MarketingShell>
   );
 }

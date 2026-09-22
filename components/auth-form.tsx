@@ -11,6 +11,17 @@ export function AuthForm({ register = false }: { register?: boolean }) {
     setBusy(true);
     setError("");
     const data = Object.fromEntries(new FormData(e.currentTarget));
+    if (register) {
+      const q = new URLSearchParams(location.search);
+      sessionStorage.setItem(
+        "omnyvox-start",
+        JSON.stringify({
+          template: q.get("template"),
+          category: q.get("category"),
+          tier: q.get("tier"),
+        }),
+      );
+    }
     try {
       const r = await fetch(`/api/auth/${register ? "register" : "login"}`, {
         method: "POST",
@@ -19,7 +30,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
       });
       const b = await r.json();
       if (!r.ok) throw new Error(b.error);
-      location.href = "/dashboard";
+      location.href = register ? "/onboarding" : "/dashboard";
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -85,11 +96,28 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               name="password"
               autoComplete={register ? "new-password" : "current-password"}
               required
-              minLength={12}
+              minLength={register ? 8 : 1}
               maxLength={128}
-              placeholder="At least 12 characters"
+              placeholder={
+                register
+                  ? "8+ characters, uppercase, number & symbol"
+                  : "Your password"
+              }
             />
           </label>
+          {register && (
+            <label className="field">
+              Confirm password
+              <input
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+              />
+            </label>
+          )}
           {!register && (
             <Link
               href="/forgot-password"

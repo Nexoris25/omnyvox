@@ -1,15 +1,97 @@
 import type { CSSProperties } from "react";
-import type { Site } from "@/lib/model";
+import type { Site, Section } from "@/lib/model";
+import { safeHtml } from "@/lib/content";
+import { SocialLinks } from "./social-links";
+export function RenderSections({
+  sections,
+  email,
+  insights,
+}: {
+  sections: Section[];
+  email: string;
+  insights?: React.ReactNode;
+}) {
+  return (
+    <>
+      {sections
+        .filter((s) => s.visible)
+        .map((s) => (
+          <section
+            id={
+              s.type === "services"
+                ? "services"
+                : s.type === "cta"
+                  ? "contact"
+                  : s.id
+            }
+            className={`rendered-section ${s.type === "hero" ? "hero-section" : ""}`}
+            key={s.id}
+          >
+            <div className={"section-layout layout-" + (s.layout || "column")}>
+              <div className="section-copy">
+                {s.type === "hero" ? <h1>{s.title}</h1> : <h2>{s.title}</h2>}
+                <div
+                  className="rich-content"
+                  dangerouslySetInnerHTML={{ __html: safeHtml(s.body) }}
+                />
+                {s.type === "faq" &&
+                  (s.faqs || []).map((f, i) => (
+                    <details key={i}>
+                      <summary>{f.question}</summary>
+                      <p>{f.answer}</p>
+                    </details>
+                  ))}
+                {s.type === "insights" && insights}
+                <div className="section-ctas">
+                  {(s.ctas?.length
+                    ? s.ctas
+                    : s.type === "hero" || s.type === "cta"
+                      ? [
+                          {
+                            label:
+                              s.type === "cta" ? "Contact us" : "Let’s talk",
+                            href:
+                              s.type === "cta" ? `mailto:${email}` : "#contact",
+                          },
+                        ]
+                      : []
+                  ).map((c, i) => (
+                    <a key={i} href={c.href} className="button">
+                      {c.label} ↗
+                    </a>
+                  ))}
+                </div>
+              </div>
+              {s.image && (
+                <img
+                  className="section-image"
+                  src={s.image}
+                  alt={s.imageAlt || ""}
+                  loading={s.type === "hero" ? "eager" : "lazy"}
+                  width={1000}
+                  height={750}
+                />
+              )}
+            </div>
+          </section>
+        ))}
+    </>
+  );
+}
 export function SiteRenderer({
   data,
   children,
   after,
   base = "",
+  legal = [],
+  insights,
 }: {
   data: Site["data"];
   children?: React.ReactNode;
   after?: React.ReactNode;
   base?: string;
+  legal?: { title: string; href: string }[];
+  insights?: React.ReactNode;
 }) {
   const { brand, sections, template } = data;
   return (
@@ -40,49 +122,28 @@ export function SiteRenderer({
           <a href={`${base}#contact`}>Get in touch</a>
         </nav>
       </header>
-      {children ||
-        sections
-          .filter((s) => s.visible)
-          .map((s) => (
-            <section
-              id={
-                s.type === "services"
-                  ? "services"
-                  : s.type === "cta"
-                    ? "contact"
-                    : s.id
-              }
-              className={`rendered-section ${s.type === "hero" ? "hero-section" : ""}`}
-              key={s.id}
-            >
-              {s.type === "hero" ? <h1>{s.title}</h1> : <h2>{s.title}</h2>}
-              {s.type === "services" ? (
-                <div className="rendered-service-grid">
-                  {s.body
-                    .split("\n")
-                    .filter(Boolean)
-                    .map((v, i) => (
-                      <div key={i}>{v}</div>
-                    ))}
-                </div>
-              ) : (
-                <p>{s.body}</p>
-              )}
-              {(s.type === "hero" || s.type === "cta") && (
-                <a
-                  className="button"
-                  href={s.type === "cta" ? `mailto:${brand.email}` : "#contact"}
-                >
-                  {s.type === "cta" ? "Contact us" : "Let’s talk"} ↗
-                </a>
-              )}
-            </section>
-          ))}
+      {children || (
+        <RenderSections
+          sections={sections}
+          email={brand.email}
+          insights={insights}
+        />
+      )}
       {after}
       <footer className="rendered-footer">
-        <span>
-          © {new Date().getFullYear()} {brand.name}
-        </span>
+        <div>
+          <span>
+            © {new Date().getFullYear()} {brand.name}
+          </span>
+          <SocialLinks links={brand.socials} />
+        </div>
+        <nav aria-label="Legal information">
+          {legal.map((l) => (
+            <a key={l.href} href={l.href}>
+              {l.title}
+            </a>
+          ))}
+        </nav>
         <a href="/">Website powered by Omnyvox</a>
       </footer>
     </div>

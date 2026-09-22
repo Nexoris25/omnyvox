@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
   description:
     "Create and manage your business website or online store. Your brand, your content, one managed platform by Nexoris Technologies.",
-  icons: { icon: "/brand-icon.webp", apple: "/brand-icon.webp" },
+  icons: { icon: "/favicon.webp", apple: "/brand-icon.webp" },
   openGraph: {
     type: "website",
     siteName: "Omnyvox",

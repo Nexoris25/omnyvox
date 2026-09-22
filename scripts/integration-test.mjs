@@ -39,6 +39,7 @@ try {
     name: "QA Author",
     email: prefix + "a@example.test",
     password: "Test-only-password!2026",
+    confirmPassword: "Test-only-password!2026",
   });
   check(a.status === 201, "Account registration and session");
   const {
@@ -47,21 +48,34 @@ try {
     "SELECT body FROM email_outbox WHERE recipient=$1 ORDER BY created_at DESC LIMIT 1",
     [prefix + "a@example.test"],
   );
-  const verificationToken = verification.body.match(/token=([a-f0-9]{64})/)[1];
+  const verificationToken = verification.body.match(/code is (\d{6})/)[1];
   check(
-    (await call("auth/verify", "POST", { token: verificationToken })).status ===
-      200,
+    (
+      await call(
+        "onboarding/otp",
+        "POST",
+        { code: verificationToken },
+        a.cookie,
+      )
+    ).status === 200,
     "Email verification token works",
   );
   check(
-    (await call("auth/verify", "POST", { token: verificationToken })).status ===
-      400,
+    (
+      await call(
+        "onboarding/otp",
+        "POST",
+        { code: verificationToken },
+        a.cookie,
+      )
+    ).status === 400,
     "Verification token cannot be reused",
   );
   const b = await call("auth/register", "POST", {
     name: "QA Other",
     email: prefix + "b@example.test",
     password: "Test-only-password!2026",
+    confirmPassword: "Test-only-password!2026",
   });
   check(b.status === 201, "Separate tenant registration");
   const create = await call(
@@ -258,7 +272,7 @@ try {
     "Tenant robots excludes private API routes",
   );
   await pool.query(
-    "UPDATE sites SET paid_until=now()-interval '1 day' WHERE id=$1",
+    "UPDATE sites SET paid_until=now()-interval '2 days' WHERE id=$1",
     [s.id],
   );
   check(
@@ -287,6 +301,7 @@ try {
   const resetResult = await call("auth/reset", "POST", {
     token,
     password: "A-new-test-password!2026",
+    confirmPassword: "A-new-test-password!2026",
   });
   check(resetResult.status === 200, "Single-use password reset token accepted");
   check(
@@ -298,6 +313,7 @@ try {
       await call("auth/reset", "POST", {
         token,
         password: "Another-test-password!2026",
+        confirmPassword: "Another-test-password!2026",
       })
     ).status === 400,
     "Password reset token cannot be reused",
