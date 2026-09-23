@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { OrderReview, paymentLabels, type ReviewOrder } from "./order-review";
 type Domain = {
   id: string;
   hostname: string;
@@ -7,14 +8,7 @@ type Domain = {
   verified_at: string | null;
   active: boolean;
 };
-type Order = {
-  id: string;
-  reference: string;
-  customer: { name: string; email: string };
-  amount: number;
-  payment_status: string;
-  fulfilment_status: string;
-};
+type Order = ReviewOrder & { fulfilment_status: string };
 export function WebsiteOperations({
   site,
   section,
@@ -235,6 +229,18 @@ export function WebsiteOperations({
           </p>
         </section>
       ) : (
+        <>
+        <OrderReview
+          orders={orders}
+          busy={busy}
+          resolve={(id, body) =>
+            action(async () => {
+              const r = await call("POST", body, `/${id}`);
+              setMessage(r.message);
+              await load();
+            })
+          }
+        />
         <section className="panel">
           <div className="panel-header">
             <h2>Store orders</h2>
@@ -261,7 +267,9 @@ export function WebsiteOperations({
                       </td>
                       <td>₦{(o.amount / 100).toLocaleString()}</td>
                       <td>
-                        <span className="badge">{o.payment_status}</span>
+                        <span className="badge">
+                          {paymentLabels[o.payment_status] || o.payment_status}
+                        </span>
                       </td>
                       <td>
                         <select
@@ -308,6 +316,7 @@ export function WebsiteOperations({
             </div>
           )}
         </section>
+        </>
       )}
     </div>
   );

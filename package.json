@@ -19,7 +19,8 @@
     "test:provision": "node --import tsx scripts/provision-test.ts",
     "test:security": "node --import tsx scripts/launch-readiness-test.ts",
     "test:billing": "node --import tsx scripts/billing-lifecycle-test.ts",
-    "samples:generate": "tsx scripts/generate-samples.ts"
+    "samples:generate": "tsx scripts/generate-samples.ts",
+    "test:payment-review": "node --import tsx scripts/payment-review-test.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",

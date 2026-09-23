@@ -28,8 +28,8 @@ export function canInternal(role: string, path: string[], method: string) {
   if (area !== 'platform-admin') return false;
   if(kind==='recovery')return role==='compliance'&&['GET','POST'].includes(method);
   const allowed: Record<string,string[]> = {
-    operations:['users','subscriptions','requests'], billing:['subscriptions'],
-    finance:['subscriptions','merchants'], support:['support','requests'],
+    operations:['users','subscriptions','requests','payments'], billing:['subscriptions'],
+    finance:['subscriptions','merchants','payments'], support:['support','requests','payments'],
     technical:['domains','storage','ai'], compliance:['merchants'], designer:[],content:[],
   };
   if (!(allowed[role] || []).includes(kind)) return false;

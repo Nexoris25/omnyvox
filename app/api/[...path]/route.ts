@@ -43,6 +43,7 @@ import { contentSchema } from "@/lib/cms-schema";
 import { safeHtml, referencedMediaIds } from "@/lib/content";
 import { containsVideo, videoUpgradeMessage } from "@/lib/video";
 import { kitFor } from "@/lib/industry-kits";
+import { resolveOrderPayment, ResolutionError } from "@/lib/payment-recovery";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -866,10 +867,27 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       if (method === "GET")
         return ok(
           await query(
-            "SELECT id,reference,customer,items,amount,payment_status,fulfilment_status,created_at FROM orders WHERE site_id=$1 ORDER BY created_at DESC",
+            "SELECT o.id,o.reference,o.customer,o.items,o.amount,o.currency,o.payment_status,o.fulfilment_status,o.created_at,o.review_reason,o.review_opened_at,o.refund_reference,o.reconcile_error,COALESCE((SELECT json_agg(json_build_object('event',e.event,'note',e.note,'at',e.created_at) ORDER BY e.created_at) FROM order_events e WHERE e.order_id=o.id),'[]') AS events FROM orders o WHERE o.site_id=$1 ORDER BY (o.payment_status IN ('verification_required','review_required')) DESC, o.created_at DESC",
             [id],
           ),
         );
+      if (method === "POST" && recordId) {
+        if (!z.uuid().safeParse(recordId).success)
+          return fail("Order not found", 404);
+        try {
+          const result = await resolveOrderPayment(
+            id,
+            recordId,
+            u.id,
+            await req.json(),
+          );
+          await audit(u.id, "order.payment." + result.outcome, recordId);
+          return ok(result);
+        } catch (e) {
+          if (e instanceof ResolutionError) return fail(e.message, 409);
+          throw e;
+        }
+      }
       if (method === "PATCH") {
         const b = z
           .object({

@@ -109,6 +109,12 @@ export async function platformAdmin(
           "SELECT s.id,s.name,u.email,s.tier,s.subscription,s.paid_until,s.service_until,s.billing_interval,s.subscription_site_id FROM effective_sites s JOIN users u ON u.id=s.owner_id ORDER BY s.created_at DESC",
         ),
       );
+    if (kind === "payments")
+      return response(
+        await query(
+          "SELECT o.id,s.name,u.email,o.reference,o.payment_status,o.amount,o.review_reason,o.review_opened_at,o.reconcile_attempts,o.reconcile_error,o.created_at FROM orders o JOIN sites s ON s.id=o.site_id JOIN users u ON u.id=s.owner_id WHERE o.payment_status IN ('verification_required','review_required') OR (o.payment_status='pending' AND o.reconcile_attempts>0) ORDER BY o.review_opened_at NULLS LAST,o.created_at LIMIT 500",
+        ),
+      );
     if (kind === "requests")
       return response(
         await query(

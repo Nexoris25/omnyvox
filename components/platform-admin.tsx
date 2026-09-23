@@ -52,6 +52,7 @@ const tabs = [
   ["users", "Accounts"],
   ["subscriptions", "Subscriptions"],
   ["merchants", "Merchant payments"],
+  ["payments", "Payment reviews"],
   ["domains", "Domains"],
   ["articles", "Insights"],
   ["pages", "Marketing pages"],
@@ -364,7 +365,7 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                         </button>
                       </form>
                     )}
-                    {["users", "subscriptions"].includes(tab) && (
+                    {["users", "subscriptions", "payments"].includes(tab) && (
                       <dl>
                         {Object.entries(r)
                           .filter(

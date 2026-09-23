@@ -171,7 +171,7 @@ export async function cancelUnpaidOrder(site: string, reference: string) {
     const {
       rows: [order],
     } = await client.query(
-      "SELECT * FROM orders WHERE site_id=$1 AND reference=$2 AND payment_status='pending' FOR UPDATE",
+      "SELECT * FROM orders WHERE site_id=$1 AND reference=$2 AND payment_status IN ('pending','verification_required') FOR UPDATE",
       [site, reference],
     );
     if (order) {
@@ -247,22 +247,22 @@ export async function confirmStorePayment(
       payment.status !== "success"
     )
       throw new Error("Payment mismatch");
-    if (order.payment_status === "pending")
+    if (["pending", "verification_required"].includes(order.payment_status))
       await client.query(
-        "UPDATE orders SET payment_status='paid' WHERE reference=$1",
+        "UPDATE orders SET payment_status='paid',review_reason=NULL,review_opened_at=NULL WHERE reference=$1",
         [order.reference],
       );
     else if (order.payment_status === "cancelled")
       await client.query(
-        "UPDATE orders SET payment_status='review_required' WHERE reference=$1",
+        "UPDATE orders SET payment_status='review_required',review_reason='Payment received after the stock reservation was released.',review_opened_at=now() WHERE reference=$1",
         [order.reference],
       );
-    if (["pending", "cancelled"].includes(order.payment_status))
+    if (["pending", "verification_required", "cancelled"].includes(order.payment_status))
       await client.query(
         "INSERT INTO order_events(order_id,actor,event) VALUES($1,'provider',$2)",
         [
           order.id,
-          order.payment_status === "pending"
+          order.payment_status !== "cancelled"
             ? "payment.confirmed"
             : "payment.late_review_required",
         ],

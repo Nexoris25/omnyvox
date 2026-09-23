@@ -575,3 +575,79 @@
     flex-wrap: wrap;
   }
 }
+
+/* Payments needing attention */
+.order-review {
+  border-color: #f3dc9c;
+}
+.order-review .panel-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.order-review .panel-header svg {
+  color: #a86a00;
+}
+.order-review-intro {
+  margin: 0;
+  padding: 0 22px 12px;
+  font-size: 13px;
+}
+.order-review-card {
+  margin: 0 22px 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffdf7;
+}
+.order-review-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.order-review-card header small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.order-review-reason {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.order-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.order-review-actions .button {
+  gap: 6px;
+}
+.order-review-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.order-history {
+  margin-top: 12px;
+  font-size: 12.5px;
+}
+.order-history ol {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+.order-history time {
+  color: var(--ink);
+}
+.badge-warn {
+  background: #fff4d6;
+  color: #7a5200;
+}
+.badge-info {
+  background: #e8eefc;
+  color: #1f3f94;
+}
