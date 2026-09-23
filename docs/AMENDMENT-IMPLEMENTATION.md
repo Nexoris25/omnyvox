@@ -15,6 +15,17 @@ This release advances the master document and the two September amendment/design
 - Corporate/e-commerce pricing routes, category template galleries, and marketing solution, feature, service and help routes. Known marketing routes can use published CMS page overrides with their slash-separated path converted to a hyphenated slug.
 - Four template manifests: Business Studio, Modern Company, Boutique Store and Everyday Store. Search, categories, sorting, cart feedback and structured product details improve the shared shop flow. Preview checkout is disabled.
 
+## Dev-branch update — 23 September 2026
+
+- Template library expanded from four palette-swapped IDs to seven distinct families: Business Studio (technology), Trust & Advisory (law, accounting, consulting), Care & Wellness (healthcare), Modern Company (other corporate), Boutique Store, Everyday Store and Everyday Essentials (grocery). Each has its own heading treatment, hero, button shape and nav/footer styling. The ten-template target (six corporate, four commerce) is still open.
+- "Create website" shows a visual template picker, sorted so templates matching the chosen industry come first, instead of a plain dropdown.
+- Rich text editor: grouped icon toolbar with active states; adds strikethrough, H4, dividers, callouts, CTA buttons and YouTube/Vimeo embeds. Embeds are limited to `youtube-nocookie.com` and `player.vimeo.com` by the sanitizer.
+- Growth/Advanced sites can add extra verified enquiry recipients (defaults: Growth 2, Advanced 4, Basic 0; admins can override via `plans.entitlements.recipients`). Migration `005-form-recipients.sql`.
+- LocalBusiness JSON-LD (corporate sites that choose to show their address) and Service JSON-LD (service/practice-area pages).
+- `npm run worker:email` runs the existing Resend outbox worker.
+
+Still to verify against an isolated database with a dedicated server: `scripts/integration-test.mjs`, `scripts/extensions-test.mjs`, `scripts/amendment-test.ts`, plus a browser pass of the new templates at 390/768/1440px.
+
 ## Design reference mapping
 
 The Nigerian references informed information hierarchy and interaction patterns; source photographs and page designs were not copied.
