@@ -85,13 +85,13 @@ Source: `lib/cms-schema.ts`, `lib/commerce.ts`, `components/checkout.tsx`, order
 
 Source: `lib/templates.ts`, `lib/industry-kits.ts`, `lib/blueprints.ts`, `components/section-editor.tsx`, `components/dashboard.tsx`, `lib/publishing.ts`.
 
-- Ten-template launch target: **seven exist: four corporate and three commerce**. At least two more distinct corporate families and one more commerce family are needed.
+- Ten-template launch target: **met — six corporate (Studio, Trust, Care, Build & Industry, Hospitality & Stays, Modern Company) and four commerce (Boutique, Beauty Counter, Everyday Store, Everyday Essentials)**. Hospitality, property and beauty still use illustrated samples; licensed photography would let the Hospitality immersive hero show in previews.
 - Distinct industry-specific inner listing/detail experiences, especially property discovery, programmes, hospitality, facilities and project galleries. Many records still share a title/body/image/details layout.
 - Database-backed template registry, immutable versions, staging/QA approval, publish/unpublish and safe tenant migration of changed slot schemas. Version strings in source code are not lifecycle management.
-- Internal management of industries, page blueprints, section schemas, approved palettes/font pairs and template plan eligibility.
+- Internal management of industries, page blueprints, section schemas, approved palettes/font pairs and template plan eligibility. (Template section eligibility is now enforced from the manifests in the editor and API.)
 - Template switching compatibility preview and mapping/rollback for unsupported content/layouts.
 - Inline select-to-edit preview; current property panels and scaled preview do not provide the full required inline workflow.
-- Autosave, conflict handling, recovery of unsaved edits and explicit whole-site revision restoration. Record-level history restoration exists; homepage snapshots are stored but no complete site-history browser/rollback is exposed.
+- Whole-site revision restoration. Autosave, conflict choice ("Keep my copy" / "Use the saved version") and recovery of unsaved edits are implemented; record-level history restoration exists, but no complete site-history browser/rollback is exposed.
 - Saved reusable blocks/sections, editorial approval states, reviewer assignment and editorial permissions.
 - Remaining approved block variants: testimonials, pricing/comparison, statistics, product collections and richer project/portfolio compositions. Generic cards/manual text can approximate some layouts but are not dedicated structured modules.
 - Controlled spacing and expanded typography/button/header/footer presets; independent accent/supporting-token management within accessible constraints.

@@ -69,10 +69,15 @@ function Media({ s, videoEnabled }: { s: Section; videoEnabled: boolean }) {
   if (videoEnabled && s.video && parseVideoUrl(s.video))
     return <SectionVideo url={s.video} title={s.videoTitle} />;
   if (!s.image) return null;
+  const src = webpSource(s.image);
+  // Bundled sample illustrations (not photographs) opt out of photo-only
+  // treatments such as full-bleed overlaid heroes.
+  const illustration = src.startsWith("/samples/") && !photoSourceSet(s.image);
   return (
     <img
       className="section-image"
-      src={webpSource(s.image)}
+      data-illustration={illustration || undefined}
+      src={src}
       srcSet={photoSourceSet(s.image)}
       sizes="(max-width: 680px) 100vw, 60vw"
       alt={s.imageAlt || ""}

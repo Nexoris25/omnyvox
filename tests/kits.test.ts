@@ -73,6 +73,34 @@ test("templates in a category share one section set, so switching never strands 
   assert.ok(!allowedSections("catalogue").includes("team"));
 });
 
+test("every template has its own design family, gallery art and preview", () => {
+  const css = ["globals.css", "site-design.css", "template-families.css"]
+    .map((f) => readFileSync(`app/${f}`, "utf8"))
+    .join("\n");
+  for (const id of templateIds) {
+    assert.ok(css.includes(`.rendered-site.${id} `), `${id} family styles`);
+    assert.ok(css.includes(`.template-art.${id} `), `${id} gallery art`);
+    assert.ok(templatePreviewIndustry[id], `${id} preview industry`);
+    assert.ok(
+      (templateManifests[id].industries as readonly string[]).includes(templatePreviewIndustry[id]),
+      `${id} previews an industry it serves`,
+    );
+  }
+  assert.ok(templateIds.length >= 10);
+});
+
+test("specialised families are the default for their industries", () => {
+  for (const [industry, template] of [
+    ["construction", "build"],
+    ["solar", "build"],
+    ["logistics", "build"],
+    ["hospitality", "haven"],
+    ["property", "haven"],
+    ["beauty", "glow"],
+  ])
+    assert.equal(industryKits[industry].template, template, industry);
+});
+
 test("kit palettes meet WCAG contrast for text, buttons and controls", () => {
   for (const [id, { palette: p }] of Object.entries(industryKits)) {
     assert.ok(contrast(p.text, p.background) >= 4.5, `${id} text`);

@@ -12,8 +12,11 @@ export const templateIndustry: Record<string, string> = {
   studio: "creative",
   trust: "legal",
   care: "healthcare",
-  horizon: "construction",
+  build: "construction",
+  haven: "hospitality",
+  horizon: "general",
   atelier: "fashion",
+  glow: "beauty",
   catalogue: "electronics",
   essentials: "food",
 };

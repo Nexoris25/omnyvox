@@ -3,6 +3,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 import "./site-design.css";
+import "./template-families.css";
 import "./editor-design.css";
 import "./brand-design.css";
 import "./store-design.css";

@@ -1,0 +1,496 @@
+/* Template families added in the second wave. Each changes structure and
+   rhythm, not only colour: see lib/templates.ts for who each one serves. */
+
+/* ================================================================
+   Build & Industry — construction, energy, logistics.
+   Heavy uppercase type, square corners, a dark split hero with an
+   offset colour block, numbered steps and accent-ruled cards.
+   ================================================================ */
+.rendered-site.build {
+  --site-radius: 0px;
+}
+.rendered-site.build h1,
+.rendered-site.build h2,
+.rendered-site.build h3 {
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-stretch: condensed;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 800;
+}
+.rendered-site.build .item-body h3 {
+  font-size: 19px;
+  letter-spacing: 0.02em;
+}
+.rendered-site.build .rendered-nav {
+  border-bottom: 4px solid var(--site-primary);
+}
+.rendered-site.build .site-desktop-menu {
+  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.rendered-site.build .button {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+.rendered-site.build .section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rendered-site.build .section-eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 4px;
+  background: var(--site-primary);
+}
+.rendered-site.build .rendered-section.hero-section {
+  background: var(--site-secondary);
+}
+.rendered-site.build .hero-section h1,
+.rendered-site.build .hero-section p,
+.rendered-site.build .hero-section .rich-content {
+  color: var(--site-secondary-fg) !important;
+}
+.rendered-site.build .hero-section h1 {
+  font-size: clamp(38px, 6.2cqi, 76px);
+  line-height: 0.98;
+  max-width: 12ch;
+}
+.rendered-site.build .hero-section .button.button-outline {
+  color: var(--site-secondary-fg);
+  border-color: color-mix(in srgb, var(--site-secondary-fg) 45%, transparent);
+  background: transparent;
+}
+/* Offset accent block behind the hero photograph. */
+.rendered-site.build .hero-section .section-image {
+  border-radius: 0;
+  box-shadow: 18px 18px 0 var(--site-primary);
+}
+.rendered-site.build .section-image {
+  border-radius: 0;
+}
+.rendered-site.build .item-card {
+  border-radius: 0;
+  border: 1px solid var(--site-line);
+  border-top: 5px solid var(--site-primary);
+  background: var(--site-bg);
+}
+.rendered-site.build .item-image {
+  filter: saturate(0.92) contrast(1.04);
+}
+.rendered-site.build .item-grid-steps {
+  counter-reset: none;
+}
+.rendered-site.build .item-grid-steps .item-card {
+  border: none;
+  border-left: 5px solid var(--site-primary);
+  padding-left: 18px;
+}
+.rendered-site.build .item-grid-steps .item-body {
+  padding-top: 0;
+}
+.rendered-site.build .step-number {
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--site-primary) 85%, var(--site-text));
+}
+.rendered-site.build .item-grid-features .item-card {
+  border: none;
+  border-top: 5px solid var(--site-text);
+}
+.rendered-site.build .feature-mark {
+  border-radius: 0;
+  background: var(--site-primary);
+  color: var(--site-primary-fg);
+}
+.rendered-site.build .section-features,
+.rendered-site.build .section-team {
+  background: color-mix(in srgb, var(--site-text) 5%, var(--site-bg));
+}
+.rendered-site.build .rendered-section.section-cta {
+  background: var(--site-primary);
+  color: var(--site-primary-fg);
+  text-align: left;
+}
+.rendered-site.build .section-cta h2,
+.rendered-site.build .section-cta p {
+  color: var(--site-primary-fg);
+  margin-inline: 0;
+}
+.rendered-site.build .section-cta .section-ctas {
+  justify-content: flex-start;
+}
+.rendered-site.build .rendered-section.section-cta .button {
+  background: var(--site-secondary);
+  color: var(--site-secondary-fg);
+  border-color: var(--site-secondary);
+}
+.rendered-site.build .faq-list summary {
+  text-transform: uppercase;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+}
+.rendered-site.build .rendered-footer {
+  background: var(--site-secondary);
+  color: var(--site-secondary-fg);
+  border-top: 4px solid var(--site-primary);
+}
+.rendered-site.build .rendered-footer a,
+.rendered-site.build .rendered-footer p,
+.rendered-site.build .rendered-footer h2 {
+  color: var(--site-secondary-fg);
+}
+@container (max-width: 760px) {
+  .rendered-site.build .hero-section .section-image {
+    box-shadow: 10px 10px 0 var(--site-primary);
+    width: calc(100% - 10px);
+  }
+}
+
+/* ================================================================
+   Hospitality & Stays — hotels, restaurants, short-lets, property.
+   Full-bleed photographic hero with overlaid copy, refined serif
+   headings, airy spacing and image-led cards.
+   ================================================================ */
+.rendered-site.haven {
+  --site-radius: 4px;
+}
+.rendered-site.haven h1,
+.rendered-site.haven h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.rendered-site.haven .item-body h3 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 21px;
+}
+.rendered-site.haven .rendered-nav {
+  border-bottom: none;
+}
+.rendered-site.haven .site-desktop-menu {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+}
+.rendered-site.haven .button {
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12.5px;
+  padding-inline: 26px;
+}
+.rendered-site.haven .section-eyebrow {
+  font-family: Georgia, serif;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 17px;
+  font-weight: 400;
+}
+.rendered-site.haven .rendered-section {
+  padding-block: clamp(72px, 10cqi, 128px);
+}
+/* Immersive hero: the photograph fills the section and the copy sits on
+   a legible gradient. Falls back to the standard layout with no image. */
+.rendered-site.haven .rendered-section.hero-section:has(.section-image:not([data-illustration])) {
+  padding: 0;
+  background: var(--site-secondary);
+}
+.rendered-site.haven .hero-section .section-layout:has(> .section-image:not([data-illustration])) {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.rendered-site.haven .hero-section .section-layout > .section-image:not([data-illustration]) {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: clamp(460px, 62cqi, 760px);
+  aspect-ratio: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+.rendered-site.haven .hero-section .section-layout:has(> .section-image:not([data-illustration])) > .section-copy {
+  grid-area: 1 / 1;
+  z-index: 1;
+  align-self: end;
+  padding: clamp(96px, 12cqi, 160px) max(24px, calc((100% - var(--site-max)) / 2))
+    clamp(48px, 7cqi, 88px);
+  background: linear-gradient(to top, rgb(10 8 6 / 0.78), rgb(10 8 6 / 0.35) 60%, transparent);
+}
+.rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) h1,
+.rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) p,
+.rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) .rich-content,
+.rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) .section-eyebrow {
+  color: #fff !important;
+}
+.rendered-site.haven .hero-section h1 {
+  font-size: clamp(40px, 6cqi, 80px);
+  line-height: 1.02;
+  max-width: 16ch;
+}
+.rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) .button.button-outline {
+  color: #fff;
+  border-color: rgb(255 255 255 / 0.6);
+  background: transparent;
+}
+.rendered-site.haven .section-image {
+  box-shadow: none;
+}
+.rendered-site.haven .item-card {
+  background: transparent;
+  border: none;
+}
+.rendered-site.haven .item-image {
+  aspect-ratio: 4 / 5;
+  border-radius: var(--site-radius);
+}
+.rendered-site.haven .item-body {
+  padding: 18px 0 0;
+  text-align: left;
+}
+.rendered-site.haven a.item-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+.rendered-site.haven a.item-card:hover .item-image {
+  filter: brightness(1.05);
+}
+.rendered-site.haven .item-grid-features .item-card,
+.rendered-site.haven .item-grid-steps .item-card {
+  border-top: 1px solid color-mix(in srgb, var(--site-text) 25%, transparent);
+}
+.rendered-site.haven .feature-mark {
+  background: none;
+  width: auto;
+  height: auto;
+  align-self: flex-start;
+  place-items: start;
+}
+.rendered-site.haven .step-number {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.rendered-site.haven .section-features,
+.rendered-site.haven .section-team {
+  background: color-mix(in srgb, var(--site-primary) 6%, var(--site-bg));
+}
+.rendered-site.haven .rendered-section.section-cta {
+  background: var(--site-secondary);
+  padding-block: clamp(88px, 12cqi, 150px);
+}
+.rendered-site.haven .section-cta h2 {
+  font-size: clamp(30px, 4.4cqi, 54px);
+}
+.rendered-site.haven .rendered-footer {
+  background: var(--site-secondary);
+  color: var(--site-secondary-fg);
+}
+.rendered-site.haven .rendered-footer a,
+.rendered-site.haven .rendered-footer p,
+.rendered-site.haven .rendered-footer h2 {
+  color: var(--site-secondary-fg);
+}
+@container (max-width: 760px) {
+  .rendered-site.haven .hero-section .section-layout > .section-image:not([data-illustration]) {
+    height: 560px;
+  }
+  .rendered-site.haven .hero-section .section-layout:has(> .section-image:not([data-illustration])) > .section-copy {
+    padding: 120px 20px 40px;
+  }
+}
+
+/* ================================================================
+   Beauty Counter — skincare, haircare, cosmetics.
+   Centred hero with an arch-framed image, blush surfaces, pill
+   actions, soft rounded cards and a light serif accent voice.
+   ================================================================ */
+.rendered-site.glow {
+  --site-radius: 26px;
+  --glow-tint: color-mix(in srgb, var(--site-primary) 9%, var(--site-bg));
+}
+.rendered-site.glow h1,
+.rendered-site.glow h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.rendered-site.glow .section-eyebrow {
+  font-family: Georgia, serif;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 18px;
+  font-weight: 400;
+}
+.rendered-site.glow .rendered-nav {
+  border-bottom: none;
+}
+.rendered-site.glow .button {
+  border-radius: 999px;
+  padding-inline: 26px;
+}
+.rendered-site.glow .rendered-section.hero-section {
+  background: var(--glow-tint);
+  text-align: center;
+}
+.rendered-site.glow .hero-section .section-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rendered-site.glow .hero-section .section-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rendered-site.glow .hero-section h1 {
+  max-width: 16ch;
+  margin-inline: auto;
+}
+.rendered-site.glow .hero-section .rich-content p {
+  margin-inline: auto;
+}
+.rendered-site.glow .hero-section .section-ctas {
+  justify-content: center;
+}
+/* Arch frame: the signature shape of the family. */
+.rendered-site.glow .hero-section .section-image {
+  width: min(440px, 100%);
+  aspect-ratio: 4 / 5;
+  border-radius: 999px 999px 28px 28px;
+  box-shadow: 0 30px 70px color-mix(in srgb, var(--site-primary) 18%, transparent);
+}
+.rendered-site.glow .section-text .section-image {
+  border-radius: 200px 200px 26px 26px;
+  box-shadow: none;
+}
+.rendered-site.glow .item-card {
+  border: none;
+  background: var(--glow-tint);
+}
+.rendered-site.glow .item-image {
+  aspect-ratio: 1;
+  border-radius: 22px;
+  margin: 10px 10px 0;
+  width: calc(100% - 20px);
+}
+.rendered-site.glow .item-body {
+  text-align: center;
+  align-items: center;
+}
+.rendered-site.glow .item-grid-features .item-card,
+.rendered-site.glow .item-grid-steps .item-card {
+  border: none;
+  border-radius: var(--site-radius);
+  background: var(--site-bg);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--site-primary) 10%, transparent);
+}
+.rendered-site.glow .item-grid-features .item-body,
+.rendered-site.glow .item-grid-steps .item-body {
+  padding: 26px 22px;
+}
+.rendered-site.glow .step-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--site-primary);
+  color: var(--site-primary-fg);
+  letter-spacing: 0;
+}
+.rendered-site.glow .section-features,
+.rendered-site.glow .section-team {
+  background: var(--glow-tint);
+}
+.rendered-site.glow .rendered-section.section-cta {
+  background: var(--glow-tint);
+  color: var(--site-text);
+  border-radius: 40px;
+  margin: 0 max(16px, calc((100% - var(--site-max)) / 2)) clamp(40px, 6cqi, 72px);
+}
+.rendered-site.glow .section-cta h2,
+.rendered-site.glow .section-cta p {
+  color: var(--site-text);
+}
+.rendered-site.glow .faq-list details {
+  border: none;
+  margin-bottom: 10px;
+  padding: 0 20px;
+  border-radius: 18px;
+  background: var(--glow-tint);
+}
+.rendered-site.glow .faq-list {
+  border-top: none;
+}
+.rendered-site.glow .product-card-media,
+.rendered-site.glow .product-purchase {
+  background: var(--glow-tint);
+}
+.rendered-site.glow .product-purchase {
+  border: none;
+}
+.rendered-site.glow .product-card .button,
+.rendered-site.glow .option-values button,
+.rendered-site.glow .qty-stepper {
+  border-radius: 999px;
+}
+
+/* ---- Gallery cards and marketing snapshots ---- */
+.template-art.build {
+  background: #25282c;
+  color: #fff;
+  border-top: 6px solid #e8a33d;
+}
+.template-art.build h3 {
+  text-transform: uppercase;
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-weight: 800;
+}
+.template-art.haven {
+  background: #2b2520;
+  color: #f4ece2;
+}
+.template-art.haven h3 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.template-art.glow {
+  background: #f6e7e4;
+  color: #6a3342;
+  border-radius: 28px;
+  text-align: center;
+}
+.template-art.glow h3 {
+  margin-inline: auto;
+}
+.template-snapshot.build h2 {
+  text-transform: uppercase;
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-weight: 800;
+}
+.template-snapshot.haven {
+  font-family: Georgia, serif;
+}
+.template-snapshot.haven h2 {
+  font-weight: 400;
+}
+.template-snapshot.glow {
+  border-radius: 30px;
+  text-align: center;
+}
+.template-snapshot.glow h2 {
+  margin-inline: auto;
+}

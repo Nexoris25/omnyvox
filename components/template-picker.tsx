@@ -108,7 +108,11 @@ export function templateOptions(
               ).includes(industry),
             )
           : 0;
-      return matches(b.id) - matches(a.id);
+      // Specialised families (fewer industries) come before general ones,
+      // so construction starts on Build & Industry, not Modern Company.
+      const breadth = (id: string) =>
+        templateManifests[id as keyof typeof templateManifests].industries.length;
+      return matches(b.id) - matches(a.id) || breadth(a.id) - breadth(b.id);
     });
 }
 /** A compact grid of template cards for choosing a starting template,

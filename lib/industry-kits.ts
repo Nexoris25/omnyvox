@@ -691,7 +691,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   property: build("property", {
-    template: "horizon",
+    template: "haven",
     palette: {
       primary: "#1D5B45",
       secondary: "#10281F",
@@ -795,7 +795,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   construction: build("construction", {
-    template: "horizon",
+    template: "build",
     palette: {
       primary: "#B8500F",
       secondary: "#1F2328",
@@ -911,7 +911,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   solar: build("solar", {
-    template: "horizon",
+    template: "build",
     palette: {
       primary: "#B45309",
       secondary: "#0C3B2E",
@@ -1027,7 +1027,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   logistics: build("logistics", {
-    template: "horizon",
+    template: "build",
     palette: {
       primary: "#C8102E",
       secondary: "#0B2545",
@@ -1332,7 +1332,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   hospitality: build("hospitality", {
-    template: "horizon",
+    template: "haven",
     palette: {
       primary: "#8C6A3F",
       secondary: "#1E1B18",
@@ -1588,7 +1588,7 @@ export const industryKits: Record<string, IndustryKit> = {
   }),
 
   beauty: build("beauty", {
-    template: "atelier",
+    template: "glow",
     palette: {
       primary: "#A8436B",
       secondary: "#3B1F2B",
@@ -2061,8 +2061,11 @@ export const templatePreviewIndustry: Record<TemplateId, string> = {
   studio: "creative",
   trust: "legal",
   care: "healthcare",
-  horizon: "construction",
+  build: "construction",
+  haven: "hospitality",
+  horizon: "general",
   atelier: "fashion",
+  glow: "beauty",
   catalogue: "electronics",
   essentials: "food",
 };

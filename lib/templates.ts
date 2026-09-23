@@ -30,6 +30,26 @@ export const templates = [
     type: "Clinics, diagnostics & healthcare",
   },
   {
+    id: "build",
+    name: "Build & Industry",
+    description:
+      "A strong, project-led home for construction, energy and logistics firms. Heavy type, proof of delivery up front and a clear route to a quote or site visit.",
+    color: "#e6e4df",
+    headline: "Built right. Delivered on time.",
+    business: "IRONBRIDGE CONSTRUCTION",
+    type: "Construction, energy & logistics",
+  },
+  {
+    id: "haven",
+    name: "Hospitality & Stays",
+    description:
+      "An immersive, image-first home for hotels, restaurants, short-lets and property. Full-bleed photography, refined type and booking or viewing requests in one tap.",
+    color: "#ece5da",
+    headline: "Stay a while. We’ll take care of the rest.",
+    business: "THE PALM COURT LEKKI",
+    type: "Hotels, restaurants & property",
+  },
+  {
     id: "horizon",
     name: "Modern Company",
     description:
@@ -48,6 +68,16 @@ export const templates = [
     headline: "Everyday things. Exceptionally made.",
     business: "THE EVERYDAY EDIT",
     type: "Fashion, beauty & home",
+  },
+  {
+    id: "glow",
+    name: "Beauty Counter",
+    description:
+      "A soft, confident storefront for skincare, haircare and cosmetics brands. Arch-framed imagery, gentle colour and product benefits people can scan before they buy.",
+    color: "#f6e7e4",
+    headline: "Skin you love, every single day.",
+    business: "SHEA & BLOOM",
+    type: "Beauty & personal care",
   },
   {
     id: "catalogue",
@@ -74,8 +104,11 @@ export const templateIds = [
   "studio",
   "trust",
   "care",
+  "build",
+  "haven",
   "horizon",
   "atelier",
+  "glow",
   "catalogue",
   "essentials",
 ] as const;
@@ -158,8 +191,22 @@ export const templateManifests = {
     sections: CORPORATE_SECTIONS,
     references: ["https://www.evercare.ng/", "https://mecure.com.ng/"],
   },
+  build: {
+    version: "1.0.0",
+    category: "corporate",
+    industries: ["construction", "solar", "logistics"],
+    sections: CORPORATE_SECTIONS,
+    references: ["https://www.julius-berger.com/", "https://www.arnergy.com/"],
+  },
+  haven: {
+    version: "1.0.0",
+    category: "corporate",
+    industries: ["hospitality", "property"],
+    sections: CORPORATE_SECTIONS,
+    references: ["https://www.eko-hotels.com/", "https://www.landmarkafrica.com/"],
+  },
   horizon: {
-    version: "1.1.0",
+    version: "1.2.0",
     category: "corporate",
     industries: [
       "general",
@@ -186,6 +233,13 @@ export const templateManifests = {
       "https://kilentar.com/collections",
       "https://orangeculture.com.ng/",
     ],
+  },
+  glow: {
+    version: "1.0.0",
+    category: "commerce",
+    industries: ["beauty"],
+    sections: COMMERCE_SECTIONS,
+    references: ["https://www.arami-essentials.com/", "https://nuban.ng/"],
   },
   catalogue: {
     version: "1.0.0",
