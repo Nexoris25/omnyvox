@@ -69,8 +69,11 @@ export const CtaButton = Node.create({
     return {
       insertCtaButton:
         (attrs) =>
-        ({ commands }) =>
-          commands.insertContent({ type: this.name, attrs }),
+        ({ chain }) =>
+          chain()
+            .insertContent({ type: this.name, attrs })
+            .createParagraphNear()
+            .run(),
     };
   },
 });
@@ -106,8 +109,11 @@ export const Embed = Node.create({
     return {
       insertEmbed:
         (attrs) =>
-        ({ commands }) =>
-          commands.insertContent({ type: this.name, attrs }),
+        ({ chain }) =>
+          chain()
+            .insertContent({ type: this.name, attrs })
+            .createParagraphNear()
+            .run(),
     };
   },
 });

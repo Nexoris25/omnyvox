@@ -14,7 +14,8 @@
     "db:migrate": "node --env-file=.env.local --import tsx scripts/run-migrations.ts",
     "worker:maintenance": "node --env-file=.env.local --import tsx scripts/maintenance.ts",
     "worker:ai": "node --env-file=.env.local --import tsx scripts/ai-worker.ts",
-    "worker:email": "node --env-file=.env.local scripts/send-email.mjs"
+    "worker:email": "node --env-file=.env.local scripts/send-email.mjs",
+    "test:recipients": "node --import tsx scripts/recipients-test.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",

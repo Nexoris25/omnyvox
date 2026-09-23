@@ -37,7 +37,8 @@ export async function marketingSettings() {
 export async function marketingMetadata(title: string, description: string) {
   const settings = await marketingSettings();
   return {
-    title,
+    // The root layout's "%s | Omnyvox" template would otherwise duplicate the brand.
+    title: /omnyvox/i.test(title) ? { absolute: title } : title,
     description,
     robots: {
       index: settings.index !== false,

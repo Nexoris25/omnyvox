@@ -157,3 +157,101 @@ export const templateManifests = {
     ],
   },
 } as const;
+/** Illustrative, clearly fictitious demo content used only on template
+ * previews so each family is shown with industry-appropriate copy. */
+export const templateSamples: Record<
+  (typeof templateIds)[number],
+  {
+    primary: string;
+    secondary: string;
+    text: string;
+    services: [string, string][];
+    about: [string, string];
+    cta: [string, string];
+  }
+> = {
+  studio: {
+    primary: "#1F3D2B",
+    secondary: "#1F3D2B",
+    text: "#1A2118",
+    services: [
+      ["Product engineering", "Web and mobile products built in small, reviewable releases."],
+      ["Platform integration", "Payments, identity and data connected to the tools you already run."],
+      ["Support & iteration", "Monitoring, fixes and improvements after launch."],
+    ],
+    about: ["How we work", "Discovery, design, build and handover — with a working demo at the end of every sprint."],
+    cta: ["Have a product in mind?", "Tell us what you are building and we will suggest a first step."],
+  },
+  trust: {
+    primary: "#5B3A1E",
+    secondary: "#2E2418",
+    text: "#2A2118",
+    services: [
+      ["Corporate & commercial", "Formation, contracts and governance for growing companies."],
+      ["Dispute resolution", "Negotiation, arbitration and litigation support."],
+      ["Tax & advisory", "Planning and compliance reviewed by qualified practitioners."],
+    ],
+    about: ["Our approach", "Clear engagement terms, a named partner on every matter and regular written updates."],
+    cta: ["Request a consultation", "Share a short summary of your matter and we will respond within one business day."],
+  },
+  care: {
+    primary: "#1E6B55",
+    secondary: "#1E6B55",
+    text: "#17332A",
+    services: [
+      ["General consultation", "Assessment and referral with a registered practitioner."],
+      ["Diagnostics", "Laboratory tests and imaging, with results explained clearly."],
+      ["Maternal & child health", "Antenatal visits, immunisation and child wellness checks."],
+    ],
+    about: ["Visiting us", "Walk-in and booked visits are welcome. Bring any previous results or prescriptions."],
+    cta: ["Request an appointment", "Send a request and our front desk will call to confirm a time."],
+  },
+  horizon: {
+    primary: "#17385D",
+    secondary: "#17385D",
+    text: "#182536",
+    services: [
+      ["Project delivery", "Planning, supervision and handover on schedule."],
+      ["Consultancy", "Feasibility, costing and technical advice before you commit."],
+      ["Maintenance", "Scheduled servicing and responsive repairs."],
+    ],
+    about: ["Who we are", "A team focused on dependable delivery and clear communication at every stage."],
+    cta: ["Start a conversation", "Tell us about your project and we will get back to you."],
+  },
+  atelier: {
+    primary: "#6B432D",
+    secondary: "#6B432D",
+    text: "#35271F",
+    services: [
+      ["New arrivals", "Seasonal pieces, released in small batches."],
+      ["Essentials", "Everyday staples that work with everything."],
+      ["Gift edit", "Considered presents, wrapped and ready."],
+    ],
+    about: ["Made with care", "Each collection is designed in-house and produced with trusted local makers."],
+    cta: ["Join the list", "Be first to hear about new collections and restocks."],
+  },
+  catalogue: {
+    primary: "#14253C",
+    secondary: "#14253C",
+    text: "#172033",
+    services: [
+      ["Phones & tablets", "Current models with full specifications."],
+      ["Computing", "Laptops, monitors and accessories."],
+      ["Power & home", "Inverters, batteries and appliances."],
+    ],
+    about: ["Shopping with us", "Clear prices, honest stock levels and delivery details shown before checkout."],
+    cta: ["Need help choosing?", "Contact our team for product advice."],
+  },
+  essentials: {
+    primary: "#3F6B1E",
+    secondary: "#3F6B1E",
+    text: "#26331A",
+    services: [
+      ["Fresh produce", "Fruit and vegetables restocked daily."],
+      ["Pantry staples", "Rice, grains, oils and spices in family pack sizes."],
+      ["Household", "Cleaning and personal care essentials."],
+    ],
+    about: ["Delivered close to home", "Order before noon for same-day delivery in our coverage areas."],
+    cta: ["Check delivery to your area", "Send your location and we will confirm availability."],
+  },
+};

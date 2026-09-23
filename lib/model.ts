@@ -199,7 +199,7 @@ export const initialSections: Section[] = [
     id: "services",
     type: "services",
     title: "Built around your needs",
-    body: "Strategy & consulting\nDesign & development\nSupport & growth",
+    body: "<ul><li><strong>Your first service</strong><br>Describe what it includes and who it is for.</li><li><strong>Your second service</strong><br>Describe what it includes and who it is for.</li><li><strong>Your third service</strong><br>Describe what it includes and who it is for.</li></ul>",
     visible: true,
   },
   {

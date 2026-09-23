@@ -23,8 +23,11 @@ This release advances the master document and the two September amendment/design
 - Growth/Advanced sites can add extra verified enquiry recipients (defaults: Growth 2, Advanced 4, Basic 0; admins can override via `plans.entitlements.recipients`). Migration `005-form-recipients.sql`.
 - LocalBusiness JSON-LD (corporate sites that choose to show their address) and Service JSON-LD (service/practice-area pages).
 - `npm run worker:email` runs the existing Resend outbox worker.
+- Template previews use industry-specific sample content (clearly labelled as fictitious) in each family's own colours. Service lists render as a card grid, CTA sections as a contrasting band, and the published-site mobile menu is a proper button.
+- Readiness now blocks publishing while any stock homepage section is unchanged. Previously only the "About" placeholder was caught.
+- Fixes: the create-website form lost typed input and could submit a mismatched category/template on every change (`NewSite` remounted each render); inserting an editor block replaced a just-inserted button; duplicated "| Omnyvox" page titles; the industry list is now public reference data, so demo mode can load it.
 
-Still to verify against an isolated database with a dedicated server: `scripts/integration-test.mjs`, `scripts/extensions-test.mjs`, `scripts/amendment-test.ts`, plus a browser pass of the new templates at 390/768/1440px.
+Verification on 23 September 2026: typecheck, production build, 22 unit tests, and `npm run test:recipients` (12 checks against a throwaway `omnyvox_test` database: plan limits, wrong codes, tenant isolation, enquiry fan-out, Reply-To, readiness). Browser checks at 390px and 1280px: template previews, mobile menu, industry-matched template picker, and every new editor action surviving sanitization. `scripts/integration-test.mjs`, `scripts/extensions-test.mjs` and `scripts/amendment-test.ts` still need a dedicated server on an isolated database (Next 16 allows one dev server per checkout).
 
 ## Design reference mapping
 

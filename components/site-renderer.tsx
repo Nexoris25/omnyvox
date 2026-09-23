@@ -38,7 +38,7 @@ export function RenderSections({
                   ? "contact"
                   : s.id
             }
-            className={`rendered-section ${s.type === "hero" ? "hero-section" : ""}`}
+            className={`rendered-section section-${s.type} ${s.type === "hero" ? "hero-section" : ""}`}
             key={s.id}
           >
             <div className={"section-layout layout-" + (s.layout || "column")}>

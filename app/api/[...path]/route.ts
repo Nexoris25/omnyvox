@@ -321,6 +321,12 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     if (area === "enquiries" && method === "POST")
       return await submitEnquiry(req);
+    if (area === "industries" && method === "GET")
+      return ok(
+        await query(
+          "SELECT id,label,category,core_pages FROM industries WHERE enabled=true ORDER BY label",
+        ),
+      );
     const u = await user();
     if (!u) return fail("Please sign in", 401);
     const extension = await extensionsApi(req, u, path);
@@ -384,12 +390,6 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
       return fail("Not found", 404);
     }
-    if (area === "industries" && method === "GET")
-      return ok(
-        await query(
-          "SELECT id,label,category,core_pages FROM industries WHERE enabled=true ORDER BY label",
-        ),
-      );
     if (area !== "sites") return fail("Not found", 404);
     if (!id && method === "GET")
       return ok(

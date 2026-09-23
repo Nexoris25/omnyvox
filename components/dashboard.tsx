@@ -50,7 +50,11 @@ import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { templates, templateManifests, templateIds } from "@/lib/templates";
-import { TemplateCard, TemplatePickerGrid } from "./template-picker";
+import {
+  TemplateCard,
+  TemplatePickerGrid,
+  templateOptions,
+} from "./template-picker";
 import { Site, initialSections, limits } from "@/lib/model";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
@@ -144,6 +148,7 @@ export function Dashboard({ section }: { section: string }) {
     >([]),
     [creationCategory, setCreationCategory] = useState("corporate"),
     [creationIndustry, setCreationIndustry] = useState(""),
+    [industryTouched, setIndustryTouched] = useState(false),
     [creationTemplate, setCreationTemplate] = useState("studio"),
     [preview, setPreview] = useState(0),
     [startPreferences, setStartPreferences] = useState<{
@@ -162,11 +167,10 @@ export function Dashboard({ section }: { section: string }) {
         .catch((e) => setMessage(e.message));
   }, [site?.id, site?.tier, demo]);
   useEffect(() => {
-    if (!demo)
-      api("industries")
-        .then(setIndustries)
-        .catch(() => {});
-  }, [demo]);
+    api("industries")
+      .then(setIndustries)
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     const belongs = industries.some(
       (i) => i.id === creationIndustry && i.category === creationCategory,
@@ -176,6 +180,15 @@ export function Dashboard({ section }: { section: string }) {
       setCreationIndustry(match ? match.id : "");
     }
   }, [industries, creationCategory, creationIndustry]);
+  useEffect(() => {
+    if (!creationIndustry) return;
+    if (!industryTouched && startPreferences.template) return;
+    const [best] = templateOptions(
+      creationCategory as "corporate" | "commerce",
+      creationIndustry,
+    );
+    if (best) setCreationTemplate(best.id);
+  }, [creationIndustry, creationCategory]);
   const isRecords = [
     "pages",
     "articles",
@@ -339,6 +352,7 @@ export function Dashboard({ section }: { section: string }) {
                       tier: data.tier,
                       data: {
                         ...demoSite.data,
+                        template: String(data.template),
                         brand: {
                           ...demoSite.data.brand,
                           name: String(data.name),
@@ -385,6 +399,7 @@ export function Dashboard({ section }: { section: string }) {
                   name="category"
                   onChange={(e) => {
                     const cat = e.target.value;
+                    setIndustryTouched(true);
                     setCreationCategory(cat);
                     setCreationTemplate(
                       cat === "commerce" ? "catalogue" : "studio",
@@ -403,7 +418,10 @@ export function Dashboard({ section }: { section: string }) {
                   key={creationCategory}
                   aria-label="Industry"
                   value={creationIndustry}
-                  onChange={(e) => setCreationIndustry(e.target.value)}
+                  onChange={(e) => {
+                    setIndustryTouched(true);
+                    setCreationIndustry(e.target.value);
+                  }}
                 >
                   {industries
                     .filter((i) => i.category === creationCategory)
@@ -1771,7 +1789,8 @@ export function Dashboard({ section }: { section: string }) {
           )}
         </main>
       </div>
-      {modal && <NewSite />}
+      {/* Called as a function: <NewSite /> would remount on every render and wipe typed input. */}
+      {modal && NewSite()}
       {recordModal && (
         <div className="modal-backdrop">
           <section

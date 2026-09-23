@@ -1,5 +1,5 @@
 import { query } from "./db";
-import type { Site } from "./model";
+import { initialSections, type Site } from "./model";
 import { siteEntitlements } from "./entitlements";
 export async function readiness(site: Site) {
   const issues: string[] = [];
@@ -81,7 +81,12 @@ export async function readiness(site: Site) {
     site.data.sections.some(
       (s) =>
         s.visible &&
-        /tell your customers|share your story|lorem ipsum/i.test(s.body),
+        (/tell your customers|share your story|lorem ipsum|your (first|second|third) service/i.test(
+          s.body,
+        ) ||
+          initialSections.some(
+            (d) => d.id === s.id && d.title === s.title && d.body === s.body,
+          )),
     )
   )
     issues.push("Replace instructional template text before publishing.");

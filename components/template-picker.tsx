@@ -65,21 +65,11 @@ export function TemplateCard({
     </article>
   );
 }
-/** A compact grid of template cards for choosing a starting template,
- * filtered by category and sorted so families matching the chosen
- * industry come first. */
-export function TemplatePickerGrid({
-  category,
-  industry,
-  value,
-  onChange,
-}: {
-  category: "corporate" | "commerce";
-  industry?: string;
-  value: string;
-  onChange: (id: string) => void;
-}) {
-  const options = templates
+export function templateOptions(
+  category: "corporate" | "commerce",
+  industry?: string,
+) {
+  return templates
     .filter(
       (t) =>
         templateManifests[t.id as keyof typeof templateManifests].category ===
@@ -97,6 +87,22 @@ export function TemplatePickerGrid({
           : 0;
       return matches(b.id) - matches(a.id);
     });
+}
+/** A compact grid of template cards for choosing a starting template,
+ * filtered by category and sorted so families matching the chosen
+ * industry come first. */
+export function TemplatePickerGrid({
+  category,
+  industry,
+  value,
+  onChange,
+}: {
+  category: "corporate" | "commerce";
+  industry?: string;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const options = templateOptions(category, industry);
   return (
     <div className="template-picker-grid">
       {options.map((t) => (
