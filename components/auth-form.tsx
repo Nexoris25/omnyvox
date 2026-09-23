@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Globe2, Palette, ShieldCheck } from "lucide-react";
 import { Brand } from "./brand";
@@ -9,6 +9,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
+  const [policies,setPolicies]=useState<Record<string,string>>({});
+  useEffect(()=>{if(register)fetch('/api/consent').then(async r=>{if(!r.ok)throw Error('Could not load platform policies.');return r.json();}).then((rows:{id:string;slug:string}[])=>setPolicies(Object.fromEntries(rows.map(r=>[r.slug,r.id])))).catch(e=>setError(e.message));},[register]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -35,7 +37,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
       const r = await fetch(`/api/auth/${register ? "register" : "login"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({...data,...(register?{consent:{terms:policies.terms,privacy:policies.privacy,accepted:data.accepted==='on'}}:{})}),
       });
       const b = await r.json();
       if (b.mfaRequired) setMfaRequired(true);
@@ -127,7 +129,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               placeholder="you@yourbusiness.com"
             />
           </label>
-          <PasswordField
+        {register && <label className="field">Phone number<input name="phone" type="tel" autoComplete="tel" required minLength={7} maxLength={25} placeholder="e.g. +234 801 234 5678" /></label>}
+        <PasswordField
             autoComplete={register ? "new-password" : "current-password"}
             requirements={register}
             onValueChange={setPassword}
@@ -139,7 +142,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               confirmation={password}
             />
           )}
-          {!register && mfaRequired && (
+        {!register && mfaRequired && (
             <label className="field">
               Authenticator or recovery code
               <input
@@ -149,7 +152,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
                 required
               />
             </label>
-          )}
+        )}
+        {!register && mfaRequired && <p><Link href="/account/recover">Lost your authenticator and recovery codes?</Link></p>}
           {!register && (
             <Link href="/forgot-password" className="auth-forgot">
               Forgot your password?
@@ -161,7 +165,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               publishing open when commercial plans are configured.
             </p>
           )}
-          <button className="button" disabled={busy}>
+        {register && <label className="consent-check"><input type="checkbox" name="accepted" required/><span>I agree to the <Link href="/legal/terms" target="_blank">Terms</Link> and acknowledge the <Link href="/legal/privacy" target="_blank">Privacy notice</Link>.</span></label>}
+        <button className="button" disabled={busy || register&&(!policies.terms||!policies.privacy)}>
             {busy
               ? "Please wait…"
               : register

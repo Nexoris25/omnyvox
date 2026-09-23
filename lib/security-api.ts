@@ -6,6 +6,8 @@ import { encrypt, decrypt } from "./commerce";
 import { newTotpSecret, verifyTotp, recoveryCodes, recoveryHash } from "./totp";
 import { consumeSecondFactor } from "./mfa";
 import { passwordSchema } from "./password";
+import { isStaff } from "./permissions";
+import { createHash,randomBytes,randomInt } from 'node:crypto';
 type User = {
   id: string;
   email: string;
@@ -20,8 +22,10 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
   if (req.method === "GET")
     return json({
       mfaEnabled: u.mfa_enabled,
-      adminRequiresMfa: u.role === "super_admin",
+      adminRequiresMfa: isStaff(u.role),
       currentSession: u.session_id,
+      profile:(await query('SELECT name,email,phone FROM users WHERE id=$1',[u.id]))[0],
+      consents:await query('SELECT v.id,v.slug,v.title,c.accepted_at FROM account_consents c JOIN platform_policy_versions v ON v.id=c.policy_version WHERE c.user_id=$1 ORDER BY c.accepted_at DESC',[u.id]),
       sessions: await query(
         "SELECT id,created_at,expires,mfa_verified FROM sessions WHERE user_id=$1 AND expires>now() ORDER BY created_at DESC",
         [u.id],
@@ -33,13 +37,17 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
     .object({
       password: z.string().max(128),
       code: z.string().max(32).default(""),
+      newCode: z.string().max(6).optional(),
       newPassword: z.string().max(128).optional(),
       confirmPassword: z.string().max(128).optional(),
       sessionId: z.uuid().optional(),
+      name:z.string().min(2).max(100).optional(),
+      phone:z.string().regex(/^\+?[0-9 ()-]{7,25}$/).optional(),
+      email:z.email().transform(v=>v.toLowerCase().trim()).optional(),
     })
     .parse(await req.json());
-  const [account] = await query<{ password: string }>(
-    "SELECT password FROM users WHERE id=$1",
+  const [account] = await query<{ password: string; mfa_secret:string|null }>(
+    "SELECT password,mfa_secret FROM users WHERE id=$1",
     [u.id],
   );
   if (!account || !verifyPassword(b.password, account.password))
@@ -49,17 +57,18 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
       { error: "Enter a fresh authenticator code or unused recovery code." },
       403,
     );
-  if (action === "setup") {
-    if (u.mfa_enabled)
+  if (action === "setup" || action === "replace-setup") {
+    if (u.mfa_enabled && action === 'setup' || !u.mfa_enabled && action === 'replace-setup')
       return json(
         { error: "Two-factor authentication is already enabled." },
         409,
       );
     const secret = newTotpSecret();
-    await query(
-      "UPDATE users SET mfa_pending=$2,mfa_pending_until=now()+interval '10 minutes' WHERE id=$1 AND mfa_secret IS NULL",
-      [u.id, encrypt(secret)],
+    const updated=await query(
+      "UPDATE users SET mfa_pending=$2,mfa_pending_until=now()+interval '10 minutes' WHERE id=$1 AND mfa_secret IS NOT DISTINCT FROM $3 AND password=$4 RETURNING id",
+      [u.id, encrypt(secret),account.mfa_secret,account.password],
     );
+    if(!updated.length)return json({error:'Security settings changed. Sign in again.'},409);
     return json({
       secret,
       uri: `otpauth://totp/${encodeURIComponent("Omnyvox:" + u.email)}?secret=${secret}&issuer=Omnyvox&algorithm=SHA1&digits=6&period=30`,
@@ -77,21 +86,21 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
     ]);
     if (
       current.password !== account.password ||
-      !!current.mfa_secret !== u.mfa_enabled
+      current.mfa_secret !== account.mfa_secret
     ) {
       await client.query("ROLLBACK");
       return json({ error: "Security settings changed. Sign in again." }, 409);
     }
-    if (action === "enable") {
+    if (action === "enable" || action === "replace") {
       if (
-        current.mfa_secret ||
+        (action==='enable' ? !!current.mfa_secret : !current.mfa_secret) ||
         !current.mfa_pending ||
         new Date(current.mfa_pending_until) <= new Date()
       ) {
         await client.query("ROLLBACK");
         return json({ error: "Start authenticator setup again." }, 409);
       }
-      const counter = verifyTotp(decrypt(current.mfa_pending), b.code);
+      const counter = verifyTotp(decrypt(current.mfa_pending), action==='replace' ? b.newCode || '' : b.code);
       if (counter === null) {
         await client.query("ROLLBACK");
         return json({ error: "Incorrect authenticator code." }, 400);
@@ -114,7 +123,7 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
       ]);
       rotated = true;
     } else if (action === "disable") {
-      if (u.role === "super_admin") {
+      if (isStaff(u.role)) {
         await client.query("ROLLBACK");
         return json(
           {
@@ -129,6 +138,22 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
         [u.id],
       );
       rotated = true;
+    } else if(action==='profile' && b.name && b.phone) {
+      await client.query('UPDATE users SET name=$2,phone=$3 WHERE id=$1',[u.id,b.name,b.phone]);
+    } else if(action==='email-request' && b.email) {
+      if(b.email===u.email){await client.query('ROLLBACK');return json({error:'Choose a different email address.'},400);}
+      const code=String(randomInt(100000,1000000)),salt=randomBytes(16).toString('hex');
+      await client.query("INSERT INTO account_email_changes(user_id,email,salt,code_hash) VALUES($1,$2,$3,$4) ON CONFLICT(user_id) DO UPDATE SET email=EXCLUDED.email,salt=EXCLUDED.salt,code_hash=EXCLUDED.code_hash,attempts=0,expires_at=now()+interval '10 minutes'",[u.id,b.email,salt,createHash('sha256').update(salt+code).digest('hex')]);
+      await client.query("INSERT INTO email_outbox(recipient,subject,body) VALUES($1,'Confirm your new Omnyvox email',$2)",[b.email,`Your email-change code is ${code}. It expires in ten minutes. If you did not request this, ignore this message.`]);
+    } else if(action==='email-confirm') {
+      const {rows:[pending]}=await client.query('SELECT * FROM account_email_changes WHERE user_id=$1 FOR UPDATE',[u.id]);
+      if(!pending || pending.attempts>=5 || new Date(pending.expires_at)<=new Date()){await client.query('ROLLBACK');return json({error:'Request a new email verification code.'},400);}
+      if(createHash('sha256').update(pending.salt+(b.newCode||'')).digest('hex')!==pending.code_hash){await client.query('UPDATE account_email_changes SET attempts=attempts+1 WHERE user_id=$1',[u.id]);await client.query('COMMIT');return json({error:'Incorrect email verification code.'},400);}
+      await client.query('UPDATE users SET email=$2,email_verified=true WHERE id=$1',[u.id,pending.email]);
+      await client.query('DELETE FROM account_email_changes WHERE user_id=$1',[u.id]);
+      await client.query("DELETE FROM auth_tokens WHERE user_id=$1",[u.id]);
+      await client.query("INSERT INTO email_outbox(recipient,subject,body) VALUES($1,'Your Omnyvox email was changed','Your new email address is confirmed. Sign in with this address from now on.')",[pending.email]);
+      rotated=true;
     } else if (action === "password") {
       const next = passwordSchema.parse(b.newPassword);
       if (next !== b.confirmPassword) {
@@ -158,6 +183,7 @@ export async function securityApi(req: NextRequest, u: User, action?: string) {
       await client.query("ROLLBACK");
       return json({ error: "Not found" }, 404);
     }
+    if(rotated) await client.query("UPDATE account_recovery_cases SET status='cancelled',pending_secret=NULL,token_hash=NULL WHERE user_id=$1 AND status IN ('requested','cooldown','ready')",[u.id]);
     if (rotated)
       await client.query("DELETE FROM sessions WHERE user_id=$1", [u.id]);
     await client.query(

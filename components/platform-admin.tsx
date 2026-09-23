@@ -7,6 +7,9 @@ import { MediaLibrary } from "./media-library";
 import { Admin } from "./admin";
 import { StorageSettings } from "./storage-settings";
 import { AIOperations } from "./ai-operations";
+import { canInternal } from "@/lib/permissions";
+import { StaffSettings } from "./staff-settings";
+import { RecoveryReviews } from './recovery-reviews';
 type Item = {
   id: string;
   user_id?: string;
@@ -41,6 +44,8 @@ type Item = {
 };
 const tabs = [
   ["overview", "Overview & pricing"],
+  ["staff", "Staff permissions"],
+  ['recovery','Account recovery'],
   ["support", "Contact inbox"],
   ["requests", "Customer requests"],
   ["kyb", "Business verification"],
@@ -59,8 +64,9 @@ const tabs = [
   ["settings", "Marketing settings"],
 ];
 const cms = ["pages", "articles", "categories", "authors", "legal"];
-export function PlatformAdmin() {
-  const [tab, setTab] = useState("overview"),
+export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
+  const allowedTabs = tabs.filter(([key])=>canInternal(role,key==='overview'?['admin']:key==='kyb'?['kyb-admin']:cms.includes(key)||['media','settings'].includes(key)?['marketing',key]:['platform-admin',key],'GET'));
+  const [tab, setTab] = useState(allowedTabs[0]?.[0] || "overview"),
     [rows, setRows] = useState<Item[]>([]),
     [message, setMessage] = useState(""),
     [edit, setEdit] = useState<Item | null>(null),
@@ -84,7 +90,7 @@ export function PlatformAdmin() {
     return b;
   }
   async function load() {
-    if (["overview", "storage", "ai"].includes(tab)) return;
+    if (["overview", "storage", "ai", "staff", "recovery"].includes(tab)) return;
     const b = await call(endpoint);
     if (tab === "settings") setSettings(b);
     else setRows(b);
@@ -115,7 +121,7 @@ export function PlatformAdmin() {
       </header>
       <div className="admin-layout">
         <nav aria-label="Admin navigation">
-          {tabs.map(([id, label]) => (
+          {allowedTabs.map(([id, label]) => (
             <button
               key={id}
               className={tab === id ? "active" : ""}
@@ -128,7 +134,7 @@ export function PlatformAdmin() {
         <main id="main">
           <h1>{tabs.find((t) => t[0] === tab)?.[1]}</h1>
           <p role="status">{message}</p>
-          {tab === "overview" ? (
+          {tab === 'recovery' ? <RecoveryReviews/> : tab === "staff" ? <StaffSettings /> : tab === "overview" ? (
             <>
               <Admin />
               <AnnualOffers />

@@ -8,6 +8,11 @@ const pool = new pg.Pool({ connectionString: process.env.TEST_DATABASE_URL });
 const prefix = `qa${Date.now()}`;
 let checks = 0;
 async function call(path, method = "GET", body, cookie = "", origin = base) {
+  if (path === "auth/register" && body) {
+    const policyResponse = await fetch(base + "/api/consent");
+    const policies = Object.fromEntries((await policyResponse.json()).map((p) => [p.slug, p.id]));
+    body = {...body, phone:"+2348012345678", consent:{...policies,accepted:true}};
+  }
   const r = await fetch(base + "/api/" + path, {
     method,
     headers: {

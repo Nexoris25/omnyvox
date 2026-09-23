@@ -14,6 +14,11 @@ const check = (value: unknown, label: string) => {
   passes++;
 };
 async function call(path: string, method = "GET", body?: unknown, cookie = "") {
+  if (path === "auth/register" && body) {
+    const policyResponse = await fetch(base + "/api/consent");
+    const policies = Object.fromEntries((await policyResponse.json()).map((p: {slug:string;id:string}) => [p.slug, p.id]));
+    body = {...(body as Record<string,unknown>), phone:"+2348012345678", consent:{...policies,accepted:true}};
+  }
   const r = await fetch(base + "/api/" + path, {
     method,
     headers: {

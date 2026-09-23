@@ -804,3 +804,6 @@ body {
 .article-byline p {
   margin: 0;
 }
+.consent-check { display:flex; align-items:flex-start; gap:10px; margin:20px 0; font-size:12px; line-height:1.7; }
+.consent-check input { width:18px; height:18px; flex-shrink:0; margin-top:2px; accent-color:var(--primary); }
+.consent-check a { color:var(--primary); text-decoration:underline; }

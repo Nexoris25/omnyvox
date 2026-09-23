@@ -9,6 +9,7 @@ import { queueOtp, verifyOtp } from "./otp";
 import { contentSchema } from "./cms-schema";
 import { safeHtml, referencedMediaIds } from "./content";
 import { imagePath, safeLink } from "./model";
+import { canInternal } from "./permissions";
 type Account = {
   id: string;
   name: string;
@@ -103,7 +104,7 @@ export async function extensionsApi(
     return response({ error: "Not found" }, 404);
   }
   if (area === "kyb-admin") {
-    if (u.role !== "super_admin")
+    if (!canInternal(u.role,path,req.method))
       return response({ error: "Administrator access required" }, 403);
     if (req.method === "GET")
       return response(
@@ -131,7 +132,7 @@ export async function extensionsApi(
     }
   }
   if (area === "marketing") {
-    if (u.role !== "super_admin")
+    if (!canInternal(u.role,path,req.method))
       return response({ error: "Administrator access required" }, 403);
     if (kind === "settings") {
       if (req.method === "GET") {

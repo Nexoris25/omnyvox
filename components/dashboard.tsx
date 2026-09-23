@@ -651,6 +651,7 @@ export function Dashboard({ section }: { section: string }) {
         </nav>
         <div className="sidebar-bottom">
           <Link href="/account/security">Account security</Link>
+          <Link href="/account/team">Organisation & team</Link>
           <Link href={href("services")}>
             <Headphones size={17} />
             Professional setup

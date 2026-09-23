@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 type Security = {
+  profile:{name:string;email:string;phone:string|null};
+  consents:{id:string;slug:string;title:string;accepted_at:string}[];
   mfaEnabled: boolean;
   adminRequiresMfa: boolean;
   currentSession: string;
@@ -20,6 +22,7 @@ export function SecuritySettings() {
   const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [setupCode,setSetupCode]=useState('');
   async function load() {
     const r = await fetch("/api/security");
     const b = await r.json();
@@ -123,17 +126,17 @@ export function SecuritySettings() {
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                maxLength={6}
+              value={setupCode}
+              onChange={(e) => setSetupCode(e.target.value)}
+              maxLength={6}
               />
             </label>
             <button
-              disabled={busy || code.length !== 6}
+              disabled={busy || setupCode.length !== 6 || !!data?.mfaEnabled && !code}
               className="button"
-              onClick={() => act("enable")}
+              onClick={() => act(data?.mfaEnabled ? "replace" : "enable",data?.mfaEnabled ? {newCode:setupCode} : {code:setupCode})}
             >
-              Enable two-factor authentication
+              {data?.mfaEnabled ? 'Confirm replacement authenticator' : 'Enable two-factor authentication'}
             </button>
           </>
         )}
@@ -150,6 +153,7 @@ export function SecuritySettings() {
             </button>
           </div>
         )}
+        {data?.mfaEnabled && !secret && <><p>Replace your authenticator using your current authenticator or an unused recovery code. The existing device remains active until you confirm a code from the new device. Confirmation revokes old sessions and recovery codes.</p><button className="button secondary" disabled={busy || !password || !code} onClick={()=>act('replace-setup')}>Replace authenticator</button></>}
         {data?.mfaEnabled && (
           <>
             <p>
@@ -178,6 +182,18 @@ export function SecuritySettings() {
         {data?.mfaEnabled && data.adminRequiresMfa && (
           <Link href="/admin">Open platform administration</Link>
         )}
+      </section>
+      <section className="panel panel-body stack">
+        <h2>Account profile</h2>
+        <form className="stack" onSubmit={e=>{e.preventDefault();act('profile',Object.fromEntries(new FormData(e.currentTarget)) as Record<string,string>);}}>
+          <label className="field">Name<input name="name" key={data?.profile.name} defaultValue={data?.profile.name} required minLength={2} maxLength={100}/></label>
+          <label className="field">Phone<input name="phone" type="tel" key={data?.profile.phone} defaultValue={data?.profile.phone||''} required minLength={7} maxLength={25}/></label>
+          <button className="button" disabled={busy||!password}>Save profile</button>
+        </form>
+        <h3>Email address</h3><p style={{overflowWrap:'anywhere'}}>{data?.profile.email}</p>
+        <form className="stack" onSubmit={e=>{e.preventDefault();act('email-request',{email:String(new FormData(e.currentTarget).get('email'))});}}><label className="field">New email address<input name="email" type="email" required/></label><button className="button secondary" disabled={busy||!password}>Send verification code</button></form>
+        <form className="stack" onSubmit={e=>{e.preventDefault();act('email-confirm',{newCode:String(new FormData(e.currentTarget).get('emailCode'))});}}><label className="field">Code sent to your new email<input name="emailCode" inputMode="numeric" maxLength={6} minLength={6} required/></label><p>Confirm with your current password and a fresh authenticator or recovery code above. Confirmation signs out other sessions.</p><button className="button secondary" disabled={busy||!password}>Confirm email change</button></form>
+        <h3>Policy acceptance history</h3>{data?.consents.map(c=><p key={c.id}><Link href={`/legal/${c.slug}?version=${c.id}`}>{c.title}</Link> · Accepted {new Date(c.accepted_at).toLocaleString()}</p>)}{!data?.consents.length&&<p>No versioned acceptance is recorded for this older account.</p>}
       </section>
       <section className="panel panel-body stack">
         <h2>Change password</h2>

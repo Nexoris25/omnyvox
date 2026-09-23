@@ -1,0 +1,16 @@
+"use client";
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+import {PasswordField} from './password-field';
+export function AssistedRecovery(){
+ const [token,setToken]=useState(''),[cancel,setCancel]=useState(''),[secret,setSecret]=useState(''),[codes,setCodes]=useState<string[]>([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{const q=new URLSearchParams(location.search);setToken(q.get('token')||'');setCancel(q.get('cancel')||'');history.replaceState(null,'','/account/recover');},[]);
+ async function act(action:string,body:unknown){setBusy(true);try{const r=await fetch('/api/account-recovery/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const b=await r.json();if(!r.ok)throw Error(b.error);if(b.secret)setSecret(b.secret);if(b.recoveryCodes){setCodes(b.recoveryCodes);setSecret('');setToken('');}setMessage(b.message||'Enter the new setup key in your authenticator, then confirm its six-digit code.');}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}
+ return <main id="main" className="section" style={{maxWidth:640,margin:'auto'}}><Link href="/login">← Sign in</Link><h1>Recover account access</h1><p role="status">{message}</p>{cancel?<section className="panel panel-body"><p>Cancel the request to replace your authenticator. Your existing authentication remains in place.</p><button className="button" disabled={busy} onClick={()=>act('cancel',{token:cancel})}>Cancel recovery request</button></section>:codes.length?<section className="notice"><h2>Save your recovery codes</h2><p>These codes will only be displayed once. Each works once.</p><pre style={{whiteSpace:'pre-wrap'}}>{codes.join('\n')}</pre><Link href="/login">Continue to sign in</Link></section>:<form className="panel panel-body stack" onSubmit={e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.currentTarget));act(token?secret?'complete':'setup':'request',{...b,token:token||undefined});}}>
+ {!token&&<><p>First try an unused recovery code on the sign-in screen. If your authenticator and recovery codes are unavailable, request an identity review. Two independent reviewers must approve it, followed by a 24-hour security delay. This does not disable MFA.</p><label className="field">Account email<input name="email" type="email" autoComplete="email" required/></label></>}
+ <PasswordField label="Current password" autoComplete="current-password"/>
+ {!token&&<><label className="field">Describe the access problem<textarea name="reason" required minLength={20} maxLength={2000}/></label><p>Do not include passwords, identity documents or financial details here. An authorised reviewer will arrange the appropriate verification. If you cannot access your mailbox, <Link href="/contact">contact support</Link>.</p></>}
+ {secret&&<><p>Add this key as a time-based Omnyvox account in your authenticator:</p><code style={{overflowWrap:'anywhere'}}>{secret}</code><label className="field">New authenticator code<input name="code" inputMode="numeric" required minLength={6} maxLength={6}/></label></>}
+ <button className="button" disabled={busy}>{token?secret?'Confirm new authenticator':'Set up replacement authenticator':'Request recovery review'}</button>
+ </form>}</main>;
+}

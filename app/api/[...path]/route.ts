@@ -1,4 +1,8 @@
 import { aiApi } from "@/lib/ai-api";
+import { organisationApi } from "@/lib/organisations";
+import { currentPolicies,registerAccount,ConsentError } from "@/lib/account-consent";
+import { assistedRecovery } from '@/lib/account-recovery';
+import { canSite, canInternal, isStaff } from "@/lib/permissions";
 import { provisionBlueprint } from "@/lib/blueprints";
 import {
   templateIds,
@@ -79,6 +83,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     const { path } = await ctx.params;
     const [area, id, kind, recordId] = path;
     const method = req.method;
+    if(area === 'consent' && method === 'GET') return ok(await currentPolicies());
     if (
       method !== "GET" &&
       area !== "webhooks" &&
@@ -87,6 +92,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       req.headers.get("origin") !== new URL(req.url).origin
     )
       return fail("Invalid request origin", 403);
+    if(area === 'account-recovery')return await assistedRecovery(req,id);
     if (area === "checkout" && method === "POST") {
       const body = await req.json();
       await rateLimit(`checkout:${String(body.email).slice(0, 254)}`);
@@ -228,6 +234,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           confirmPassword: z.string().optional(),
           code: z.string().max(32).optional(),
           name: z.string().min(2).max(100).optional(),
+          phone: z.string().regex(/^\+?[0-9 ()-]{7,25}$/).optional(),
+          consent: z.object({terms:z.uuid(),privacy:z.uuid(),accepted:z.literal(true)}).optional(),
         })
         .parse(await req.json());
       await rateLimit(`auth:${body.email}`);
@@ -236,10 +244,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         passwordSchema.parse(body.password);
         if (body.password !== body.confirmPassword)
           return fail("Passwords must match");
-        const [u] = await query<{ id: string }>(
-          "INSERT INTO users(name,email,password,role) VALUES($1,$2,$3,$4) RETURNING id",
-          [body.name, body.email, hashPassword(body.password), "owner"],
-        );
+        if(!body.phone || !body.consent) return fail("Provide a phone number and accept the current Terms and Privacy notice.");
+        const u = await registerAccount({name:body.name,email:body.email,phone:body.phone,passwordHash:hashPassword(body.password),...body.consent});
         await queueOtp(u.id, body.email);
         await session(u.id);
         await audit(u.id, "account.created", u.id);
@@ -274,7 +280,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return ok({
           success: true,
           next:
-            u.role === "super_admin" && !u.mfa_enabled
+            isStaff(u.role) && !u.mfa_enabled
               ? "/account/security"
               : "/dashboard",
         });
@@ -314,8 +320,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       if (!u || (u.mfa_enabled && !u.mfa_verified))
         return fail("Not found", 404);
       const [privateMedia] = await query<StoredMedia>(
-        "SELECT m.* FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (s.owner_id=$2 OR (m.site_id IS NULL AND $3=\'super_admin\'))",
-        [id, u.id, u.mfa_enabled && u.mfa_verified ? u.role : "owner"],
+        "SELECT m.* FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (EXISTS(SELECT 1 FROM organisations o JOIN organisation_members om ON om.organisation_id=o.id WHERE o.owner_id=s.owner_id AND om.user_id=$2) OR (m.site_id IS NULL AND $3=true))",
+        [id, u.id, u.mfa_enabled && u.mfa_verified && canInternal(u.role,['marketing','media'],'GET')],
       );
       return privateMedia
         ? await mediaResponse(privateMedia)
@@ -336,7 +342,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       return fail("Sign in with your authenticator to continue.", 401);
     if (
       ["admin", "platform-admin", "kyb-admin", "marketing"].includes(area) &&
-      u.role === "super_admin" &&
+      isStaff(u.role) &&
       (!u.mfa_enabled || !u.mfa_verified)
     )
       return ok(
@@ -347,6 +353,9 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         },
         403,
       );
+    if (["admin", "platform-admin", "kyb-admin", "marketing"].includes(area) && !canInternal(u.role,path,method))
+      return fail("Your role does not allow this action.",403);
+    if (area === "organisations") return await organisationApi(req,u,id,kind);
     const extension = await extensionsApi(req, u, path);
     if (extension) return extension;
     if (area === "me") return ok(u);
@@ -412,7 +421,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (!id && method === "GET")
       return ok(
         await query(
-          "SELECT * FROM effective_sites WHERE owner_id=$1 ORDER BY created_at",
+          "SELECT s.*,m.role AS member_role FROM effective_sites s JOIN organisations o ON o.owner_id=s.owner_id JOIN organisation_members m ON m.organisation_id=o.id WHERE m.user_id=$1 ORDER BY s.created_at",
           [u.id],
         ),
       );
@@ -506,11 +515,12 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       return ok(s, 201);
     }
     if (!z.uuid().safeParse(id).success) return fail("Website not found", 404);
-    const [site] = await query<Site>(
-      "SELECT * FROM effective_sites WHERE id=$1 AND owner_id=$2",
+    const [site] = await query<Site & {member_role:string}>(
+      "SELECT s.*,m.role AS member_role FROM effective_sites s JOIN organisations o ON o.owner_id=s.owner_id JOIN organisation_members m ON m.organisation_id=o.id WHERE s.id=$1 AND m.user_id=$2",
       [id, u.id],
     );
     if (!site) return fail("Website not found", 404);
+    if (!canSite(site.member_role,kind,method)) return fail("Your workspace role does not allow this action.",403);
     if (kind === "billing-history" && method === "GET")
       return ok(await billingLifecycle(id));
     if (kind === "renewal" && method === "POST") {
@@ -591,7 +601,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           JSON.stringify({ ...b, revision: b.revision + 1 }),
           b.brand.name,
           id,
-          u.id,
+          site.owner_id,
           b.revision,
         ],
       );
@@ -997,6 +1007,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         if (!a) return fail("Choose an author from this website", 403);
         author = a.data.title;
       }
+      if(site.member_role === 'editor' && b.status !== 'draft') return fail("Editors save drafts; a website administrator must publish them.",403);
       const data = {
         ...b,
         revision: b.revision + 1,
@@ -1071,8 +1082,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           );
         } else {
           const result = await client.query(
-            "UPDATE records SET data=$1 WHERE id=$2 AND site_id=$3 AND kind=$4 AND COALESCE((data->>'revision')::int,0)=$5",
-            [JSON.stringify(data), recordId, id, kind, b.revision],
+            "UPDATE records SET data=$1 WHERE id=$2 AND site_id=$3 AND kind=$4 AND COALESCE((data->>'revision')::int,0)=$5 AND ($6<>'editor' OR data->>'status'='draft')",
+            [JSON.stringify(data), recordId, id, kind, b.revision,site.member_role],
           );
           if (!result.rowCount) {
             await client.query("ROLLBACK");
@@ -1094,6 +1105,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     return fail("Method not allowed", 405);
   } catch (error) {
+    if(error instanceof ConsentError)return fail(error.message,409);
     if (error instanceof BillingStateError)
       return fail(error.message, error.status);
     if ((error as { code?: string }).code === "P0001")

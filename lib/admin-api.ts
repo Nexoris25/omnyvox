@@ -3,6 +3,10 @@ import { z } from "zod";
 import { query, pool, audit } from "./db";
 import { storageAdmin } from "./storage-admin";
 import { aiSettingsSchema } from "./local-ai";
+import { canInternal, staffRoles } from "./permissions";
+import { verifyPassword, rateLimit } from "./auth";
+import { consumeSecondFactor } from "./mfa";
+import { reviewRecovery } from './account-recovery';
 export async function platformAdmin(
   req: NextRequest,
   u: { id: string; role: string },
@@ -11,9 +15,31 @@ export async function platformAdmin(
   if (path[0] !== "platform-admin") return null;
   const response = (b: unknown, status = 200) =>
     NextResponse.json(b, { status });
-  if (u.role !== "super_admin")
+  if (!canInternal(u.role,path,req.method))
     return response({ error: "Administrator access required" }, 403);
   const [, kind, id] = path;
+  if(kind==='recovery')return await reviewRecovery(req,u);
+  if(kind === 'staff') {
+    if(u.role !== 'super_admin') return response({error:'Super-admin access required'},403);
+    if(req.method === 'GET') return response(await query("SELECT id,name,email,role,email_verified,mfa_secret IS NOT NULL AS mfa_enabled FROM users ORDER BY created_at DESC LIMIT 500"));
+    if(req.method === 'POST') {
+      await rateLimit('staff:'+u.id);
+      const b=z.object({userId:z.uuid(),role:z.enum(['owner',...staffRoles]),password:z.string().max(128),code:z.string().max(32)}).parse(await req.json());
+      const [actor]=await query<{password:string}>('SELECT password FROM users WHERE id=$1',[u.id]);
+      if(!verifyPassword(b.password,actor.password)||!await consumeSecondFactor(u.id,b.code)) return response({error:'Confirm your password and a fresh authenticator or recovery code.'},403);
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const {rows:[target]}=await client.query("UPDATE users SET role=$2 WHERE id=$1 AND id<>$3 AND role<>'super_admin' AND email_verified=true RETURNING email",[b.userId,b.role,u.id]);
+        if(!target){await client.query('ROLLBACK');return response({error:'Choose a verified account other than yourself or a super-admin.'},409);}
+        await client.query('DELETE FROM sessions WHERE user_id=$1',[b.userId]);
+        await client.query("INSERT INTO audit(actor,action,target) VALUES($1,$2,$3)",[u.id,'staff.role.'+b.role,b.userId]);
+        await client.query("INSERT INTO email_outbox(recipient,subject,body) VALUES($1,'Your Omnyvox access changed',$2)",[target.email,`Your platform role is now ${b.role}. Sign in again. Staff roles require two-factor authentication.`]);
+        await client.query('COMMIT');return response({success:true});
+      }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+    }
+    return response({error:'Method not allowed'},405);
+  }
   if (kind === "storage") return storageAdmin(req, u.id, id);
   if (kind === "ai") {
     if (req.method === "GET") {
