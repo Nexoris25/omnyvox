@@ -22,30 +22,53 @@ export async function MarketingShell({
         <div>
           <Brand />
           <p>Business websites. Fully managed.</p>
+          <p className="footer-description">
+            Build your online presence, manage your content and serve your
+            customers from one place.
+          </p>
           <SocialLinks links={settings.socials} businessName="Omnyvox" />
         </div>
         <div>
-          <strong>Explore Omnyvox</strong>
-          <Link href="/templates">Find your template</Link>
-          <Link href="/pricing">Compare plans</Link>
+          <strong>Product</strong>
+          <Link href="/corporate-websites">Business websites</Link>
+          <Link href="/ecommerce-websites">Online stores</Link>
+          <Link href="/features">Features</Link>
+          <Link href="/templates">Templates</Link>
+          <Link href="/pricing">Pricing</Link>
+        </div>
+        <div>
+          <strong>Resources</strong>
+          <Link href="/how-it-works">How it works</Link>
           <Link href="/insights">Insights & guides</Link>
-          <Link href="/contact">Contact our team</Link>
+          <Link href="/help">Help centre</Link>
+          <Link href="/website-setup">Website setup</Link>
+          <Link href="/professional-services">Professional services</Link>
+        </div>
+        <div>
+          <strong>Company</strong>
+          <Link href="/about">About Omnyvox</Link>
+          <Link href="/contact">Contact us</Link>
+          <Link href="/faq">FAQs</Link>
         </div>
         <div>
           <strong>Your account</strong>
           <Link href="/register">Create an account</Link>
           <Link href="/login">Sign in</Link>
-          <Link href="/onboarding">Business verification</Link>
-          {legal.map((l) => (
-            <Link key={l.id} href={"/legal/" + l.data.slug}>
-              {l.data.title}
-            </Link>
-          ))}
+          <Link href="/forgot-password">Account recovery</Link>
         </div>
-        <small>
-          © {new Date().getFullYear()} Nexoris Technologies Ltd. All rights
-          reserved.
-        </small>
+        <div className="footer-bottom">
+          <small>
+            © {new Date().getFullYear()} Omnyvox. A product of Nexoris
+            Technologies Ltd.
+          </small>
+          <nav aria-label="Legal">
+            {legal.map((l) => (
+              <Link key={l.id} href={"/legal/" + l.data.slug}>
+                {l.data.title}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </footer>
     </div>
   );

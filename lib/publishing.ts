@@ -56,7 +56,7 @@ export async function publishScheduled() {
         )
           continue;
         await client.query(
-          "UPDATE records SET data=data||jsonb_build_object('status','published','updatedAt',now()::text) WHERE id=$1",
+          "UPDATE records SET data=data||jsonb_build_object('status','published','updatedAt',now()::text,'revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$1",
           [r.id],
         );
         await client.query(

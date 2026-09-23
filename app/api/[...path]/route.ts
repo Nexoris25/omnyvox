@@ -1,6 +1,18 @@
 import { aiApi } from "@/lib/ai-api";
 import { provisionBlueprint } from "@/lib/blueprints";
-import { templateIds, templateManifests } from "@/lib/templates";
+import {
+  templateIds,
+  templateManifests,
+  compatibleTemplate,
+} from "@/lib/templates";
+import { securityApi } from "@/lib/security-api";
+import { consumeSecondFactor } from "@/lib/mfa";
+import {
+  confirmSubscriptionPayment,
+  billingLifecycle,
+  setRenewal,
+  BillingStateError,
+} from "@/lib/subscription-billing";
 import { businessSettings } from "@/lib/business";
 import { readiness } from "@/lib/readiness";
 import { formSettings, formRecipients, submitEnquiry } from "@/lib/forms";
@@ -214,6 +226,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           email: z.email().transform((v) => v.toLowerCase().trim()),
           password: z.string().min(1).max(128),
           confirmPassword: z.string().optional(),
+          code: z.string().max(32).optional(),
           name: z.string().min(2).max(100).optional(),
         })
         .parse(await req.json());
@@ -233,14 +246,38 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return ok({ success: true }, 201);
       }
       if (id === "login") {
-        const [u] = await query<{ id: string; password: string }>(
-          "SELECT id,password FROM users WHERE email=$1",
+        const [u] = await query<{
+          id: string;
+          password: string;
+          mfa_enabled: boolean;
+          role: string;
+        }>(
+          "SELECT id,password,mfa_secret IS NOT NULL AS mfa_enabled,role FROM users WHERE email=$1",
           [body.email],
         );
         if (!u || !verifyPassword(body.password, u.password))
           return fail("Email or password is incorrect", 401);
-        await session(u.id);
-        return ok({ success: true });
+        if (
+          u.mfa_enabled &&
+          (!body.code || !(await consumeSecondFactor(u.id, body.code)))
+        )
+          return ok(
+            {
+              error:
+                "Enter a fresh authenticator code or unused recovery code.",
+              mfaRequired: true,
+            },
+            401,
+          );
+        await session(u.id, u.mfa_enabled);
+        await audit(u.id, "account.login", u.id);
+        return ok({
+          success: true,
+          next:
+            u.role === "super_admin" && !u.mfa_enabled
+              ? "/account/security"
+              : "/dashboard",
+        });
       }
       return fail("Not found", 404);
     }
@@ -257,46 +294,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Invalid signature", 401);
       const event = JSON.parse(raw);
       if (event.event !== "charge.success") return ok({ received: true });
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        const {
-          rows: [payment],
-        } = await client.query(
-          "SELECT * FROM billing WHERE reference=$1 FOR UPDATE",
-          [event.data.reference],
-        );
-        if (
-          !payment ||
-          payment.amount !== event.data.amount ||
-          payment.currency !== event.data.currency ||
-          event.data.status !== "success"
-        ) {
-          await client.query("ROLLBACK");
-          return fail("Payment does not match", 400);
-        }
-        if (payment.status !== "paid") {
-          await client.query(
-            "UPDATE billing SET status='paid' WHERE reference=$1",
-            [payment.reference],
-          );
-          await client.query(
-            "UPDATE sites SET subscription='active',billing_interval=$2,paid_until=GREATEST(COALESCE(paid_until,now()),now())+CASE WHEN $2='annual' THEN interval '1 year'+$3*interval '1 month' ELSE interval '1 month' END WHERE id=$1",
-            [payment.site_id, payment.interval, payment.bonus_months],
-          );
-          await client.query(
-            "INSERT INTO audit(actor,action,target) VALUES($1,$2,$3)",
-            ["paystack", "subscription.activated", payment.site_id],
-          );
-        }
-        await client.query("COMMIT");
-        return ok({ received: true });
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
-      } finally {
-        client.release();
-      }
+      await confirmSubscriptionPayment(event.data);
+      return ok({ received: true });
     }
     if (area === "media" && method === "GET") {
       if (!z.uuid().safeParse(id).success) return fail("Not found", 404);
@@ -312,10 +311,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
       if (m) return await mediaResponse(m);
       const u = await user();
-      if (!u) return fail("Not found", 404);
+      if (!u || (u.mfa_enabled && !u.mfa_verified))
+        return fail("Not found", 404);
       const [privateMedia] = await query<StoredMedia>(
         "SELECT m.* FROM media m LEFT JOIN sites s ON s.id=m.site_id WHERE m.id=$1 AND (s.owner_id=$2 OR (m.site_id IS NULL AND $3=\'super_admin\'))",
-        [id, u.id, u.role],
+        [id, u.id, u.mfa_enabled && u.mfa_verified ? u.role : "owner"],
       );
       return privateMedia
         ? await mediaResponse(privateMedia)
@@ -331,6 +331,22 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
     const u = await user();
     if (!u) return fail("Please sign in", 401);
+    if (area === "security") return await securityApi(req, u, id);
+    if (u.mfa_enabled && !u.mfa_verified)
+      return fail("Sign in with your authenticator to continue.", 401);
+    if (
+      ["admin", "platform-admin", "kyb-admin", "marketing"].includes(area) &&
+      u.role === "super_admin" &&
+      (!u.mfa_enabled || !u.mfa_verified)
+    )
+      return ok(
+        {
+          error:
+            "Enable two-factor authentication in Account security before administering the platform.",
+          code: "ADMIN_MFA_REQUIRED",
+        },
+        403,
+      );
     const extension = await extensionsApi(req, u, path);
     if (extension) return extension;
     if (area === "me") return ok(u);
@@ -407,6 +423,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return fail("Choose a template for your website type.");
       const industry =
         b.industry || (b.category === "commerce" ? "retail" : "general");
+      if (!compatibleTemplate(b.template, b.category, industry))
+        return fail("Choose a template matching your business industry.");
       if (
         !(
           await query(
@@ -493,15 +511,24 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       [id, u.id],
     );
     if (!site) return fail("Website not found", 404);
-    if (kind === "ai") return aiApi(req, site, u.id, recordId);
-    if (kind === "business") return businessSettings(req, id);
+    if (kind === "billing-history" && method === "GET")
+      return ok(await billingLifecycle(id));
+    if (kind === "renewal" && method === "POST") {
+      const b = z
+        .object({ enabled: z.boolean(), consent: z.literal(true) })
+        .parse(await req.json());
+      await setRenewal(site.subscription_site_id || id, u.id, b.enabled);
+      return ok({ success: true });
+    }
+    if (kind === "ai") return await aiApi(req, site, u.id, recordId);
+    if (kind === "business") return await businessSettings(req, id);
     if (kind === "readiness" && method === "GET")
       return ok(await readiness(site));
     if (kind === "modules" && method === "GET")
       return ok(await availableModules(site));
-    if (kind === "forms") return formSettings(req, id, u.id, recordId);
+    if (kind === "forms") return await formSettings(req, id, u.id, recordId);
     if (kind === "recipients")
-      return formRecipients(req, site, u.id, recordId);
+      return await formRecipients(req, site, u.id, recordId);
     if (
       collectionKinds.includes(kind) &&
       !(await industryFor(site))?.collections[kind]
@@ -519,6 +546,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           brand: brandSchema,
           sections: z.array(sectionSchema).max(15),
           template: z.enum(templateIds),
+          revision: z.number().int().nonnegative().default(0),
         })
         .parse(await req.json());
       if (!entitled(site.tier, "video") && containsVideo(b))
@@ -527,7 +555,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         section.body = safeHtml(section.body);
       });
       if (
-        templateManifests[b.template].category !== site.category &&
+        !compatibleTemplate(b.template, site.category, site.industry_id) &&
         b.template !== site.data.template
       )
         return fail("Choose a template for your website type.");
@@ -557,12 +585,23 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         )
           return fail("Choose images from this website’s media library", 403);
       }
-      await query(
-        "UPDATE sites SET data=$1,name=$2 WHERE id=$3 AND owner_id=$4",
-        [JSON.stringify(b), b.brand.name, id, u.id],
+      const updated = await query(
+        "UPDATE sites SET data=$1,name=$2 WHERE id=$3 AND owner_id=$4 AND COALESCE((data->>'revision')::int,0)=$5 RETURNING id",
+        [
+          JSON.stringify({ ...b, revision: b.revision + 1 }),
+          b.brand.name,
+          id,
+          u.id,
+          b.revision,
+        ],
       );
+      if (!updated.length)
+        return fail(
+          "This website changed in another session. Reload before saving; your current edits have not been applied.",
+          409,
+        );
       await audit(u.id, "site.draft.saved", id);
-      return ok({ success: true });
+      return ok({ success: true, revision: b.revision + 1 });
     }
     if (kind === "publish" && method === "POST") {
       if (!u.email_verified)
@@ -639,13 +678,14 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         );
       const reference = `sub_${randomUUID()}`;
       await query(
-        "INSERT INTO billing(reference,site_id,amount,interval,bonus_months) VALUES($1,$2,$3,$4,$5)",
+        "INSERT INTO billing(reference,site_id,amount,interval,bonus_months,payer_email) VALUES($1,$2,$3,$4,$5,$6)",
         [
           reference,
           site.subscription_site_id || id,
           amount,
           interval,
           interval === "annual" ? plan.bonus_months : 0,
+          u.email,
         ],
       );
       const r = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -670,7 +710,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (kind === "media-usage" && method === "GET")
       return ok(await mediaUsage(id));
     if (kind === "media" && ["PATCH", "DELETE"].includes(method))
-      return manageMedia(req, recordId, id, u.id);
+      return await manageMedia(req, recordId, id, u.id);
     if (kind === "media" && method === "GET")
       return ok(
         await query(
@@ -959,6 +999,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
       const data = {
         ...b,
+        revision: b.revision + 1,
         pageClass: pageClass(kind),
         body: safeHtml(b.body),
         author,
@@ -1030,12 +1071,15 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           );
         } else {
           const result = await client.query(
-            "UPDATE records SET data=$1 WHERE id=$2 AND site_id=$3 AND kind=$4",
-            [JSON.stringify(data), recordId, id, kind],
+            "UPDATE records SET data=$1 WHERE id=$2 AND site_id=$3 AND kind=$4 AND COALESCE((data->>'revision')::int,0)=$5",
+            [JSON.stringify(data), recordId, id, kind, b.revision],
           );
           if (!result.rowCount) {
             await client.query("ROLLBACK");
-            return fail("Record not found", 404);
+            return fail(
+              "This record changed or was removed. Reload it before saving; your edits have not been applied.",
+              409,
+            );
           }
         }
         await client.query("COMMIT");
@@ -1050,6 +1094,10 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     }
     return fail("Method not allowed", 405);
   } catch (error) {
+    if (error instanceof BillingStateError)
+      return fail(error.message, error.status);
+    if ((error as { code?: string }).code === "P0001")
+      return fail((error as Error).message, 409);
     if (error instanceof StorageQuotaError) return fail(error.message, 413);
     if (error instanceof z.ZodError)
       return fail(error.issues[0]?.message || "Invalid input");

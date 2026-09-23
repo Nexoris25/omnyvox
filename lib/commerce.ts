@@ -20,7 +20,7 @@ export function encrypt(secret: string) {
   const bytes = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
   return `${iv.toString("hex")}:${cipher.getAuthTag().toString("hex")}:${bytes.toString("hex")}`;
 }
-function decrypt(secret: string) {
+export function decrypt(secret: string) {
   const [iv, tag, bytes] = secret.split(":");
   const cipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "hex"));
   cipher.setAuthTag(Buffer.from(tag, "hex"));
@@ -29,7 +29,10 @@ function decrypt(secret: string) {
     cipher.final(),
   ]).toString("utf8");
 }
-export async function checkout(input: unknown) {
+export async function checkout(
+  input: unknown,
+  transport: typeof fetch = fetch,
+) {
   const b = z
     .object({
       site: z.uuid(),
@@ -81,7 +84,7 @@ export async function checkout(input: unknown) {
       amount += p.data.price * item.quantity;
       items.push({ ...item, price: p.data.price, title: p.data.title });
       await client.query(
-        "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb($1::int)) WHERE id=$2",
+        "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb($1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2",
         [p.data.stock - item.quantity, item.id],
       );
     }
@@ -110,27 +113,55 @@ export async function checkout(input: unknown) {
     client.release();
   }
   try {
-    const r = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        "Content-Type": "application/json",
+    const r = await transport(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        method: "POST",
+        redirect: "error",
+        signal: AbortSignal.timeout(15000),
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reference,
+          amount,
+          currency: "NGN",
+          email: b.email,
+          callback_url: `${process.env.APP_URL}/order/${reference}`,
+        }),
       },
-      body: JSON.stringify({
-        reference,
-        amount,
-        currency: "NGN",
-        email: b.email,
-        callback_url: `${process.env.APP_URL}/order/${reference}`,
-      }),
-    });
+    );
     const response = await r.json();
-    if (!r.ok || !response.status)
+    if (r.status >= 400 && r.status < 500 && response.status === false) {
+      await cancelUnpaidOrder(b.site, reference);
       throw new Error("The payment provider could not start this payment.");
+    }
+    if (
+      !r.ok ||
+      response.status !== true ||
+      response.data?.reference !== reference
+    )
+      throw new Error("Payment initialization needs verification.");
+    const destination = new URL(response.data.authorization_url);
+    if (
+      destination.protocol !== "https:" ||
+      destination.hostname !== "checkout.paystack.com" ||
+      destination.username ||
+      destination.password
+    )
+      throw new Error("Unexpected payment destination.");
     return { url: response.data.authorization_url, reference };
-  } catch (e) {
-    await cancelUnpaidOrder(b.site, reference);
-    throw e;
+  } catch {
+    await query(
+      "UPDATE orders SET reconcile_error='Payment initialization needs verification',reconcile_after=now()+interval '5 minutes' WHERE reference=$1 AND payment_status='pending'",
+      [reference],
+    );
+    throw new Error(
+      "Payment could not be opened. Please contact the store with order reference " +
+        reference +
+        " before trying again.",
+    );
   }
 }
 export async function cancelUnpaidOrder(site: string, reference: string) {
@@ -144,14 +175,20 @@ export async function cancelUnpaidOrder(site: string, reference: string) {
       [site, reference],
     );
     if (order) {
-      for (const item of order.items)
+      for (const item of [...order.items].sort((a, b) =>
+        a.id.localeCompare(b.id),
+      ))
         await client.query(
-          "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb((data->>'stock')::int+$1::int)) WHERE id=$2 AND site_id=$3",
+          "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb((data->>'stock')::int+$1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2 AND site_id=$3",
           [item.quantity, item.id, site],
         );
       await client.query(
         "UPDATE orders SET payment_status='cancelled' WHERE reference=$1",
         [reference],
+      );
+      await client.query(
+        "INSERT INTO order_events(order_id,actor,event) VALUES($1,'system','reservation.released')",
+        [order.id],
       );
     }
     await client.query("COMMIT");
@@ -181,6 +218,19 @@ export async function merchantWebhook(
     throw new Error("Invalid signature");
   const event = JSON.parse(raw);
   if (event.event !== "charge.success") return;
+  await confirmStorePayment(site, event.data);
+}
+
+/** Shared by authenticated webhooks and server-side provider reconciliation. */
+export async function confirmStorePayment(
+  site: string,
+  payment: {
+    reference: string;
+    amount: number;
+    currency: string;
+    status: string;
+  },
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -188,13 +238,13 @@ export async function merchantWebhook(
       rows: [order],
     } = await client.query(
       "SELECT * FROM orders WHERE reference=$1 AND site_id=$2 FOR UPDATE",
-      [event.data.reference, site],
+      [payment.reference, site],
     );
     if (
       !order ||
-      order.amount !== event.data.amount ||
-      order.currency !== event.data.currency ||
-      event.data.status !== "success"
+      order.amount !== payment.amount ||
+      order.currency !== payment.currency ||
+      payment.status !== "success"
     )
       throw new Error("Payment mismatch");
     if (order.payment_status === "pending")
@@ -206,6 +256,16 @@ export async function merchantWebhook(
       await client.query(
         "UPDATE orders SET payment_status='review_required' WHERE reference=$1",
         [order.reference],
+      );
+    if (["pending", "cancelled"].includes(order.payment_status))
+      await client.query(
+        "INSERT INTO order_events(order_id,actor,event) VALUES($1,'provider',$2)",
+        [
+          order.id,
+          order.payment_status === "pending"
+            ? "payment.confirmed"
+            : "payment.late_review_required",
+        ],
       );
     await client.query("COMMIT");
   } catch (e) {

@@ -380,7 +380,8 @@ export default async function Page({ params, searchParams }: Props) {
                   preview={preview}
                   site={site.id}
                   base={base}
-                  products={[record]}
+                  products={content.filter((r) => r.kind === "products")}
+                  featuredProductId={record.id}
                   hideImages
                   delivery={merchant?.delivery || 0}
                 />

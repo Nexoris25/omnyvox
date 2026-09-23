@@ -489,9 +489,10 @@ try {
     ).status === 403,
     "Marketing CMS denies ordinary owners",
   );
-  await db.query("UPDATE users SET role='super_admin' WHERE email=$1", [
+  await db.query("UPDATE users SET role='super_admin',mfa_secret='isolated-test-fixture' WHERE email=$1", [
     a.email,
   ]);
+  await db.query("UPDATE sessions SET mfa_verified=true WHERE user_id=(SELECT id FROM users WHERE email=$1)",[a.email]);
   const inbox = await call(
     "platform-admin/support",
     "GET",

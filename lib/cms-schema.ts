@@ -2,6 +2,7 @@ import { z } from "zod";
 import { sectionSchema, indexingSchema, imagePath } from "./model";
 import { policyTypes } from "./legal-policies";
 export const contentSchema = z.object({
+  revision: z.number().int().nonnegative().default(0),
   details: z
     .array(
       z.object({

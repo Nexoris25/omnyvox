@@ -2,7 +2,7 @@ import { marketingMetadata } from "@/lib/marketing";
 import Link from "next/link";
 import { MarketingShell } from "@/components/marketing-shell";
 import { marketingContent } from "@/lib/marketing";
-import { plainText } from "@/lib/content";
+import { InsightCard } from "@/components/insight-card";
 export async function generateMetadata() {
   return marketingMetadata(
     "Insights & guides",
@@ -15,7 +15,10 @@ export default async function Page({
   searchParams: Promise<{ category?: string }>;
 }) {
   const category = (await searchParams).category;
-  const all = await marketingContent("articles");
+  const [all, authors] = await Promise.all([
+    marketingContent("articles"),
+    marketingContent("authors"),
+  ]);
   const articles = all.filter((a) => !category || a.data.category === category);
   return (
     <MarketingShell>
@@ -41,21 +44,11 @@ export default async function Page({
         </nav>
         <div className="insights-grid">
           {articles.map((a) => (
-            <article className="insight-card" key={a.id}>
-              <Link href={"/insights/" + a.data.slug}>
-                <div>
-                  <span className="eyebrow">
-                    {a.data.category.replaceAll("-", " ")}
-                  </span>
-                  <h2>{a.data.title}</h2>
-                  <p>{plainText(a.data.body).slice(0, 145)}…</p>
-                  <small>
-                    By {a.data.author} ·{" "}
-                    {new Date(a.created_at).toLocaleDateString("en-NG")}
-                  </small>
-                </div>
-              </Link>
-            </article>
+            <InsightCard
+              key={a.id}
+              article={a}
+              author={authors.find((author) => author.id === a.data.authorId)}
+            />
           ))}
         </div>
         {!articles.length && (

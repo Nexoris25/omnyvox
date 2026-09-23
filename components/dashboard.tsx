@@ -36,6 +36,7 @@ import {
   Tablet,
 } from "lucide-react";
 import { BillingSummary } from "./billing-summary";
+import { BillingHistory } from "./billing-history";
 import { BrandSettings, RobotsSettings } from "./brand-settings";
 import { RecordExtras } from "./record-extras";
 import { NavigationEditor } from "./navigation-editor";
@@ -51,7 +52,12 @@ import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { ScaledPreview } from "./scaled-preview";
-import { templates, templateManifests, templateIds } from "@/lib/templates";
+import {
+  templates,
+  templateManifests,
+  templateIds,
+  compatibleTemplate,
+} from "@/lib/templates";
 import {
   TemplateCard,
   TemplatePickerGrid,
@@ -95,6 +101,7 @@ const demoSite: Site = {
 type Row = {
   id: string;
   data: {
+    revision?: number;
     title: string;
     slug: string;
     body: string;
@@ -179,7 +186,12 @@ export function Dashboard({ section }: { section: string }) {
     ]).then(
       ([legal, facts]: [
         { data: { title: string } }[],
-        { phone?: string; address?: string; showAddress?: boolean; hours?: string },
+        {
+          phone?: string;
+          address?: string;
+          showAddress?: boolean;
+          hours?: string;
+        },
       ]) =>
         setPreviewExtras({
           legal: legal.map((l) => ({ title: l.data.title, href: "#" })),
@@ -314,7 +326,16 @@ export function Dashboard({ section }: { section: string }) {
   }
   async function save() {
     await action(async () => {
-      if (!demo) await api(`sites/${site.id}`, "PATCH", site.data);
+      if (!demo) {
+        const saved = await api(`sites/${site.id}`, "PATCH", site.data);
+        setSites((all) =>
+          all.map((s) =>
+            s.id === site.id
+              ? { ...s, data: { ...s.data, revision: saved.revision } }
+              : s,
+          ),
+        );
+      }
       setMessage(
         demo
           ? "Saved in this demo session."
@@ -330,7 +351,14 @@ export function Dashboard({ section }: { section: string }) {
         );
         return;
       }
-      await api(`sites/${site.id}`, "PATCH", site.data);
+      const saved = await api(`sites/${site.id}`, "PATCH", site.data);
+      setSites((all) =>
+        all.map((s) =>
+          s.id === site.id
+            ? { ...s, data: { ...s.data, revision: saved.revision } }
+            : s,
+        ),
+      );
       await api(`sites/${site.id}/publish`, "POST");
       setSites(await api("sites"));
       setMessage("Your website is published.");
@@ -466,7 +494,10 @@ export function Dashboard({ section }: { section: string }) {
               </label>
               <div className="field full">
                 <span className="field-label">Starting template</span>
-                <p className="muted" style={{ fontSize: 12, margin: "0 0 4px" }}>
+                <p
+                  className="muted"
+                  style={{ fontSize: 12, margin: "0 0 4px" }}
+                >
                   Matched to your industry — change it any time later.
                 </p>
                 <TemplatePickerGrid
@@ -519,6 +550,7 @@ export function Dashboard({ section }: { section: string }) {
     const form = Object.fromEntries(new FormData(e.currentTarget));
     const data = {
       ...form,
+      revision: Number(editRow?.data.revision || 0),
       policyReviewed: form.policyReviewed === "on",
       title: String(form.title || ""),
       slug: String(form.slug || ""),
@@ -618,6 +650,7 @@ export function Dashboard({ section }: { section: string }) {
           })}
         </nav>
         <div className="sidebar-bottom">
+          <Link href="/account/security">Account security</Link>
           <Link href={href("services")}>
             <Headphones size={17} />
             Professional setup
@@ -1470,7 +1503,11 @@ export function Dashboard({ section }: { section: string }) {
                           .filter(
                             (t) =>
                               !site ||
-                              templateManifests[t].category === site.category,
+                              compatibleTemplate(
+                                t,
+                                site.category,
+                                site.industry_id,
+                              ),
                           )
                           .map((t) => (
                             <TemplateCard
@@ -1784,6 +1821,7 @@ export function Dashboard({ section }: { section: string }) {
                                 margin: "30px 0",
                               }}
                             />
+                            {!demo && <BillingHistory site={site.id} />}
                             <h3 style={{ fontSize: 17 }}>
                               Your data stays yours.
                             </h3>
@@ -1864,7 +1902,13 @@ export function Dashboard({ section }: { section: string }) {
                 recordId={editRow.id}
                 onRestore={(data) => {
                   setRecordModal(false);
-                  setEditRow({ ...editRow, data: data as Row["data"] });
+                  setEditRow({
+                    ...editRow,
+                    data: {
+                      ...(data as Row["data"]),
+                      revision: editRow.data.revision,
+                    },
+                  });
                   setTimeout(() => setRecordModal(true), 0);
                 }}
               />

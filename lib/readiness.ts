@@ -2,8 +2,27 @@ import { query } from "./db";
 import { initialSections, usesSampleImage, type Site } from "./model";
 import { siteEntitlements } from "./entitlements";
 import { legalSetFor, policies } from "./legal-policies";
+import { industryFor } from "./industry";
+import { pageReadiness } from "./page-readiness";
+import { compatibleTemplate } from "./templates";
 export async function readiness(site: Site) {
   const issues: string[] = [];
+  const industry = await industryFor(site);
+  const records = await query<{
+    id: string;
+    kind: string;
+    data: { slug: string; status: string; category?: string };
+  }>("SELECT id,kind,data FROM records WHERE site_id=$1", [site.id]);
+  issues.push(
+    ...pageReadiness(
+      site,
+      industry?.core_pages || [],
+      Object.keys(industry?.collections || {}),
+      records,
+    ),
+  );
+  if (!compatibleTemplate(site.data.template, site.category, site.industry_id))
+    issues.push("Choose a template matching your business industry.");
   const [profile] = await query<{
     data: {
       summary?: string;
@@ -43,7 +62,9 @@ export async function readiness(site: Site) {
     if (
       !policy.some((p) => p.data.policyType === type && p.data.policyReviewed)
     )
-      issues.push(`Review and publish your ${policies[type].title.toLowerCase()}.`);
+      issues.push(
+        `Review and publish your ${policies[type].title.toLowerCase()}.`,
+      );
   if (site.category === "commerce") {
     if (
       !(
@@ -88,6 +109,8 @@ export async function readiness(site: Site) {
       `Review the starter content in: ${unreviewed.map((s) => s.title || s.type).join(", ")}.`,
     );
   if (visible.some(usesSampleImage))
-    issues.push("Replace the sample images on your homepage with your own photographs.");
+    issues.push(
+      "Replace the sample images on your homepage with your own photographs.",
+    );
   return { ready: issues.length === 0, issues, contentPages: count.total + 1 };
 }

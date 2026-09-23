@@ -1,3 +1,4 @@
+import { InsightCard } from "@/components/insight-card";
 import { marketingMetadata, marketingContent } from "@/lib/marketing";
 import { MarketingShell } from "@/components/marketing-shell";
 import Link from "next/link";
@@ -30,6 +31,7 @@ export async function generateMetadata() {
   );
 }
 export default async function Home() {
+  const authors = await marketingContent("authors");
   const articles = (await marketingContent("articles")).slice(0, 3);
   return (
     <MarketingShell>
@@ -323,17 +325,11 @@ export default async function Home() {
           </div>
           <div className="insights-grid">
             {articles.map((a) => (
-              <article className="insight-card" key={a.id}>
-                <Link href={"/insights/" + a.data.slug}>
-                  <div>
-                    <span className="eyebrow">
-                      {a.data.category.replaceAll("-", " ")}
-                    </span>
-                    <h2>{a.data.title}</h2>
-                    <small>By {a.data.author}</small>
-                  </div>
-                </Link>
-              </article>
+              <InsightCard
+                key={a.id}
+                article={a}
+                author={authors.find((author) => author.id === a.data.authorId)}
+              />
             ))}
           </div>
         </section>

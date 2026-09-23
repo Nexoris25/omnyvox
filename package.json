@@ -17,6 +17,8 @@
     "worker:email": "node --env-file=.env.local scripts/send-email.mjs",
     "test:recipients": "node --import tsx scripts/recipients-test.ts",
     "test:provision": "node --import tsx scripts/provision-test.ts",
+    "test:security": "node --import tsx scripts/launch-readiness-test.ts",
+    "test:billing": "node --import tsx scripts/billing-lifecycle-test.ts",
     "samples:generate": "tsx scripts/generate-samples.ts"
   },
   "dependencies": {

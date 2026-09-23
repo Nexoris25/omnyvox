@@ -227,7 +227,12 @@ export type Site = {
   service_until?: string;
   billing_interval?: string;
   subscription_site_id?: string | null;
-  data: { brand: Brand; sections: Section[]; template: string };
+  data: {
+    brand: Brand;
+    sections: Section[];
+    template: string;
+    revision?: number;
+  };
   published: Site["data"] | null;
 };
 export function articlePath(

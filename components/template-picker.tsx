@@ -1,6 +1,10 @@
 "use client";
 import { Check } from "lucide-react";
-import { templates, templateManifests } from "@/lib/templates";
+import {
+  templates,
+  templateManifests,
+  compatibleTemplate,
+} from "@/lib/templates";
 import { starterImage, templateIndustry } from "@/lib/brand-assets";
 export function TemplateCard({
   id,
@@ -93,11 +97,7 @@ export function templateOptions(
   industry?: string,
 ) {
   return templates
-    .filter(
-      (t) =>
-        templateManifests[t.id as keyof typeof templateManifests].category ===
-        category,
-    )
+    .filter((t) => compatibleTemplate(t.id, category, industry))
     .sort((a, b) => {
       const matches = (id: string) =>
         industry

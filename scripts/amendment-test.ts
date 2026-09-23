@@ -25,6 +25,16 @@ async function account(role = "owner") {
     "INSERT INTO sessions(token,user_id,expires) VALUES($1,$2,now()+interval '1 hour')",
     [createHash("sha256").update(token).digest("hex"), u.id],
   );
+  // Authentication itself is exercised by launch-readiness-test.ts.
+  if (role === "super_admin") {
+    await query(
+      "UPDATE users SET mfa_secret='isolated-test-fixture' WHERE id=$1",
+      [u.id],
+    );
+    await query("UPDATE sessions SET mfa_verified=true WHERE user_id=$1", [
+      u.id,
+    ]);
+  }
   return { id: u.id, cookie: `omnyvox_session=${token}` };
 }
 async function call(path: string, method = "GET", body?: unknown, cookie = "") {
@@ -52,7 +62,7 @@ try {
       category: "corporate",
       tier: "basic",
       industry: "legal",
-      template: "studio",
+      template: "trust",
     },
     a.cookie,
   );
@@ -178,11 +188,11 @@ try {
     r.data.slug.startsWith("page-"),
   );
   const publication = await Promise.all(
-    rows.map((r: { id: string; data: unknown }) =>
+    rows.map((r: { id: string; data: { revision?: number } }) =>
       call(
         `sites/${site}/pages/${r.id}`,
         "PATCH",
-        { ...page, slug: r.id, status: "published" },
+        { ...page, revision: r.data.revision, slug: r.id, status: "published" },
         a.cookie,
       ),
     ),

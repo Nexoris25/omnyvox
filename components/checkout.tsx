@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readCart } from "@/lib/cart";
 type Product = {
   id: string;
   data: {
@@ -19,6 +20,7 @@ export function StoreCheckout({
   base = "",
   hideImages = false,
   preview = false,
+  featuredProductId,
 }: {
   site: string;
   products: Product[];
@@ -26,6 +28,7 @@ export function StoreCheckout({
   base?: string;
   hideImages?: boolean;
   preview?: boolean;
+  featuredProductId?: string;
 }) {
   const [cart, setCart] = useState<Record<string, number>>({}),
     [message, setMessage] = useState(""),
@@ -33,6 +36,23 @@ export function StoreCheckout({
     [search, setSearch] = useState(""),
     [category, setCategory] = useState(""),
     [sort, setSort] = useState("name");
+  const [loadedSite, setLoadedSite] = useState("");
+  useEffect(() => {
+    try {
+      setCart(readCart(localStorage.getItem(`omnyvox:cart:${site}`)));
+    } catch {
+      setCart({});
+    }
+    setLoadedSite(site);
+  }, [site]);
+  useEffect(() => {
+    if (loadedSite !== site || preview) return;
+    try {
+      localStorage.setItem(`omnyvox:cart:${site}`, JSON.stringify(cart));
+    } catch {
+      /* Private browsing can disable storage; checkout still works. */
+    }
+  }, [cart, loadedSite, site, preview]);
   const selected = products.filter((p) => cart[p.id] > 0);
   if (preview)
     return (
@@ -112,6 +132,7 @@ export function StoreCheckout({
         ) && <p>No matching products. Try another search or category.</p>}
       <div className="template-grid">
         {products
+          .filter((p) => !featuredProductId || p.id === featuredProductId)
           .filter(
             (p) =>
               p.data.title.toLowerCase().includes(search.toLowerCase()) &&
@@ -155,7 +176,8 @@ export function StoreCheckout({
                       ...cart,
                       [p.id]: Math.min(
                         p.data.stock || 0,
-                        Math.max(0, Number(e.target.value)),
+                        50,
+                        Math.max(0, Math.floor(Number(e.target.value) || 0)),
                       ),
                     })
                   }
@@ -207,6 +229,14 @@ export function StoreCheckout({
             <p key={p.id}>
               {cart[p.id]} × {p.data.title} —{" "}
               {format((p.data.price || 0) * cart[p.id])}
+              <button
+                type="button"
+                className="button secondary small"
+                aria-label={`Remove ${p.data.title} from cart`}
+                onClick={() => setCart({ ...cart, [p.id]: 0 })}
+              >
+                Remove
+              </button>
             </p>
           ))}
           <p>Delivery: {format(delivery)}</p>

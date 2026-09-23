@@ -1,3 +1,4 @@
+import { AuthorAvatar } from "@/components/insight-card";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MarketingShell } from "@/components/marketing-shell";
@@ -43,21 +44,30 @@ export default async function Page({
     (a) => a.data.slug === slug,
   );
   if (!a) notFound();
+  const author = (await marketingContent("authors")).find(
+    (item) => item.id === a.data.authorId,
+  );
   return (
     <MarketingShell>
       <main id="main" className="article-page">
         <Link href="/insights">← All insights</Link>
         <span className="eyebrow">{a.data.category}</span>
         <h1>{a.data.title}</h1>
-        <p>
-          By{" "}
-          {a.data.authorId ? (
-            <Link href={"/authors/" + a.data.authorId}>{a.data.author}</Link>
-          ) : (
-            a.data.author
-          )}{" "}
-          · {new Date(a.created_at).toLocaleDateString("en-NG")}
-        </p>
+        <div className="article-byline">
+          <AuthorAvatar
+            author={author}
+            name={author?.data.title || a.data.author}
+          />
+          <p>
+            By{" "}
+            {a.data.authorId ? (
+              <Link href={"/authors/" + a.data.authorId}>{a.data.author}</Link>
+            ) : (
+              a.data.author
+            )}{" "}
+            · {new Date(a.created_at).toLocaleDateString("en-NG")}
+          </p>
+        </div>
         {a.data.image && (
           <img
             className="editorial-photo"

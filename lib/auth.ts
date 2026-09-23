@@ -12,6 +12,7 @@ export function hashPassword(password: string) {
 }
 export function verifyPassword(password: string, stored: string) {
   const [salt, hash] = stored.split(":");
+  if (!salt || !hash || !/^[a-f0-9]{128}$/i.test(hash)) return false;
   return timingSafeEqual(
     Buffer.from(hash, "hex"),
     scryptSync(password, salt, 64),
@@ -26,17 +27,20 @@ export async function user() {
     email: string;
     role: string;
     email_verified: boolean;
+    mfa_enabled: boolean;
+    mfa_verified: boolean;
+    session_id: string;
   }>(
-    "SELECT u.id,u.name,u.email,u.role,u.email_verified FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now()",
+    "SELECT u.id,u.name,u.email,u.role,u.email_verified,u.mfa_secret IS NOT NULL AS mfa_enabled,s.mfa_verified,s.id AS session_id FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now()",
     [createHash("sha256").update(token).digest("hex")],
   );
   return u ?? null;
 }
-export async function session(id: string) {
+export async function session(id: string, mfaVerified = false) {
   const token = randomBytes(32).toString("hex");
   await query(
-    "INSERT INTO sessions(token,user_id,expires) VALUES($1,$2,now()+interval '7 days')",
-    [createHash("sha256").update(token).digest("hex"), id],
+    "INSERT INTO sessions(token,user_id,expires,mfa_verified) VALUES($1,$2,now()+interval '7 days',$3)",
+    [createHash("sha256").update(token).digest("hex"), id, mfaVerified],
   );
   (await cookies()).set("omnyvox_session", token, {
     httpOnly: true,

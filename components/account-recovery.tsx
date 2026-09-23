@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { Brand } from "./brand";
 import Link from "next/link";
+import { PasswordField } from "./password-field";
 export function AccountRecovery({
   mode,
 }: {
   mode: "verify" | "forgot" | "reset";
 }) {
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   return (
@@ -56,29 +58,18 @@ export function AccountRecovery({
           </label>
         )}
         {mode === "reset" && (
-          <label className="field">
-            New password
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              maxLength={128}
+          <>
+            <PasswordField
+              label="New password"
+              requirements
+              onValueChange={setPassword}
             />
-          </label>
-        )}
-        {mode === "reset" && (
-          <label className="field">
-            Confirm password
-            <input
+            <PasswordField
+              label="Confirm password"
               name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              required
+              confirmation={password}
             />
-          </label>
+          </>
         )}
         {message && (
           <p role="status" className="notice">

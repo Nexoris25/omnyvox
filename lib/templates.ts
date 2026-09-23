@@ -79,6 +79,18 @@ export const templateIds = [
   "catalogue",
   "essentials",
 ] as const;
+export function compatibleTemplate(
+  id: string,
+  category: string,
+  industry?: string,
+) {
+  const manifest = templateManifests[id as keyof typeof templateManifests];
+  return (
+    !!manifest &&
+    manifest.category === category &&
+    (!industry || (manifest.industries as readonly string[]).includes(industry))
+  );
+}
 export const templateManifests = {
   studio: {
     version: "1.1.0",
@@ -151,9 +163,6 @@ export const templateManifests = {
     category: "commerce",
     industries: ["food"],
     sections: ["hero", "text", "cta", "faq", "insights"],
-    references: [
-      "https://www.supermart.ng/",
-      "https://www.konga.com/",
-    ],
+    references: ["https://www.supermart.ng/", "https://www.konga.com/"],
   },
 } as const;

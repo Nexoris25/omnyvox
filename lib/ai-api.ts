@@ -90,6 +90,7 @@ export async function aiApi(
         );
         if (!target) throw Error("Target section no longer exists");
         target[field] = job.result.text;
+        current.data.revision = (current.data.revision || 0) + 1;
         await client.query("UPDATE sites SET data=$1 WHERE id=$2", [
           JSON.stringify(current.data),
           site.id,

@@ -1,36 +1,46 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Globe2, Palette, ShieldCheck } from "lucide-react";
 import { Brand } from "./brand";
+import { PasswordField } from "./password-field";
 export function AuthForm({ register = false }: { register?: boolean }) {
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError("");
     const data = Object.fromEntries(new FormData(e.currentTarget));
-    if (register) {
-      const q = new URLSearchParams(location.search);
-      sessionStorage.setItem(
-        "omnyvox-start",
-        JSON.stringify({
-          template: q.get("template"),
-          category: q.get("category"),
-          tier: q.get("tier"),
-        }),
-      );
-    }
     try {
+      if (register && data.password !== data.confirmPassword)
+        throw Error("Passwords must match.");
+      if (register) {
+        const q = new URLSearchParams(location.search);
+        try {
+          sessionStorage.setItem(
+            "omnyvox-start",
+            JSON.stringify({
+              template: q.get("template"),
+              category: q.get("category"),
+              tier: q.get("tier"),
+            }),
+          );
+        } catch {
+          /* Onboarding also works without browser storage. */
+        }
+      }
       const r = await fetch(`/api/auth/${register ? "register" : "login"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       const b = await r.json();
-      if (!r.ok) throw new Error(b.error);
-      location.href = register ? "/onboarding" : "/dashboard";
+      if (b.mfaRequired) setMfaRequired(true);
+      if (!r.ok) throw Error(b.error);
+      location.href = register ? "/onboarding" : b.next || "/dashboard";
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -39,28 +49,56 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   return (
     <main id="main" className="auth-layout">
       <section className="auth-story">
-        <span className="eyebrow" style={{ color: "#bf9eff" }}>
-          YOUR BUSINESS BELONGS HERE
-        </span>
+        <span className="eyebrow">YOUR BUSINESS. YOUR NEXT CHAPTER.</span>
         <h1>
-          A home for your business.
-          <br />
-          Room for your ambition.
+          Your ambition.
+          <br />A website to match.
         </h1>
         <p>
-          Create a website that feels like you. We’ll take care of what’s behind
-          it.
+          A professional website, a connected store and a simpler way to manage
+          it all. Built around your business.
         </p>
+        <div className="auth-benefits">
+          <div>
+            <Palette size={20} />
+            <span>
+              <strong>Make it unmistakably yours</strong>Templates, colours and
+              content for your brand.
+            </span>
+          </div>
+          <div>
+            <Globe2 size={20} />
+            <span>
+              <strong>One place to keep moving</strong>Your pages, products and
+              enquiries together.
+            </span>
+          </div>
+          <div>
+            <ShieldCheck size={20} />
+            <span>
+              <strong>Focus on your business</strong>Managed hosting and account
+              security built in.
+            </span>
+          </div>
+        </div>
         <small>Omnyvox by Nexoris Technologies Ltd.</small>
       </section>
       <section className="auth-form-wrap">
-        <Brand />
+        <div className="auth-topline">
+          <Brand />
+          <Link href="/">Back to website ↗</Link>
+        </div>
         <form onSubmit={submit} className="auth-form">
-          <h2>{register ? "Start your next chapter." : "Welcome back."}</h2>
+          <span className="eyebrow">
+            {register ? "GET STARTED" : "YOUR OMNYVOX WORKSPACE"}
+          </span>
+          <h2>
+            {register ? "Build your next chapter." : "Good to see you again."}
+          </h2>
           <p>
             {register
               ? "Create your account and find your starting point."
-              : "Your website. Your workspace. Right where you left it."}
+              : "Sign in to manage your website, store and customers."}
           </p>
           {error && (
             <div className="notice error" role="alert">
@@ -89,45 +127,36 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               placeholder="you@yourbusiness.com"
             />
           </label>
-          <label className="field">
-            Password
-            <input
-              type="password"
-              name="password"
-              autoComplete={register ? "new-password" : "current-password"}
-              required
-              minLength={register ? 8 : 1}
-              maxLength={128}
-              placeholder={
-                register
-                  ? "8+ characters, uppercase, number & symbol"
-                  : "Your password"
-              }
-            />
-          </label>
+          <PasswordField
+            autoComplete={register ? "new-password" : "current-password"}
+            requirements={register}
+            onValueChange={setPassword}
+          />
           {register && (
+            <PasswordField
+              label="Confirm password"
+              name="confirmPassword"
+              confirmation={password}
+            />
+          )}
+          {!register && mfaRequired && (
             <label className="field">
-              Confirm password
+              Authenticator or recovery code
               <input
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                maxLength={128}
+                name="code"
+                autoComplete="one-time-code"
+                maxLength={32}
                 required
               />
             </label>
           )}
           {!register && (
-            <Link
-              href="/forgot-password"
-              style={{ fontSize: 12, color: "var(--primary)" }}
-            >
+            <Link href="/forgot-password" className="auth-forgot">
               Forgot your password?
             </Link>
           )}
           {register && (
-            <p className="muted" style={{ fontSize: 11 }}>
+            <p className="muted auth-note">
               Pre-launch workspace access is free. Paid subscriptions and public
               publishing open when commercial plans are configured.
             </p>
