@@ -33,6 +33,7 @@ export async function platformAdmin(
         const {rows:[target]}=await client.query("UPDATE users SET role=$2 WHERE id=$1 AND id<>$3 AND role<>'super_admin' AND email_verified=true RETURNING email",[b.userId,b.role,u.id]);
         if(!target){await client.query('ROLLBACK');return response({error:'Choose a verified account other than yourself or a super-admin.'},409);}
         await client.query('DELETE FROM sessions WHERE user_id=$1',[b.userId]);
+        await client.query("UPDATE account_recovery_cases SET status='cancelled',pending_secret=NULL,token_hash=NULL WHERE user_id=$1 AND status IN ('requested','cooldown','ready')",[b.userId]);
         await client.query("INSERT INTO audit(actor,action,target) VALUES($1,$2,$3)",[u.id,'staff.role.'+b.role,b.userId]);
         await client.query("INSERT INTO email_outbox(recipient,subject,body) VALUES($1,'Your Omnyvox access changed',$2)",[target.email,`Your platform role is now ${b.role}. Sign in again. Staff roles require two-factor authentication.`]);
         await client.query('COMMIT');return response({success:true});

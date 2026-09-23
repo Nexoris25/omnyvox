@@ -35,7 +35,9 @@ export async function assistedRecovery(req:NextRequest,action:string){
    if(cancelled)await c.query("INSERT INTO audit(actor,action,target) VALUES($1,'recovery.cancelled',$2)",[cancelled.user_id,cancelled.id]);
    await c.query('COMMIT');return json({message:'Any active request matching this link has been cancelled.'});
   }
-  const {rows:[item]}=await c.query("SELECT r.*,u.password,u.email FROM account_recovery_cases r JOIN users u ON u.id=r.user_id WHERE r.token_hash=$1 AND r.status='ready' AND r.token_expires>now() FOR UPDATE OF r,u",[hash(b.token)]);
+  const {rows:[candidate]}=await c.query('SELECT user_id FROM account_recovery_cases WHERE token_hash=$1',[hash(b.token)]);
+  if(candidate)await c.query('SELECT id FROM users WHERE id=$1 FOR UPDATE',[candidate.user_id]);
+  const {rows:[item]}=await c.query("SELECT r.*,u.password,u.email FROM account_recovery_cases r JOIN users u ON u.id=r.user_id WHERE r.token_hash=$1 AND r.status='ready' AND r.token_expires>now() FOR UPDATE OF r",[hash(b.token)]);
   if(!item||!b.password||!verifyPassword(b.password,item.password)){await c.query('ROLLBACK');return json({error:'This recovery link or password is invalid. Request assistance if the link expired.'},403);}
   if(action==='setup'){
    const secret=newTotpSecret();await c.query('UPDATE account_recovery_cases SET pending_secret=$2 WHERE id=$1',[item.id,encrypt(secret)]);await c.query('COMMIT');return json({secret});
@@ -71,7 +73,7 @@ export async function reviewRecovery(req:NextRequest,actor:{id:string;role:strin
  }catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}
 }
 export async function dispatchRecoveryLinks(){
- const c=await pool.connect();try{await c.query('BEGIN');const {rows}=await c.query("SELECT r.id,u.email FROM account_recovery_cases r JOIN users u ON u.id=r.user_id WHERE r.status='cooldown' AND r.ready_at<=now() FOR UPDATE OF r SKIP LOCKED LIMIT 20");
+ const c=await pool.connect();try{await c.query('BEGIN');await c.query("WITH expired AS (UPDATE account_recovery_cases SET status='cancelled',pending_secret=NULL,token_hash=NULL WHERE status='ready' AND token_expires<=now() RETURNING id,user_id) INSERT INTO audit(actor,action,target) SELECT user_id::text,'recovery.expired',id::text FROM expired");const {rows}=await c.query("SELECT r.id,u.email FROM account_recovery_cases r JOIN users u ON u.id=r.user_id WHERE r.status='cooldown' AND r.ready_at<=now() FOR UPDATE OF r SKIP LOCKED LIMIT 20");
  for(const item of rows){const token=randomBytes(32).toString('hex');const url=new URL('/account/recover',process.env.APP_URL);url.searchParams.set('token',token);await c.query("UPDATE account_recovery_cases SET status='ready',token_hash=$2,token_expires=now()+interval '1 hour' WHERE id=$1",[item.id,hash(token)]);await c.query("INSERT INTO email_outbox(recipient,subject,body) VALUES($1,'Your Omnyvox recovery link',$2)",[item.email,`Open ${url.href} within one hour. Your current password and a new authenticator are required. Existing access remains unchanged until you complete setup.`]);}
  await c.query('COMMIT');return rows.length;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}
 }

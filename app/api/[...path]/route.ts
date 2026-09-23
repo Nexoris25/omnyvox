@@ -208,6 +208,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
             await client.query("DELETE FROM sessions WHERE user_id=$1", [
               token.user_id,
             ]);
+            await client.query("UPDATE account_recovery_cases SET status='cancelled',pending_secret=NULL,token_hash=NULL WHERE user_id=$1 AND status IN ('requested','cooldown','ready')",[token.user_id]);
             await client.query(
               "DELETE FROM auth_tokens WHERE user_id=$1 AND purpose='reset'",
               [token.user_id],
