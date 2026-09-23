@@ -1,5 +1,5 @@
 import { query } from "./db";
-import { initialSections, type Site } from "./model";
+import { initialSections, usesSampleImage, type Site } from "./model";
 import { siteEntitlements } from "./entitlements";
 export async function readiness(site: Site) {
   const issues: string[] = [];
@@ -77,18 +77,22 @@ export async function readiness(site: Site) {
     issues.push(
       "The homepage and published custom pages exceed your plan allowance.",
     );
-  if (
-    site.data.sections.some(
-      (s) =>
-        s.visible &&
-        (/tell your customers|share your story|lorem ipsum|your (first|second|third) service/i.test(
-          s.body,
-        ) ||
-          initialSections.some(
-            (d) => d.id === s.id && d.title === s.title && d.body === s.body,
-          )),
-    )
-  )
-    issues.push("Replace instructional template text before publishing.");
+  const visible = site.data.sections.filter((s) => s.visible);
+  const unreviewed = visible.filter(
+    (s) =>
+      s.sample ||
+      /tell your customers|share your story|lorem ipsum|your (first|second|third) service/i.test(
+        s.body,
+      ) ||
+      initialSections.some(
+        (d) => d.id === s.id && d.title === s.title && d.body === s.body,
+      ),
+  );
+  if (unreviewed.length)
+    issues.push(
+      `Review the starter content in: ${unreviewed.map((s) => s.title || s.type).join(", ")}.`,
+    );
+  if (visible.some(usesSampleImage))
+    issues.push("Replace the sample images on your homepage with your own photographs.");
   return { ready: issues.length === 0, issues, contentPages: count.total + 1 };
 }

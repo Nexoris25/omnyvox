@@ -44,20 +44,62 @@ export const safeLink = z
     (v) => v === "" || /^(https?:\/\/|mailto:|tel:|\/(?!\/)|#)/i.test(v),
     "Use a website URL, email, phone, or relative link",
   );
+/** Bundled, replaceable starter artwork shipped with every template. */
+export const SAMPLE_IMAGE = /^\/samples\/[a-z0-9-]+\.svg$/;
+export const isSampleImage = (src?: string) => !!src && SAMPLE_IMAGE.test(src);
 export const imagePath = z
   .string()
   .regex(/^\/api\/media\/[a-f0-9-]+$/)
+  .or(z.string().regex(SAMPLE_IMAGE))
   .or(z.literal(""));
 export const indexingSchema = z.object({
   index: z.boolean().default(true),
   follow: z.boolean().default(true),
 });
+export const sectionTypes = [
+  "hero",
+  "text",
+  "services",
+  "features",
+  "steps",
+  "team",
+  "gallery",
+  "faq",
+  "cta",
+  "contact",
+  "insights",
+] as const;
+export const sectionTypeLabels: Record<(typeof sectionTypes)[number], string> =
+  {
+    hero: "Hero banner",
+    text: "Text and image",
+    services: "Services or offers (cards)",
+    features: "Highlights",
+    steps: "Process steps",
+    team: "Team or people",
+    gallery: "Image gallery",
+    faq: "Questions and answers",
+    cta: "Call to action",
+    contact: "Contact details",
+    insights: "Latest insights",
+  };
+export const sectionItemSchema = z.object({
+  title: z.string().max(120),
+  text: z.string().max(600).default(""),
+  image: imagePath.optional(),
+  imageAlt: z.string().max(300).optional(),
+  href: safeLink.optional(),
+});
 export const sectionSchema = z.object({
   id: z.string(),
-  type: z.enum(["hero", "text", "services", "cta", "faq", "insights"]),
+  type: z.enum(sectionTypes),
+  eyebrow: z.string().max(60).optional(),
   title: z.string().max(160),
   body: z.string().max(10000),
   visible: z.boolean().default(true),
+  /** Set on starter content; cleared once the owner edits the section. */
+  sample: z.boolean().optional(),
+  items: z.array(sectionItemSchema).max(12).optional(),
   image: imagePath.optional(),
   imageAlt: z.string().max(300).optional(),
   video: z
@@ -103,6 +145,9 @@ export const siteSchema = z.object({
 export const brandSchema = z
   .object({
     favicon: imagePath.optional(),
+    navCta: z
+      .object({ label: z.string().max(40), href: safeLink })
+      .optional(),
     navigation: z
       .array(
         z.object({
@@ -227,3 +272,9 @@ export const initialSections: Section[] = [
     visible: true,
   },
 ];
+/** True when a section still shows bundled sample artwork. */
+export function usesSampleImage(s: Section) {
+  return (
+    isSampleImage(s.image) || !!s.items?.some((i) => isSampleImage(i.image))
+  );
+}

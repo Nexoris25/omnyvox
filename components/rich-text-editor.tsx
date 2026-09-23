@@ -35,85 +35,8 @@ import {
 } from "lucide-react";
 import { Callout, CtaButton, Embed } from "@/lib/rich-text-extensions";
 import { parseVideoUrl } from "@/lib/video";
-export function MediaPicker({
-  endpoint,
-  onSelect,
-}: {
-  endpoint: string;
-  onSelect: (url: string) => void;
-}) {
-  const [items, setItems] = useState<{ id: string; alt: string }[]>([]),
-    [open, setOpen] = useState(false),
-    [error, setError] = useState("");
-  async function load() {
-    try {
-      const r = await fetch(endpoint);
-      const b = await r.json();
-      if (!r.ok) throw Error(b.error);
-      setItems(b);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-  return (
-    <div className="media-picker">
-      <button
-        type="button"
-        className="button secondary"
-        onClick={() => {
-          setOpen(!open);
-          load();
-        }}
-      >
-        Choose or upload image
-      </button>
-      {open && (
-        <div className="media-panel">
-          <p role="status">{error}</p>
-          <label className="field">
-            Upload an image (up to 5 MB)
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const f = new FormData();
-                f.set("file", file);
-                try {
-                  const r = await fetch(endpoint, { method: "POST", body: f });
-                  const b = await r.json();
-                  if (!r.ok) throw Error(b.error);
-                  onSelect(b.url);
-                  setOpen(false);
-                } catch (e) {
-                  setError((e as Error).message);
-                }
-              }}
-            />
-          </label>
-          <div className="media-choice-grid">
-            {items.map((m) => (
-              <button
-                type="button"
-                key={m.id}
-                onClick={() => {
-                  onSelect("/api/media/" + m.id);
-                  setOpen(false);
-                }}
-              >
-                <img
-                  src={"/api/media/" + m.id}
-                  alt={m.alt || "Library image"}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+import { MediaPicker } from "./media-picker";
+export { MediaPicker } from "./media-picker";
 function ToolbarButton({
   icon: Icon,
   label,
@@ -169,6 +92,7 @@ export function RichTextEditor({
     ],
     content: value,
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     onUpdate: ({ editor }) => {
       const h = editor.getHTML();
       setHtml(h);
@@ -318,6 +242,18 @@ export function RichTextEditor({
             />
           </div>
           <div className="rich-toolbar-group">
+            <MediaPicker
+              iconOnly
+              label="Insert image"
+              endpoint={mediaEndpoint}
+              onSelect={(src, alt) =>
+                editor
+                  .chain()
+                  .focus()
+                  .setImage({ src, alt: alt || "", title: "" })
+                  .run()
+              }
+            />
             <ToolbarButton
               icon={Link2}
               label="Link"
@@ -412,16 +348,24 @@ export function RichTextEditor({
           </div>
         </div>
       )}
-      <EditorContent editor={editor} />
-      {name && <input type="hidden" name={name} value={html} />}{" "}
-      {mediaEndpoint && (
-        <MediaPicker
-          endpoint={mediaEndpoint}
-          onSelect={(src) =>
-            editor?.chain().focus().setImage({ src, alt: "", title: "" }).run()
-          }
-        />
+      {editor?.isActive("image") && (
+        <label className="rich-image-bar">
+          <span>Image description (alt text)</span>
+          <input
+            value={editor.getAttributes("image").alt || ""}
+            maxLength={300}
+            placeholder="Describe what the image shows"
+            onChange={(e) =>
+              editor
+                .chain()
+                .updateAttributes("image", { alt: e.target.value })
+                .run()
+            }
+          />
+        </label>
       )}
+      <EditorContent editor={editor} />
+      {name && <input type="hidden" name={name} value={html} />}
     </div>
   );
 }

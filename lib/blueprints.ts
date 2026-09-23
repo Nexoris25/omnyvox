@@ -1,12 +1,14 @@
 import type { PoolClient } from "pg";
 import type { Site, Brand } from "./model";
 import { reservedSlugs } from "./industry";
+import { kitFor, pageSections } from "./industry-kits";
 export async function provisionBlueprint(client: PoolClient, site: Site) {
   const {
     rows: [industry],
   } = await client.query("SELECT * FROM industries WHERE id=$1", [
     site.industry_id,
   ]);
+  const kit = kitFor(site.industry_id, site.category);
   const navigation: NonNullable<Brand["navigation"]> = [
     { label: "Home", href: "/", footer: false },
   ];
@@ -27,7 +29,8 @@ export async function provisionBlueprint(client: PoolClient, site: Site) {
         JSON.stringify({
           title,
           slug,
-          body: `[Required: add your verified ${title.toLowerCase()} information before publishing.]`,
+          body: "",
+          sections: pageSections(kit, title),
           status: "draft",
           category: "general",
           pageClass: "CORE_CONTENT",

@@ -151,7 +151,7 @@ try {
 
   const r = await readiness(growth.site);
   check(
-    r.issues.some((i) => /instructional template text/.test(i)),
+    r.issues.some((i) => /Review the starter content/.test(i)),
     "Readiness flags unchanged stock sections before publishing",
   );
   console.log(`${passes} recipient checks passed`);

@@ -174,7 +174,7 @@ export function StorageSettings() {
                 <input
                   name="zone"
                   required
-                  pattern="[a-zA-Z0-9][a-zA-Z0-9-]{1,62}"
+                  pattern="[a-zA-Z0-9][a-zA-Z0-9\-]{1,62}"
                 />
               </label>
               <label className="field">

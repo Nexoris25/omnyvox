@@ -154,6 +154,11 @@ export default async function Page({ params, searchParams }: Props) {
       : {}),
   };
   const facts = businessProfile?.data;
+  const contact = {
+    phone: facts?.phone || undefined,
+    address: facts?.showAddress ? facts.address || undefined : undefined,
+    hours: facts?.hours || undefined,
+  };
   const localBusiness =
     site.category === "corporate" && facts?.showAddress && facts.address
       ? {
@@ -225,6 +230,7 @@ export default async function Page({ params, searchParams }: Props) {
       <SiteRenderer
         preview={preview}
         videoEnabled={videoEnabled}
+        contact={contact}
         data={site.view}
         base={base}
         navigationPages={content.map((r) => ({
@@ -352,6 +358,8 @@ export default async function Page({ params, searchParams }: Props) {
                 base={base}
                 preview={preview}
                 videoEnabled={videoEnabled}
+                contact={contact}
+                whatsapp={site.view.brand.socials?.whatsapp}
                 sections={record.data.sections}
                 email={site.view.brand.email}
               />

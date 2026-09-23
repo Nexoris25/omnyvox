@@ -7,15 +7,7 @@ export type Industry = {
   collections: Record<string, string>;
   core_pages: string[];
 };
-export const collectionKinds = [
-  "offerings",
-  "projects",
-  "people",
-  "properties",
-  "facilities",
-  "programmes",
-  "locations",
-];
+export { collectionKinds, reservedSlugs } from "./industry-routes";
 export async function industryFor(site: Site) {
   const [industry] = await query<Industry>(
     "SELECT * FROM industries WHERE id=$1",
@@ -92,26 +84,3 @@ export function pageClass(kind: string) {
         ? "BLOG_SYSTEM"
         : "COLLECTION_SYSTEM";
 }
-export const reservedSlugs = new Set([
-  "shop",
-  "cart",
-  "checkout",
-  "order",
-  "account",
-  "login",
-  "register",
-  "insights",
-  "authors",
-  "api",
-  "admin",
-  "dashboard",
-  "sitemap",
-  "robots",
-  "offerings",
-  "projects",
-  "people",
-  "properties",
-  "facilities",
-  "programmes",
-  "locations",
-]);

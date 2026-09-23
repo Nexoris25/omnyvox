@@ -1,11 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SiteRenderer } from "@/components/site-renderer";
-import {
-  templates,
-  templateManifests,
-  templateSamples,
-} from "@/lib/templates";
+import { templates, templateManifests } from "@/lib/templates";
+import { previewSite, templatePreviewIndustry } from "@/lib/industry-kits";
 import TemplateGallery from "../page";
 export async function generateMetadata({
   params,
@@ -33,7 +30,13 @@ export default async function Page({
     );
   const t = templates.find((t) => t.id === template);
   if (!t) notFound();
-  const sample = templateSamples[t.id as keyof typeof templateSamples];
+  const category = templateManifests[t.id as keyof typeof templateManifests]
+    .category as "corporate" | "commerce";
+  const preview = previewSite(
+    templatePreviewIndustry[t.id as keyof typeof templatePreviewIndustry],
+    category,
+    { name: t.business },
+  );
   return (
     <main id="main">
       <div className="template-preview-bar">
@@ -56,58 +59,10 @@ export default async function Page({
         verified details.
       </p>
       <SiteRenderer
-        data={{
-          template: t.id,
-          brand: {
-            name: t.business,
-            description: t.description,
-            primary: sample.primary,
-            secondary: sample.secondary,
-            background: t.color,
-            text: sample.text,
-            font: t.id === "atelier" || t.id === "trust" ? "serif" : "sans",
-            email: "hello@example.com",
-            categoryUrls: false,
-            logo: "",
-          },
-          sections: [
-            {
-              id: "hero",
-              type: "hero",
-              title: t.headline,
-              body: t.description,
-              visible: true,
-              ctas: [{ label: sample.cta[0], href: "#contact" }],
-            },
-            {
-              id: "services",
-              type: "services",
-              title: "What we offer",
-              body:
-                "<ul>" +
-                sample.services
-                  .map(([name, text]) => `<li><strong>${name}</strong><br>${text}</li>`)
-                  .join("") +
-                "</ul>",
-              visible: true,
-            },
-            {
-              id: "about",
-              type: "text",
-              title: sample.about[0],
-              body: sample.about[1],
-              visible: true,
-            },
-            {
-              id: "contact",
-              type: "cta",
-              title: sample.cta[0],
-              body: sample.cta[1],
-              visible: true,
-              ctas: [{ label: "Get in touch", href: "#contact" }],
-            },
-          ],
-        }}
+        data={preview.data}
+        contact={preview.contact}
+        legal={preview.legal}
+        videoEnabled
       />
     </main>
   );

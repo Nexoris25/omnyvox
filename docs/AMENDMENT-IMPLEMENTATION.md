@@ -27,6 +27,26 @@ This release advances the master document and the two September amendment/design
 - Readiness now blocks publishing while any stock homepage section is unchanged. Previously only the "About" placeholder was caught.
 - Fixes: the create-website form lost typed input and could submit a mismatched category/template on every change (`NewSite` remounted each render); inserting an editor block replaced a just-inserted button; duplicated "| Omnyvox" page titles; the industry list is now public reference data, so demo mode can load it.
 
+### Industry starter kits, navigation, footer and image editing
+
+- **Industry kits** (`lib/industry-kits.ts`). All 19 industries have:
+  - a sector-appropriate palette, checked by tests against WCAG contrast for text, buttons, controls and the call-to-action band;
+  - a matching template and a header call-to-action;
+  - a nine-section homepage: hero, service cards with images, about, highlights, process steps, team or gallery, FAQ, call to action, contact.
+
+  Starter copy contains no figures, awards, credentials or outcome claims, and every section is flagged `sample`.
+- **Inner pages.** New sites also get starter sections on their provisioned inner pages. Contact leads with the contact block, About with the story and team, and the services-type page with cards, process and FAQ.
+- **Artwork.** 138 replaceable SVGs in the industry colours live in `public/samples`, regenerated with `npm run samples:generate`. Real photography should replace them before launch.
+- **Publishing gates.** Readiness blocks publishing while any homepage section is still flagged sample or shows sample artwork. Page saves are refused as published under the same conditions.
+- **Section model.** Structured cards (`items`: title, text, link, image, alt text) and new section types: highlights, steps, team, gallery and contact.
+- **Standard header.** Logo, links, dropdown menus, header button, and a full-width mobile menu with nested groups. Layout uses container queries, so the editor's device previews match the live site.
+- **Footer.** Four columns: brand with description and social links, Explore, published legal pages, and contact details from Business information. The address shows only when the owner opts in.
+- **Navigation editor.** One destination picker covering pages, homepage sections, shop, insights, industry collections or a custom URL. Owners can turn any link into a dropdown, reorder links, move them to the footer, and set the header button.
+- **Images.** One control everywhere: thumbnail, Replace, Remove and alt text. The picker has a "Your library" tab (upload or choose) and a "Sample images" tab, which works in demo mode. The rich text toolbar has an image button, and selecting an image shows an alt text bar.
+- **Editor layout.** Wider editor column. The preview renders at true device width (1280, 768 or 375px) scaled to fit, and stays pinned while scrolling.
+- **Fixes.** Invalid HTML `pattern` attributes: browsers compile them in `v` mode, which rejects an unescaped `-` in a character class, so validation was silently skipped. Duplicate React keys in the footer.
+- **Tests.** `tests/kits.test.ts` (every kit link resolves to a page the site will have, sections validate, artwork exists, contrast) and `npm run test:provision` (21 checks on a throwaway database).
+
 ### Video embeds (Growth and Advanced)
 
 Subscribers upload videos to YouTube, Vimeo or their own Cloudinary account and paste the link, so videos never use plan storage.

@@ -49,13 +49,15 @@ import { MediaLibrary } from "./media-library";
 import { WebsiteOperations } from "./website-operations";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
+import { ScaledPreview } from "./scaled-preview";
 import { templates, templateManifests, templateIds } from "@/lib/templates";
 import {
   TemplateCard,
   TemplatePickerGrid,
   templateOptions,
 } from "./template-picker";
-import { Site, initialSections, limits, entitled } from "@/lib/model";
+import { Site, limits, entitled } from "@/lib/model";
+import { previewSite } from "@/lib/industry-kits";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
   ["websites", "My websites", Globe2],
@@ -85,22 +87,8 @@ const demoSite: Site = {
   tier: "growth",
   status: "draft",
   subscription: "pending",
-  data: {
-    template: "studio",
-    brand: {
-      name: "Forma Studio",
-      description: "Independent design for ambitious brands.",
-      primary: "#540CDA",
-      secondary: "#19261d",
-      background: "#ffffff",
-      text: "#172033",
-      font: "sans",
-      email: "hello@example.com",
-      categoryUrls: false,
-      logo: "",
-    },
-    sections: initialSections,
-  },
+  industry_id: "technology",
+  data: previewSite("technology", "corporate", { name: "Forma Studio" }).data,
   published: null,
 };
 type Row = {
@@ -171,6 +159,37 @@ export function Dashboard({ section }: { section: string }) {
       .then(setIndustries)
       .catch(() => {});
   }, []);
+  const [previewExtras, setPreviewExtras] = useState<{
+    legal: { title: string; href: string }[];
+    contact: { phone?: string; address?: string; hours?: string };
+  }>({ legal: [], contact: {} });
+  useEffect(() => {
+    if (!site || section !== "editor") return;
+    if (demo) {
+      const p = previewSite(site.industry_id || "general", site.category, {
+        name: site.data.brand.name,
+      });
+      setPreviewExtras({ legal: p.legal, contact: p.contact });
+      return;
+    }
+    Promise.all([
+      api(`sites/${site.id}/legal`).catch(() => []),
+      api(`sites/${site.id}/business`).catch(() => ({})),
+    ]).then(
+      ([legal, facts]: [
+        { data: { title: string } }[],
+        { phone?: string; address?: string; showAddress?: boolean; hours?: string },
+      ]) =>
+        setPreviewExtras({
+          legal: legal.map((l) => ({ title: l.data.title, href: "#" })),
+          contact: {
+            phone: facts.phone || undefined,
+            address: facts.showAddress ? facts.address || undefined : undefined,
+            hours: facts.hours || undefined,
+          },
+        }),
+    );
+  }, [site?.id, section, demo]);
   useEffect(() => {
     const belongs = industries.some(
       (i) => i.id === creationIndustry && i.category === creationCategory,
@@ -350,13 +369,14 @@ export function Dashboard({ section }: { section: string }) {
                       slug: String(data.slug),
                       category: data.category,
                       tier: data.tier,
+                      industry_id: String(data.industry),
                       data: {
-                        ...demoSite.data,
+                        ...previewSite(
+                          String(data.industry),
+                          data.category as "corporate" | "commerce",
+                          { name: String(data.name) },
+                        ).data,
                         template: String(data.template),
-                        brand: {
-                          ...demoSite.data.brand,
-                          name: String(data.name),
-                        },
                       },
                     } as Site)
                   : await api("sites", "POST", data);
@@ -385,7 +405,7 @@ export function Dashboard({ section }: { section: string }) {
                 <input
                   name="slug"
                   required
-                  pattern="[a-z][a-z0-9-]{2,48}"
+                  pattern="[a-z][a-z0-9\-]{2,48}"
                   placeholder="your-business"
                 />
                 <small>
@@ -1260,6 +1280,9 @@ export function Dashboard({ section }: { section: string }) {
                     <NavigationEditor
                       siteId={site.id}
                       brand={site.data.brand}
+                      sections={site.data.sections}
+                      modules={modules}
+                      category={site.category}
                       onChange={(brand) => updateSite({ ...site.data, brand })}
                       demo={demo}
                     />
@@ -1419,20 +1442,17 @@ export function Dashboard({ section }: { section: string }) {
                             demo ? undefined : `/api/sites/${site.id}/media`
                           }
                           allowVideo={entitled(site.tier, "video")}
+                          industry={site.industry_id}
                         />
                         <div className="preview-wrap">
-                          <div
-                            style={{
-                              width: preview || "100%",
-                              maxWidth: "100%",
-                              margin: "auto",
-                            }}
-                          >
+                          <ScaledPreview width={preview || 1280}>
                             <SiteRenderer
                               data={site.data}
                               videoEnabled={entitled(site.tier, "video")}
+                              legal={previewExtras.legal}
+                              contact={previewExtras.contact}
                             />
-                          </div>
+                          </ScaledPreview>
                         </div>
                       </div>
                     </>
@@ -1907,7 +1927,7 @@ export function Dashboard({ section }: { section: string }) {
                   <input
                     name="category"
                     list="site-category-options"
-                    pattern="[a-z0-9-]+"
+                    pattern="[a-z0-9\-]+"
                     defaultValue={editRow?.data.category || "general"}
                   />
                 </label>

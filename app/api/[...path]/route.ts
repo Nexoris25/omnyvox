@@ -26,6 +26,7 @@ import { extensionsApi } from "@/lib/extensions-api";
 import { contentSchema } from "@/lib/cms-schema";
 import { safeHtml, referencedMediaIds } from "@/lib/content";
 import { containsVideo, videoUpgradeMessage } from "@/lib/video";
+import { kitFor } from "@/lib/industry-kits";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -52,9 +53,9 @@ import {
   siteSchema,
   brandSchema,
   sectionSchema,
-  initialSections,
   limits,
   entitled,
+  usesSampleImage,
   Site,
 } from "@/lib/model";
 export const runtime = "nodejs";
@@ -401,7 +402,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
     if (!id && method === "POST") {
       const b = siteSchema.parse(await req.json());
-      b.template ||= b.category === "commerce" ? "catalogue" : "studio";
+      b.template ||= kitFor(b.industry, b.category).template;
       if (templateManifests[b.template].category !== b.category)
         return fail("Choose a template for your website type.");
       const industry =
@@ -415,18 +416,23 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         ).length
       )
         return fail("Choose an industry matching your website type");
+      const kit = kitFor(industry, b.category);
       const brand = {
         name: b.name,
-        businessNature: b.category === "commerce" ? "commerce" : "general",
-        description: "Your business, beautifully online.",
-        primary: "#540CDA",
-        secondary: "#111827",
-        background: "#ffffff",
-        text: "#172033",
-        font: "sans",
+        businessNature:
+          b.category === "commerce"
+            ? "commerce"
+            : industry === "healthcare"
+              ? "healthcare"
+              : industry === "education"
+                ? "education"
+                : "general",
+        description: kit.description,
+        ...kit.palette,
         email: u.email,
         categoryUrls: false,
         logo: "",
+        navCta: kit.navCta,
       };
       const client = await pool.connect();
       let s: Site;
@@ -458,8 +464,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
             tier,
             JSON.stringify({
               brand,
-              sections: initialSections,
-              template: b.template,
+              sections: structuredClone(kit.sections),
+              template: b.template || kit.template,
             }),
             root?.id || null,
             root && root.category !== b.category
@@ -897,6 +903,15 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         /\[Required:|lorem ipsum/i.test(b.body)
       )
         return fail("Replace required placeholder content before publishing.");
+      if (
+        ["published", "scheduled"].includes(b.status) &&
+        (b.sections || []).some(
+          (s) => s.visible && (s.sample || usesSampleImage(s)),
+        )
+      )
+        return fail(
+          "Review the starter content and replace sample images on this page before publishing.",
+        );
       if (
         kind === "legal" &&
         ["published", "scheduled"].includes(b.status) &&

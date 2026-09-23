@@ -3876,7 +3876,7 @@ summary:focus-visible {
 .section-services .rich-content li strong + br {
   display: none;
 }
-.site-mobile-menu summary {
+.site-mobile-menu > summary {
   list-style: none;
   display: inline-flex;
   align-items: center;
@@ -3887,10 +3887,10 @@ summary:focus-visible {
   font-size: 14px;
   font-weight: 600;
 }
-.site-mobile-menu summary::-webkit-details-marker {
+.site-mobile-menu > summary::-webkit-details-marker {
   display: none;
 }
-.site-mobile-menu summary::before {
+.site-mobile-menu > summary::before {
   content: "";
   width: 16px;
   height: 10px;
@@ -3898,11 +3898,11 @@ summary:focus-visible {
   background: linear-gradient(currentColor, currentColor) center / 100% 2px
     no-repeat;
 }
-.site-mobile-menu[open] summary {
+.site-mobile-menu[open] > summary {
   background: var(--site-text);
   color: var(--site-bg);
 }
-.site-mobile-menu[open] nav {
+.site-mobile-menu[open] > nav {
   margin-top: 12px;
   padding: 8px;
   border-radius: 12px;

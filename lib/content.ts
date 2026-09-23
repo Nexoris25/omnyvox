@@ -89,7 +89,7 @@ export function safeHtml(value: string, { video = true } = {}) {
     },
     exclusiveFilter: (frame) =>
       (frame.tag === "img" &&
-        !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z-]+\.webp)$/.test(
+        !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z-]+\.webp|samples\/[a-z0-9-]+\.svg)$/.test(
           frame.attribs.src || "",
         )) ||
       ((frame.tag === "iframe" || frame.tag === "video") &&
