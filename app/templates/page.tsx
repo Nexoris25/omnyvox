@@ -2,6 +2,11 @@ import { marketingMetadata } from "@/lib/marketing";
 import Link from "next/link";
 import { MarketingShell } from "@/components/marketing-shell";
 import { templates, templateManifests } from "@/lib/templates";
+import {
+  starterImage,
+  templateIndustry,
+  photoSourceSet,
+} from "@/lib/brand-assets";
 export async function generateMetadata() {
   return marketingMetadata(
     "Website templates | Omnyvox",
@@ -49,11 +54,18 @@ export default async function Page({
                   <h2>{t.headline}</h2>
                   <p>Built around people. Designed to make a difference.</p>
                   <span className="snapshot-cta">Discover our work ↗</span>
-                  <div className="snapshot-blocks">
-                    <i />
-                    <i />
-                    <i />
-                  </div>
+                  <img
+                    className="template-cover"
+                    src={starterImage(templateIndustry[t.id], "hero")}
+                    srcSet={photoSourceSet(
+                      starterImage(templateIndustry[t.id], "hero"),
+                    )}
+                    sizes="(max-width:680px) 100vw, 45vw"
+                    alt={`${t.name} illustrative preview`}
+                    width={640}
+                    height={427}
+                    loading="lazy"
+                  />
                 </div>
                 <div className="template-description">
                   <span className="eyebrow">{t.type}</span>

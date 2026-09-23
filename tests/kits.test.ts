@@ -120,7 +120,7 @@ test("sanitiser keeps bundled sample images and rejects others", () => {
   const html = safeHtml(
     '<img src="/samples/legal-hero.svg" alt="a"><img src="/evil.svg" alt="b">',
   );
-  assert.match(html, /samples\/legal-hero\.svg/);
+  assert.match(html, /samples\/legal-hero-photo\.webp/);
   assert.doesNotMatch(html, /evil/);
 });
 

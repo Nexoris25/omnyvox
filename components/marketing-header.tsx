@@ -3,8 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { Brand } from "./brand";
+import { usePathname } from "next/navigation";
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   return (
     <header className="marketing-nav sticky-nav">
       <Brand />
@@ -30,7 +32,17 @@ export function MarketingHeader() {
           ["/insights", "Insights"],
           ["/contact", "Contact"],
         ].map(([url, label]) => (
-          <Link key={url} href={url} onClick={() => setOpen(false)}>
+          <Link
+            key={url}
+            href={url}
+            aria-current={
+              pathname === url ||
+              (url !== "/" && pathname.startsWith(url + "/"))
+                ? "page"
+                : undefined
+            }
+            onClick={() => setOpen(false)}
+          >
             {label}
           </Link>
         ))}

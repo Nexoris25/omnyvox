@@ -1,4 +1,5 @@
 import { industryKits } from "./industry-kits";
+import { starterImage } from "./brand-assets";
 
 const label = (key: string) =>
   key
@@ -11,7 +12,7 @@ export const sampleImages = Object.entries(industryKits).map(
   ([industry, kit]) => ({
     industry,
     images: Object.keys(kit.art).map((key) => ({
-      src: `/samples/${industry}-${key}.svg`,
+      src: starterImage(industry, key),
       label: label(key),
     })),
   }),

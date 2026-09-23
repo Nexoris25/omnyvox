@@ -11,8 +11,9 @@ import {
 import type { Site, Section, Brand } from "@/lib/model";
 import { safeHtml } from "@/lib/content";
 import { SocialLinks, BrandIcon, whatsappIcon } from "./social-links";
-import { foreground } from "@/lib/theme";
+import { foreground, contrast } from "@/lib/theme";
 import { parseVideoUrl } from "@/lib/video";
+import { webpSource, photoSourceSet } from "@/lib/brand-assets";
 
 export type SiteContact = {
   phone?: string;
@@ -64,20 +65,16 @@ function SectionVideo({ url, title }: { url: string; title?: string }) {
   );
 }
 
-function Media({
-  s,
-  videoEnabled,
-}: {
-  s: Section;
-  videoEnabled: boolean;
-}) {
+function Media({ s, videoEnabled }: { s: Section; videoEnabled: boolean }) {
   if (videoEnabled && s.video && parseVideoUrl(s.video))
     return <SectionVideo url={s.video} title={s.videoTitle} />;
   if (!s.image) return null;
   return (
     <img
       className="section-image"
-      src={s.image}
+      src={webpSource(s.image)}
+      srcSet={photoSourceSet(s.image)}
+      sizes="(max-width: 680px) 100vw, 60vw"
       alt={s.imageAlt || ""}
       loading={s.type === "hero" ? "eager" : "lazy"}
       width={1200}
@@ -164,7 +161,9 @@ function ItemsGrid({
             {item.image && variant !== "features" && variant !== "steps" && (
               <img
                 className="item-image"
-                src={item.image}
+                src={webpSource(item.image)}
+                srcSet={photoSourceSet(item.image)}
+                sizes="(max-width:680px) 100vw, 33vw"
                 alt={item.imageAlt || ""}
                 loading="lazy"
                 width={variant === "team" ? 600 : 800}
@@ -223,8 +222,12 @@ function ContactBlock({
   whatsapp?: string;
   videoEnabled: boolean;
 }) {
-  const rows: { icon: ReactNode; label: string; value: string; href?: string }[] =
-    [];
+  const rows: {
+    icon: ReactNode;
+    label: string;
+    value: string;
+    href?: string;
+  }[] = [];
   if (contact?.phone)
     rows.push({
       icon: <Phone size={18} />,
@@ -253,7 +256,11 @@ function ContactBlock({
       value: contact.address,
     });
   if (contact?.hours)
-    rows.push({ icon: <Clock size={18} />, label: "Hours", value: contact.hours });
+    rows.push({
+      icon: <Clock size={18} />,
+      label: "Hours",
+      value: contact.hours,
+    });
   return (
     <div className="contact-block">
       <div className="section-copy">
@@ -447,7 +454,9 @@ export function SiteRenderer({
             </summary>
             <div className="site-dropdown-panel">
               {url && url !== "#" && (
-                <a href={url}>{mobile ? `All ${n.label}` : `${n.label} overview`}</a>
+                <a href={url}>
+                  {mobile ? `All ${n.label}` : `${n.label} overview`}
+                </a>
               )}
               {kids.map((c, j) => (
                 <a key={j} href={href(c)}>
@@ -476,6 +485,10 @@ export function SiteRenderer({
         {
           "--site-primary": brand.primary,
           "--site-primary-fg": foreground(brand.primary),
+          "--site-link":
+            contrast(brand.primary, brand.background) >= 4.5
+              ? brand.primary
+              : brand.text,
           "--site-secondary": brand.secondary,
           "--site-secondary-fg": foreground(brand.secondary),
           "--site-bg": brand.background,
@@ -562,9 +575,7 @@ export function SiteRenderer({
           <div className="footer-col">
             <h2>Contact</h2>
             {contact?.phone && <a href={tel(contact.phone)}>{contact.phone}</a>}
-            {brand.email && (
-              <a href={`mailto:${brand.email}`}>{brand.email}</a>
-            )}
+            {brand.email && <a href={`mailto:${brand.email}`}>{brand.email}</a>}
             {whatsapp && (
               <a href={whatsapp} target="_blank" rel="noopener noreferrer">
                 WhatsApp

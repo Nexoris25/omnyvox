@@ -45,7 +45,7 @@ export const safeLink = z
     "Use a website URL, email, phone, or relative link",
   );
 /** Bundled, replaceable starter artwork shipped with every template. */
-export const SAMPLE_IMAGE = /^\/samples\/[a-z0-9-]+\.svg$/;
+export const SAMPLE_IMAGE = /^\/samples\/[a-z0-9-]+\.(?:svg|webp)$/;
 export const isSampleImage = (src?: string) => !!src && SAMPLE_IMAGE.test(src);
 export const imagePath = z
   .string()
@@ -145,9 +145,7 @@ export const siteSchema = z.object({
 export const brandSchema = z
   .object({
     favicon: imagePath.optional(),
-    navCta: z
-      .object({ label: z.string().max(40), href: safeLink })
-      .optional(),
+    navCta: z.object({ label: z.string().max(40), href: safeLink }).optional(),
     navigation: z
       .array(
         z.object({

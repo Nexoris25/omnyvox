@@ -1,3 +1,4 @@
+import { webpSource } from "./brand-assets";
 import sanitizeHtml from "sanitize-html";
 import { isAllowedVideoSrc } from "./video";
 export function referencedMediaIds(value: unknown): string[] {
@@ -59,13 +60,7 @@ export function safeHtml(value: string, { video = true } = {}) {
       th: ["colspan", "rowspan"],
       td: ["colspan", "rowspan"],
       div: ["class"],
-      iframe: [
-        "src",
-        "loading",
-        "allowfullscreen",
-        "frameborder",
-        "title",
-      ],
+      iframe: ["src", "loading", "allowfullscreen", "frameborder", "title"],
       video: ["src", "controls", "preload", "playsinline", "title"],
     },
     allowedClasses: {
@@ -82,6 +77,10 @@ export function safeHtml(value: string, { video = true } = {}) {
     ],
     allowIframeRelativeUrls: false,
     transformTags: {
+      img: (_tag, attrs) => ({
+        tagName: "img",
+        attribs: { ...attrs, src: webpSource(attrs.src || "") },
+      }),
       a: (_tag, attrs) => ({
         tagName: "a",
         attribs: { ...attrs, rel: "noopener noreferrer" },
@@ -89,7 +88,7 @@ export function safeHtml(value: string, { video = true } = {}) {
     },
     exclusiveFilter: (frame) =>
       (frame.tag === "img" &&
-        !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z-]+\.webp|samples\/[a-z0-9-]+\.svg)$/.test(
+        !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z0-9-]+\.webp|samples\/[a-z0-9-]+\.(?:svg|webp))$/.test(
           frame.attribs.src || "",
         )) ||
       ((frame.tag === "iframe" || frame.tag === "video") &&

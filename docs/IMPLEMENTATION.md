@@ -1,5 +1,7 @@
 # Implementation status
 
+The [23 September brand refresh record](BRAND-REFRESH.md) identifies the fetched dev baseline and supersedes older template/workflow counts below.
+
 The supplied master document specifies a multi-phase SaaS business, including substantial advanced commerce and operational scope. This repository implements the core foundation and working website flows. It must not be represented as the complete commercial product described by all 40 sections.
 
 The [September update](RELEASE-2026-09.md) records the expanded CMS, onboarding, marketing and administration workflows. The newer [WaaS amendment status](AMENDMENT-IMPLEMENTATION.md) supersedes the older feature and remaining-work inventory below for storage, industry collections, navigation, scheduled publishing and local AI. Consult that document for the current release boundary and remaining engineering.

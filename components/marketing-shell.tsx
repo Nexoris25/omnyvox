@@ -15,13 +15,13 @@ export async function MarketingShell({
     marketingSettings(),
   ]);
   return (
-    <>
+    <div className="marketing-site">
       <MarketingHeader />
       {children}
       <footer className="marketing-footer">
         <div>
           <Brand />
-          <p>Business websites. Built for your next step.</p>
+          <p>Business websites. Fully managed.</p>
           <SocialLinks links={settings.socials} businessName="Omnyvox" />
         </div>
         <div>
@@ -47,6 +47,6 @@ export async function MarketingShell({
           reserved.
         </small>
       </footer>
-    </>
+    </div>
   );
 }

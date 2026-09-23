@@ -1,6 +1,6 @@
 "use client";
 import { Brand } from "@/lib/model";
-import { palettes } from "@/lib/theme";
+import { palettes, contrast, foreground } from "@/lib/theme";
 export function BrandSettings({
   brand,
   onChange,
@@ -10,7 +10,69 @@ export function BrandSettings({
 }) {
   return (
     <div className="panel panel-body">
-      <h2>Contact, social & legal settings</h2>
+      <h2>A palette that feels like you</h2>
+      <p>
+        Start with a coordinated palette, then fine-tune your colours. Your
+        website keeps its own identity.
+      </p>
+      <div
+        className="palette-options"
+        role="group"
+        aria-label="Website colour palettes"
+      >
+        {palettes.map((p) => (
+          <button
+            type="button"
+            className="palette-option"
+            key={p.id}
+            aria-pressed={
+              brand.primary.toLowerCase() === p.primary.toLowerCase() &&
+              brand.background.toLowerCase() === p.background.toLowerCase()
+            }
+            onClick={() =>
+              onChange({
+                ...brand,
+                primary: p.primary,
+                secondary: p.secondary,
+                background: p.background,
+                text: p.text,
+              })
+            }
+          >
+            <span className="palette-swatches" aria-hidden="true">
+              {[p.primary, p.secondary, p.background, p.text].map((c, i) => (
+                <i style={{ background: c }} key={i} />
+              ))}
+            </span>
+            <strong>{p.name}</strong>
+          </button>
+        ))}
+      </div>
+      <p className="brand-contrast-note">
+        Text contrast:{" "}
+        <strong>{contrast(brand.text, brand.background).toFixed(1)}:1</strong> ·
+        Button text adjusts automatically for readability.
+      </p>
+      <div
+        className="palette-live"
+        style={{
+          background: brand.background,
+          color: brand.text,
+          borderColor: brand.primary,
+        }}
+      >
+        <strong>Your brand in focus</strong>
+        <p>A clear message. A recognisable colour. A confident next step.</p>
+        <span
+          style={{
+            background: brand.primary,
+            color: foreground(brand.primary),
+          }}
+        >
+          Your primary action ↗
+        </span>
+      </div>
+      <h3>Contact, social & legal settings</h3>
       <label className="field">
         Approved colour palette
         <select

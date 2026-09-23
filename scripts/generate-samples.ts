@@ -2,7 +2,8 @@
  * Generates the replaceable starter artwork referenced by lib/industry-kits.ts
  * into public/samples. Run with: npx tsx scripts/generate-samples.ts
  */
-import { mkdir, writeFile, readdir, rm } from "node:fs/promises";
+import { mkdir, writeFile, readdir } from "node:fs/promises";
+import sharp from "sharp";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as lucide from "lucide-react";
@@ -56,8 +57,10 @@ function artwork(
   const tile = Math.round(s * 0.36);
   const cx = w / 2,
     cy = h / 2;
-  const svgIcon = icon(iconName, deep, glyph)
-    .replace("<svg", `<svg x="${cx - glyph / 2}" y="${cy - glyph / 2}"`);
+  const svgIcon = icon(iconName, deep, glyph).replace(
+    "<svg",
+    `<svg x="${cx - glyph / 2}" y="${cy - glyph / 2}"`,
+  );
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Sample image">
 <defs>
 <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${mid}"/></linearGradient>
@@ -75,7 +78,7 @@ ${svgIcon}
 `;
 }
 
-await rm(OUT, { recursive: true, force: true });
+// Preserve editorial photos and their responsive variants when rebuilding artwork.
 await mkdir(OUT, { recursive: true });
 let count = 0;
 for (const [industry, kit] of Object.entries(industryKits)) {
@@ -84,10 +87,12 @@ for (const [industry, kit] of Object.entries(industryKits)) {
     const portrait = key.startsWith("team-");
     const large = key === "hero" || key === "about";
     const [w, h] = portrait ? [600, 750] : large ? [1200, 900] : [800, 600];
-    await writeFile(
-      `${OUT}/${industry}-${key}.svg`,
-      artwork(w, h, iconName, kit.palette, seed++),
-    );
+    const svg = artwork(w, h, iconName, kit.palette, seed++);
+    await writeFile(`${OUT}/${industry}-${key}.svg`, svg);
+    await sharp(Buffer.from(svg))
+      .resize({ width: 900, withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toFile(`${OUT}/${industry}-${key}.webp`);
     count++;
   }
 }

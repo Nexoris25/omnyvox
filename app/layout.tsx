@@ -4,6 +4,7 @@ import "@fontsource-variable/manrope";
 import "./globals.css";
 import "./site-design.css";
 import "./editor-design.css";
+import "./brand-design.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: {

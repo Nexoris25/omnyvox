@@ -17,9 +17,15 @@ import {
 import { PlanPrice } from "@/components/plan-price";
 import { Brand } from "@/components/brand";
 import { jsonLd } from "@/lib/model";
+import { BrandHero } from "@/components/brand-hero";
+import {
+  starterImage,
+  templateIndustry,
+  photoSourceSet,
+} from "@/lib/brand-assets";
 export async function generateMetadata() {
   return marketingMetadata(
-    "Business websites. Built for your next step.",
+    "Business websites. Fully managed.",
     "Build and manage a business website or online store with your own brand, content and payments.",
   );
 }
@@ -28,124 +34,7 @@ export default async function Home() {
   return (
     <MarketingShell>
       <main id="main">
-        <section className="hero">
-          <div className="eyebrow">
-            <span className="pulse" /> YOUR NEXT CHAPTER STARTS HERE
-          </div>
-          <h1>
-            Your business, online.
-            <br />
-            Ready for <span>what’s next.</span>
-          </h1>
-          <p>
-            A website you’re proud to share. An online store ready to grow.
-            <br className="desktop" /> All the tools you need, with the
-            technical work taken care of.
-          </p>
-          <div className="hero-actions">
-            <Link href="/register" className="button">
-              Let’s build your website <ArrowUpRight size={18} />
-            </Link>
-            <a href="/templates" className="button secondary">
-              Explore templates <ArrowRight size={18} />
-            </a>
-          </div>
-          <div className="hero-notes">
-            <span>
-              <Check size={14} /> Your brand, your way
-            </span>
-            <span>
-              <Check size={14} /> No coding needed
-            </span>
-            <span>
-              <Check size={14} /> Hosting included
-            </span>
-          </div>
-          <div className="showcase">
-            <div className="showcase-caption">
-              <span>FROM AN IDEA TO YOUR OWN CORNER OF THE INTERNET</span>
-              <span>Made with Omnyvox ↗</span>
-            </div>
-            <div className="site-mock corporate-mock">
-              <div className="mock-browser">
-                <i />
-                <i />
-                <i />
-                <span>studio.omnyvox.com</span>
-              </div>
-              <div className="mock-nav">
-                <b>
-                  forma<span>®</span>
-                </b>
-                <span>Our studio　 Work　 Contact ↗</span>
-              </div>
-              <div className="forma-body">
-                <span className="mini-label">INDEPENDENT DESIGN STUDIO</span>
-                <h2>
-                  Good ideas.
-                  <br />
-                  Extraordinary
-                  <br />
-                  <em>possibilities.</em>
-                </h2>
-                <p>
-                  We help ambitious brands find their voice
-                  <br />
-                  and make their mark.
-                </p>
-                <span className="mock-cta">Discover our work ↗</span>
-                <div className="architectural">
-                  <div />
-                  <div />
-                  <div />
-                </div>
-              </div>
-              <div className="mock-bottom">
-                STRATEGY　 •　 DESIGN　 •　 DIGITAL EXPERIENCES
-              </div>
-            </div>
-            <div className="site-mock shop-mock">
-              <div className="mock-browser">
-                <i />
-                <i />
-                <i />
-                <span>theeveryday.omnyvox.com</span>
-              </div>
-              <div className="mock-nav">
-                <b>the everyday.</b>
-                <ShoppingBag size={15} />
-              </div>
-              <div className="shop-body">
-                <span>LESS, BUT BETTER</span>
-                <h3>
-                  Everyday things.
-                  <br />
-                  Beautifully considered.
-                </h3>
-                <div className="product-display">
-                  <div className="product-block">
-                    every
-                    <br />
-                    day<span>ESSENTIALS / 01</span>
-                  </div>
-                </div>
-                <div className="product-caption">
-                  <span>The essentials collection</span>
-                  <ArrowUpRight size={18} />
-                </div>
-              </div>
-            </div>
-            <div className="floating-label">
-              <span className="success-icon">
-                <Check size={17} />
-              </span>
-              <div>
-                <b>That’s your website. Live.</b>
-                <small>Your next chapter looks good.</small>
-              </div>
-            </div>
-          </div>
-        </section>
+        <BrandHero />
         <section className="trust-strip">
           <p>One platform. Everything behind your website.</p>
           <div>
@@ -200,6 +89,16 @@ export default async function Home() {
                 <span>Agencies</span>
                 <span>Organisations</span>
               </div>
+              <img
+                className="solution-photo"
+                src="/marketing-corporate-v2.webp"
+                srcSet="/marketing-corporate-v2-small.webp 640w, /marketing-corporate-v2.webp 1440w"
+                sizes="(max-width:680px) 100vw, 50vw"
+                alt="Consultant discussing a project with a small business team"
+                width={1440}
+                height={960}
+                loading="lazy"
+              />
             </article>
             <article className="solution-card dark">
               <span className="icon-tile">
@@ -222,6 +121,16 @@ export default async function Home() {
                 <span>Beauty</span>
                 <span>Home & lifestyle</span>
               </div>
+              <img
+                className="solution-photo"
+                src="/marketing-commerce-v2.webp"
+                srcSet="/marketing-commerce-v2-small.webp 640w, /marketing-commerce-v2.webp 1440w"
+                sizes="(max-width:680px) 100vw, 50vw"
+                alt="Online store owner packing a ceramic mug for delivery"
+                width={1440}
+                height={960}
+                loading="lazy"
+              />
             </article>
           </div>
         </section>
@@ -259,7 +168,7 @@ export default async function Home() {
             ].map(([name, desc, style]) => (
               <Link
                 className="template-card"
-                href={`/register?template=${style}`}
+                href={`/templates/${style}`}
                 key={name}
               >
                 <div className={`template-art ${style}`}>
@@ -276,6 +185,18 @@ export default async function Home() {
                   <span className="template-line" />
                   <span className="template-line short" />
                   <div className="template-button">Discover more ↗</div>
+                  <img
+                    className="template-cover"
+                    src={starterImage(templateIndustry[style], "hero")}
+                    srcSet={photoSourceSet(
+                      starterImage(templateIndustry[style], "hero"),
+                    )}
+                    sizes="(max-width:680px) 100vw, 33vw"
+                    alt=""
+                    width={640}
+                    height={427}
+                    loading="lazy"
+                  />
                 </div>
                 <div className="template-meta">
                   <div>
@@ -308,6 +229,16 @@ export default async function Home() {
             </Link>
           </div>
           <div className="steps">
+            <img
+              className="brand-process-photo"
+              src="/marketing-setup-v2.webp"
+              srcSet="/marketing-setup-v2-small.webp 640w, /marketing-setup-v2.webp 1440w"
+              sizes="(max-width:680px) 100vw, 50vw"
+              alt="Business owner planning website content at a laptop"
+              width={1440}
+              height={960}
+              loading="lazy"
+            />
             {[
               [
                 "01",

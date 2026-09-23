@@ -1,6 +1,7 @@
 "use client";
 import { Check } from "lucide-react";
 import { templates, templateManifests } from "@/lib/templates";
+import { starterImage, templateIndustry } from "@/lib/brand-assets";
 export function TemplateCard({
   id,
   selected,
@@ -33,6 +34,17 @@ export function TemplateCard({
           <span className="template-check" aria-hidden="true">
             <Check size={13} />
           </span>
+          <img
+            className="template-cover"
+            src={starterImage(templateIndustry[id], "hero").replace(
+              ".webp",
+              "-small.webp",
+            )}
+            alt=""
+            width={320}
+            height={213}
+            loading="lazy"
+          />
         </span>
         <span className="template-compact-name">{t.name}</span>
         <span className="template-compact-type">{t.type}</span>
@@ -49,6 +61,17 @@ export function TemplateCard({
         <h3>{t.headline}</h3>
         <span className="template-line" />
         <span className="template-line short" />
+        <img
+          className="template-cover"
+          src={starterImage(templateIndustry[id], "hero").replace(
+            ".webp",
+            "-small.webp",
+          )}
+          alt=""
+          width={640}
+          height={427}
+          loading="lazy"
+        />
       </div>
       <div className="panel-body">
         <h3 style={{ fontSize: 18 }}>{t.name}</h3>
