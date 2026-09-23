@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { contrast } from "./theme";
 import { templateIds } from "./templates";
+import { parseVideoUrl } from "./video";
 export const tiers = ["basic", "growth", "advanced"] as const;
 export type Tier = (typeof tiers)[number];
 export const limits = {
@@ -30,7 +31,7 @@ export const limits = {
   },
 };
 export function entitled(tier: Tier, feature: string) {
-  return feature === "blog" || feature === "domains"
+  return feature === "blog" || feature === "domains" || feature === "video"
     ? tier !== "basic"
     : feature === "integrations"
       ? tier === "advanced"
@@ -59,6 +60,15 @@ export const sectionSchema = z.object({
   visible: z.boolean().default(true),
   image: imagePath.optional(),
   imageAlt: z.string().max(300).optional(),
+  video: z
+    .string()
+    .max(500)
+    .refine(
+      (v) => v === "" || parseVideoUrl(v) !== null,
+      "Use a YouTube, Vimeo or Cloudinary video link.",
+    )
+    .optional(),
+  videoTitle: z.string().max(160).optional(),
   layout: z.enum(["column", "row", "row-reverse", "column-reverse"]).optional(),
   ctas: z
     .array(z.object({ label: z.string().min(1).max(60), href: safeLink }))

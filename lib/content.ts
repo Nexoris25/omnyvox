@@ -1,4 +1,5 @@
 import sanitizeHtml from "sanitize-html";
+import { isAllowedVideoSrc } from "./video";
 export function referencedMediaIds(value: unknown): string[] {
   const ids = new Set<string>();
   function walk(v: unknown) {
@@ -12,7 +13,7 @@ export function referencedMediaIds(value: unknown): string[] {
   walk(value);
   return [...ids];
 }
-export function safeHtml(value: string) {
+export function safeHtml(value: string, { video = true } = {}) {
   const input = /<\/?[a-z][\s\S]*>/i.test(value)
     ? value
     : `<p>${value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>")}</p>`;
@@ -46,6 +47,7 @@ export function safeHtml(value: string) {
       "code",
       "div",
       "iframe",
+      "video",
     ],
     allowedAttributes: {
       a: ["href", "target", "rel", "class"],
@@ -64,6 +66,7 @@ export function safeHtml(value: string) {
         "frameborder",
         "title",
       ],
+      video: ["src", "controls", "preload", "playsinline", "title"],
     },
     allowedClasses: {
       a: ["cta-button"],
@@ -72,7 +75,11 @@ export function safeHtml(value: string) {
     allowedStyles: { "*": { "text-align": [/^(left|right|center|justify)$/] } },
     allowedSchemes: ["http", "https", "mailto", "tel"],
     allowProtocolRelative: false,
-    allowedIframeHostnames: ["www.youtube-nocookie.com", "player.vimeo.com"],
+    allowedIframeHostnames: [
+      "www.youtube-nocookie.com",
+      "player.vimeo.com",
+      "player.cloudinary.com",
+    ],
     allowIframeRelativeUrls: false,
     transformTags: {
       a: (_tag, attrs) => ({
@@ -81,10 +88,16 @@ export function safeHtml(value: string) {
       }),
     },
     exclusiveFilter: (frame) =>
-      frame.tag === "img" &&
-      !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z-]+\.webp)$/.test(
-        frame.attribs.src || "",
-      ),
+      (frame.tag === "img" &&
+        !/^\/(api\/media\/[a-f0-9-]+|marketing-[a-z-]+\.webp)$/.test(
+          frame.attribs.src || "",
+        )) ||
+      ((frame.tag === "iframe" || frame.tag === "video") &&
+        (!video ||
+          !isAllowedVideoSrc(
+            frame.attribs.src || "",
+            frame.tag === "video" ? "file" : "iframe",
+          ))),
   });
 }
 export function plainText(value: string) {

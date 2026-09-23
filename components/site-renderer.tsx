@@ -3,6 +3,7 @@ import type { Site, Section } from "@/lib/model";
 import { safeHtml } from "@/lib/content";
 import { SocialLinks } from "./social-links";
 import { foreground } from "@/lib/theme";
+import { parseVideoUrl } from "@/lib/video";
 function localHref(base: string, path: string, preview: boolean) {
   const [pathname, hash] = path.split("#", 2);
   return (
@@ -12,18 +13,48 @@ function localHref(base: string, path: string, preview: boolean) {
     (hash === undefined ? "" : "#" + hash)
   );
 }
+function SectionVideo({ url, title }: { url: string; title?: string }) {
+  const video = parseVideoUrl(url);
+  if (!video) return null;
+  const label = title || "Video";
+  return (
+    <div className="section-video">
+      {video.kind === "file" ? (
+        <video
+          src={video.src}
+          controls
+          preload="metadata"
+          playsInline
+          title={label}
+          aria-label={label}
+        />
+      ) : (
+        <iframe
+          src={video.src}
+          title={label}
+          loading="lazy"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      )}
+    </div>
+  );
+}
 export function RenderSections({
   sections,
   email,
   insights,
   base = "",
   preview = false,
+  videoEnabled = false,
 }: {
   sections: Section[];
   email: string;
   insights?: React.ReactNode;
   base?: string;
   preview?: boolean;
+  videoEnabled?: boolean;
 }) {
   return (
     <>
@@ -46,7 +77,9 @@ export function RenderSections({
                 {s.type === "hero" ? <h1>{s.title}</h1> : <h2>{s.title}</h2>}
                 <div
                   className="rich-content"
-                  dangerouslySetInnerHTML={{ __html: safeHtml(s.body) }}
+                  dangerouslySetInnerHTML={{
+                    __html: safeHtml(s.body, { video: videoEnabled }),
+                  }}
                 />
                 {s.type === "faq" &&
                   (s.faqs || []).map((f, i) => (
@@ -84,7 +117,10 @@ export function RenderSections({
                   ))}
                 </div>
               </div>
-              {s.image && (
+              {videoEnabled && s.video && parseVideoUrl(s.video) ? (
+                <SectionVideo url={s.video} title={s.videoTitle} />
+              ) : (
+                s.image && (
                 <img
                   className="section-image"
                   src={s.image}
@@ -93,6 +129,7 @@ export function RenderSections({
                   width={1000}
                   height={750}
                 />
+                )
               )}
             </div>
           </section>
@@ -109,6 +146,7 @@ export function SiteRenderer({
   insights,
   navigationPages = [],
   preview = false,
+  videoEnabled = false,
 }: {
   data: Site["data"];
   children?: React.ReactNode;
@@ -118,6 +156,7 @@ export function SiteRenderer({
   insights?: React.ReactNode;
   navigationPages?: { id: string; href: string }[];
   preview?: boolean;
+  videoEnabled?: boolean;
 }) {
   const { brand, sections, template } = data;
   function href(n: { pageId?: string; href: string }) {
@@ -201,6 +240,7 @@ export function SiteRenderer({
           insights={insights}
           base={base}
           preview={preview}
+          videoEnabled={videoEnabled}
         />
       )}
       {after}

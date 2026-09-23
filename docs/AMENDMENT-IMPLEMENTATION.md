@@ -27,6 +27,20 @@ This release advances the master document and the two September amendment/design
 - Readiness now blocks publishing while any stock homepage section is unchanged. Previously only the "About" placeholder was caught.
 - Fixes: the create-website form lost typed input and could submit a mismatched category/template on every change (`NewSite` remounted each render); inserting an editor block replaced a just-inserted button; duplicated "| Omnyvox" page titles; the industry list is now public reference data, so demo mode can load it.
 
+### Video embeds (Growth and Advanced)
+
+Subscribers upload videos to YouTube, Vimeo or their own Cloudinary account and paste the link, so videos never use plan storage.
+
+- Every template section has a **Video URL** field that replaces the section image. The editor's video button accepts the same links. `lib/video.ts` is the single parser:
+  - YouTube → `youtube-nocookie.com` embed.
+  - Vimeo → Vimeo's embed player.
+  - Cloudinary `res.cloudinary.com/<cloud>/video/upload/...` → native `<video>`.
+  - Cloudinary `player.cloudinary.com/embed/?cloud_name=…&public_id=…` → framed player.
+  - Anything else is rejected. This includes plain `http:`, lookalike domains and URLs containing quotes.
+- The sanitizer re-checks every stored `iframe`/`video` source against the parser's own output at render time, so saved HTML is never trusted.
+- Plan enforcement is `entitled(tier, "video")`. The API returns 403 when a Basic site saves a section video or embedded video. After a downgrade, published sites stop rendering videos but the links are kept. The editor shows a "Remove video" prompt so Basic users can still save.
+- Tests: `tests/video.test.ts`.
+
 Verification on 23 September 2026: typecheck, production build, 22 unit tests, and `npm run test:recipients` (12 checks against a throwaway `omnyvox_test` database: plan limits, wrong codes, tenant isolation, enquiry fan-out, Reply-To, readiness). Browser checks at 390px and 1280px: template previews, mobile menu, industry-matched template picker, and every new editor action surviving sanitization. `scripts/integration-test.mjs`, `scripts/extensions-test.mjs` and `scripts/amendment-test.ts` still need a dedicated server on an isolated database (Next 16 allows one dev server per checkout).
 
 ## Design reference mapping

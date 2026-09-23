@@ -33,7 +33,8 @@ import {
   Video,
   type LucideIcon,
 } from "lucide-react";
-import { Callout, CtaButton, Embed, embedSrcFor } from "@/lib/rich-text-extensions";
+import { Callout, CtaButton, Embed } from "@/lib/rich-text-extensions";
+import { parseVideoUrl } from "@/lib/video";
 export function MediaPicker({
   endpoint,
   onSelect,
@@ -146,12 +147,14 @@ export function RichTextEditor({
   name,
   mediaEndpoint,
   label = "Content",
+  allowVideo = true,
 }: {
   value: string;
   onChange?: (html: string) => void;
   name?: string;
   mediaEndpoint?: string;
   label?: string;
+  allowVideo?: boolean;
 }) {
   const [html, setHtml] = useState(value);
   const editor = useEditor({
@@ -348,20 +351,30 @@ export function RichTextEditor({
                   .run();
               }}
             />
-            <ToolbarButton
-              icon={Video}
-              label="Embed video"
-              onClick={() => {
-                const url = prompt("YouTube or Vimeo link");
-                if (!url) return;
-                const src = embedSrcFor(url);
-                if (!src) {
-                  alert("Enter a YouTube or Vimeo video link.");
-                  return;
-                }
-                editor.chain().focus().insertEmbed({ src }).run();
-              }}
-            />
+            {allowVideo && (
+              <ToolbarButton
+                icon={Video}
+                label="Embed video"
+                onClick={() => {
+                  const url = prompt(
+                    "Paste a YouTube, Vimeo or Cloudinary video link",
+                  );
+                  if (!url) return;
+                  const video = parseVideoUrl(url);
+                  if (!video) {
+                    alert(
+                      "That link isn't supported. Use a YouTube, Vimeo or Cloudinary video link.",
+                    );
+                    return;
+                  }
+                  editor
+                    .chain()
+                    .focus()
+                    .insertEmbed({ src: video.src, kind: video.kind })
+                    .run();
+                }}
+              />
+            )}
           </div>
           <div className="rich-toolbar-group">
             <ToolbarButton

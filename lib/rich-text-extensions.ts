@@ -9,7 +9,7 @@ declare module "@tiptap/core" {
       insertCtaButton: (attrs: { href: string; label: string }) => ReturnType;
     };
     embed: {
-      insertEmbed: (attrs: { src: string }) => ReturnType;
+      insertEmbed: (attrs: { src: string; kind: "iframe" | "file" }) => ReturnType;
     };
   }
 }
@@ -78,31 +78,58 @@ export const CtaButton = Node.create({
   },
 });
 
-/** An allow-listed YouTube/Vimeo embed. No arbitrary iframe HTML. */
+/** An allow-listed YouTube, Vimeo or Cloudinary video. Framed players use an
+ * iframe; Cloudinary file URLs play in a native <video>. No arbitrary HTML. */
 export const Embed = Node.create({
   name: "embed",
   group: "block",
   atom: true,
   addAttributes() {
-    return { src: { default: "" } };
+    return {
+      src: { default: "" },
+      kind: { default: "iframe" },
+    };
   },
   parseHTML() {
-    return [{ tag: "div.rich-embed iframe" }];
+    return [
+      {
+        tag: "div.rich-embed",
+        getAttrs: (el) => {
+          const media = (el as HTMLElement).querySelector("iframe, video");
+          if (!media) return false;
+          return {
+            src: media.getAttribute("src") || "",
+            kind: media.tagName === "VIDEO" ? "file" : "iframe",
+          };
+        },
+      },
+    ];
   },
   renderHTML({ node }) {
     return [
       "div",
       { class: "rich-embed" },
-      [
-        "iframe",
-        {
-          src: node.attrs.src,
-          loading: "lazy",
-          allowfullscreen: "true",
-          frameborder: "0",
-          title: "Embedded video",
-        },
-      ],
+      node.attrs.kind === "file"
+        ? [
+            "video",
+            {
+              src: node.attrs.src,
+              controls: "true",
+              preload: "metadata",
+              playsinline: "true",
+              title: "Embedded video",
+            },
+          ]
+        : [
+            "iframe",
+            {
+              src: node.attrs.src,
+              loading: "lazy",
+              allowfullscreen: "true",
+              frameborder: "0",
+              title: "Embedded video",
+            },
+          ],
     ];
   },
   addCommands() {
@@ -117,16 +144,3 @@ export const Embed = Node.create({
     };
   },
 });
-
-const YOUTUBE = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{6,})/;
-const VIMEO = /vimeo\.com\/(?:video\/)?(\d+)/;
-
-/** Turns a pasted YouTube/Vimeo URL into a safe embeddable URL, or null. */
-export function embedSrcFor(input: string): string | null {
-  const url = input.trim();
-  const yt = url.match(YOUTUBE);
-  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`;
-  const vimeo = url.match(VIMEO);
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
-  return null;
-}

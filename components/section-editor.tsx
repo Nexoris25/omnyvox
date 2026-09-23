@@ -1,14 +1,17 @@
 "use client";
 import { Section } from "@/lib/model";
 import { RichTextEditor, MediaPicker } from "./rich-text-editor";
+import { parseVideoUrl, videoHelp } from "@/lib/video";
 export function SectionEditor({
   sections,
   onChange,
   mediaEndpoint,
+  allowVideo = false,
 }: {
   sections: Section[];
   onChange: (sections: Section[]) => void;
   mediaEndpoint?: string;
+  allowVideo?: boolean;
 }) {
   function change(id: string, patch: Partial<Section>) {
     onChange(sections.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -33,6 +36,7 @@ export function SectionEditor({
             value={s.body}
             onChange={(body) => change(s.id, { body })}
             mediaEndpoint={mediaEndpoint}
+            allowVideo={allowVideo}
           />
           <label className="field">
             Image and text layout
@@ -72,6 +76,73 @@ export function SectionEditor({
                 Remove image
               </button>
             </>
+          )}
+          {allowVideo ? (
+            <div className="video-field">
+              <label className="field">
+                Video URL
+                <input
+                  type="url"
+                  inputMode="url"
+                  value={s.video || ""}
+                  placeholder="https://www.youtube.com/watch?v=… or https://res.cloudinary.com/…"
+                  aria-invalid={!!s.video && !parseVideoUrl(s.video)}
+                  onChange={(e) => change(s.id, { video: e.target.value.trim() })}
+                />
+                <small>{videoHelp} A video replaces this section’s image.</small>
+              </label>
+              {s.video &&
+                (parseVideoUrl(s.video) ? (
+                  <>
+                    <p className="field-ok">
+                      ✓ {parseVideoUrl(s.video)!.provider === "cloudinary"
+                        ? "Cloudinary"
+                        : parseVideoUrl(s.video)!.provider === "youtube"
+                          ? "YouTube"
+                          : "Vimeo"} video will be embedded.
+                    </p>
+                    <label className="field">
+                      Video description (for screen readers)
+                      <input
+                        value={s.videoTitle || ""}
+                        maxLength={160}
+                        onChange={(e) =>
+                          change(s.id, { videoTitle: e.target.value })
+                        }
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => change(s.id, { video: "", videoTitle: "" })}
+                    >
+                      Remove video
+                    </button>
+                  </>
+                ) : (
+                  <p className="field-error" role="alert">
+                    Use a YouTube, Vimeo or Cloudinary video link.
+                  </p>
+                ))}
+            </div>
+          ) : s.video ? (
+            <div className="video-locked" role="alert">
+              <p style={{ margin: "0 0 8px" }}>
+                This section has a video that isn’t shown on your current plan.
+                Remove it to save changes, or upgrade to Growth to show it
+                again.
+              </p>
+              <button
+                type="button"
+                onClick={() => change(s.id, { video: "", videoTitle: "" })}
+              >
+                Remove video
+              </button>
+            </div>
+          ) : (
+            <p className="muted video-locked">
+              Embedded YouTube and Cloudinary videos are available on Growth
+              and Advanced.
+            </p>
           )}
           {(s.ctas || []).map((c, j) => (
             <div className="form-grid" key={j}>

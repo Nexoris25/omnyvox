@@ -55,7 +55,7 @@ import {
   TemplatePickerGrid,
   templateOptions,
 } from "./template-picker";
-import { Site, initialSections, limits } from "@/lib/model";
+import { Site, initialSections, limits, entitled } from "@/lib/model";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
   ["websites", "My websites", Globe2],
@@ -1418,6 +1418,7 @@ export function Dashboard({ section }: { section: string }) {
                           mediaEndpoint={
                             demo ? undefined : `/api/sites/${site.id}/media`
                           }
+                          allowVideo={entitled(site.tier, "video")}
                         />
                         <div className="preview-wrap">
                           <div
@@ -1427,7 +1428,10 @@ export function Dashboard({ section }: { section: string }) {
                               margin: "auto",
                             }}
                           >
-                            <SiteRenderer data={site.data} />
+                            <SiteRenderer
+                              data={site.data}
+                              videoEnabled={entitled(site.tier, "video")}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1863,6 +1867,7 @@ export function Dashboard({ section }: { section: string }) {
                     mediaEndpoint={
                       demo ? undefined : `/api/sites/${site?.id}/media`
                     }
+                    allowVideo={!!site && entitled(site.tier, "video")}
                   />
                 </label>
                 {section === "products" && (
@@ -1895,6 +1900,7 @@ export function Dashboard({ section }: { section: string }) {
                   kind={section}
                   initial={editRow?.data}
                   demo={demo}
+                  allowVideo={!!site && entitled(site.tier, "video")}
                 />
                 <label className="field">
                   Category

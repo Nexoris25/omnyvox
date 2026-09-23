@@ -186,6 +186,12 @@ export function PricingComparison({
                     ]
                   : []),
                 ["Custom domain", "—", "Included", "Included"],
+                [
+                  "YouTube, Vimeo & Cloudinary video embeds",
+                  "—",
+                  "Included",
+                  "Included",
+                ],
                 ["Sections per page", "15", "15", "15"],
                 [
                   "Media library & rich text editor",

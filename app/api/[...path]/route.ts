@@ -25,6 +25,7 @@ import { queueOtp } from "@/lib/otp";
 import { extensionsApi } from "@/lib/extensions-api";
 import { contentSchema } from "@/lib/cms-schema";
 import { safeHtml, referencedMediaIds } from "@/lib/content";
+import { containsVideo, videoUpgradeMessage } from "@/lib/video";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -514,6 +515,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           template: z.enum(templateIds),
         })
         .parse(await req.json());
+      if (!entitled(site.tier, "video") && containsVideo(b))
+        return fail(videoUpgradeMessage, 403);
       b.sections?.forEach((section) => {
         section.body = safeHtml(section.body);
       });
@@ -887,6 +890,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (method === "POST" || method === "PATCH") {
       if (kind === "enquiries") return fail("Read only", 403);
       const b = contentSchema.parse(await req.json());
+      if (!entitled(site.tier, "video") && containsVideo(b))
+        return fail(videoUpgradeMessage, 403);
       if (
         ["published", "scheduled"].includes(b.status) &&
         /\[Required:|lorem ipsum/i.test(b.body)

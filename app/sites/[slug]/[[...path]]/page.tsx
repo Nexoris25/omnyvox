@@ -8,7 +8,7 @@ import {
   contentPath,
   siteBase,
 } from "@/lib/public-site";
-import { jsonLd } from "@/lib/model";
+import { jsonLd, entitled } from "@/lib/model";
 import { SiteRenderer, RenderSections } from "@/components/site-renderer";
 import { StoreCheckout } from "@/components/checkout";
 import { query } from "@/lib/db";
@@ -95,6 +95,7 @@ export default async function Page({ params, searchParams }: Props) {
     [site.id],
   );
   const pathname = "/" + path.join("/");
+  const videoEnabled = entitled(site.tier, "video");
   const industry = await industryFor(site);
   const indexKinds: Record<string, string> = {
     ...(site.tier !== "basic" ? { insights: "articles" } : {}),
@@ -223,6 +224,7 @@ export default async function Page({ params, searchParams }: Props) {
       )}
       <SiteRenderer
         preview={preview}
+        videoEnabled={videoEnabled}
         data={site.view}
         base={base}
         navigationPages={content.map((r) => ({
@@ -341,12 +343,15 @@ export default async function Page({ params, searchParams }: Props) {
             )}
             <div
               className="rich-content"
-              dangerouslySetInnerHTML={{ __html: safeHtml(record.data.body) }}
+              dangerouslySetInnerHTML={{
+                __html: safeHtml(record.data.body, { video: videoEnabled }),
+              }}
             />
             {record.data.sections && (
               <RenderSections
                 base={base}
                 preview={preview}
+                videoEnabled={videoEnabled}
                 sections={record.data.sections}
                 email={site.view.brand.email}
               />
