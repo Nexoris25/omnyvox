@@ -4,14 +4,13 @@ import {
   ChevronDown,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
   Clock,
   Check,
 } from "lucide-react";
 import type { Site, Section, Brand } from "@/lib/model";
 import { safeHtml } from "@/lib/content";
-import { SocialLinks } from "./social-links";
+import { SocialLinks, BrandIcon, whatsappIcon } from "./social-links";
 import { foreground } from "@/lib/theme";
 import { parseVideoUrl } from "@/lib/video";
 
@@ -242,7 +241,7 @@ function ContactBlock({
     });
   if (whatsapp)
     rows.push({
-      icon: <MessageCircle size={18} />,
+      icon: <BrandIcon icon={whatsappIcon} />,
       label: "WhatsApp",
       value: "Chat with us",
       href: whatsapp,
@@ -536,7 +535,7 @@ export function SiteRenderer({
               <b>{brand.name}</b>
             )}
             {brand.description && <p>{brand.description}</p>}
-            <SocialLinks links={brand.socials} />
+            <SocialLinks links={brand.socials} businessName={brand.name} />
           </div>
           {!!explore.length && (
             <nav aria-label="Footer navigation" className="footer-col">

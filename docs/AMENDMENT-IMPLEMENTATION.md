@@ -27,6 +27,36 @@ This release advances the master document and the two September amendment/design
 - Readiness now blocks publishing while any stock homepage section is unchanged. Previously only the "About" placeholder was caught.
 - Fixes: the create-website form lost typed input and could submit a mismatched category/template on every change (`NewSite` remounted each render); inserting an editor block replaced a just-inserted button; duplicated "| Omnyvox" page titles; the industry list is now public reference data, so demo mode can load it.
 
+### Target market, legal pages and brand icons
+
+**Software & IT retired.** Software businesses usually build their own websites, so this product decision supersedes the PRD's "technology companies" segment and the design brief's software-agency Studio direction.
+- Migration `006-creative-industry.sql` disables `technology` for new sites. Existing sites keep working and fall back to the general kit.
+- The same migration adds **Creative & events** (photographers, event planners, interior designers, marketing studios), which the Studio template now serves.
+
+**Industry legal pages** (`lib/legal-policies.ts`). Every site needs terms, privacy and cookies. Stores add refunds and returns, plus shipping for physical goods or fulfilment for digital goods. Each industry then adds:
+
+| Industry | Additional pages |
+| --- | --- |
+| Law firm, consulting | Legal or professional disclaimer |
+| Healthcare | Medical disclaimer, appointment cancellation |
+| Real estate | Listing disclaimer |
+| Construction | Quotation terms |
+| Solar | Quotation terms, warranty |
+| Logistics | Conditions of carriage |
+| School, training | Admissions & fees, safeguarding |
+| NGO | Donations, safeguarding |
+| Hospitality | Reservation terms |
+| Creative & events | Booking & cancellation, image use & copyright |
+| Beauty | Product safety |
+| Electronics, furniture | Warranty |
+| Food | Allergens |
+
+- **Drafts.** Each page is a structured fill-in draft with a "not legal advice" notice. Every business-specific fact is a `[Required: …]` marker, and the API refuses to publish a page that still contains one.
+- **Enforcement.** Provisioning creates the industry's set; readiness requires every page in it to be reviewed and published.
+- **Legal checklist.** The Legal pages screen shows status per page and offers one-click drafts for missing pages, so existing sites can catch up.
+
+**Brand icons.** Social links and the contact block use the real Facebook, Instagram, LinkedIn, X, YouTube, TikTok and WhatsApp marks, from `@fortawesome/free-brands-svg-icons` (icons CC BY 4.0; attribution kept in `components/social-links.tsx`). Each has an accessible name such as "Business on Instagram (opens in a new tab)".
+
 ### Industry starter kits, navigation, footer and image editing
 
 - **Industry kits** (`lib/industry-kits.ts`). All 19 industries have:

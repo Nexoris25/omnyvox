@@ -1,5 +1,6 @@
 import type { Brand, Section } from "./model";
 import type { templateIds } from "./templates";
+import { legalSetFor, policies } from "./legal-policies";
 
 /**
  * Industry starter kits: the palette, template, navigation button and
@@ -182,69 +183,69 @@ const sans = "sans" as const,
   serif = "serif" as const;
 
 export const industryKits: Record<string, IndustryKit> = {
-  technology: build("technology", {
+  creative: build("creative", {
     template: "studio",
-    palette: { primary: "#2446D8", secondary: "#0F1B3D", background: "#F7F8FC", text: "#141A2E", font: sans },
-    description: "Software, web and mobile products built with care.",
-    navCta: ["Start a project", "/contact"],
+    palette: { primary: "#B03A5B", secondary: "#1E1A24", background: "#FAF7F5", text: "#1C1820", font: sans },
+    description: "Photography, events and creative design.",
+    navCta: ["Book a consultation", "/contact"],
     hero: {
-      eyebrow: "Software & digital products",
-      title: "Software that moves your business forward.",
-      body: "We design, build and support web platforms, mobile apps and integrations — delivered in clear stages so you always know what comes next.",
-      cta: [["Discuss your project", "/contact"], ["See our services", "/services"]],
-      art: "code-xml",
+      eyebrow: "Creative studio & events",
+      title: "Ideas made memorable.",
+      body: "We plan, create and deliver work people remember — from brand shoots and celebrations to spaces that simply feel right. Tell us what you have in mind and we’ll shape it with you.",
+      cta: [["Start your project", "/contact"], ["View our portfolio", "/portfolio"]],
+      art: "camera",
     },
     offers: {
-      eyebrow: "What we do",
-      title: "Services built around your goals",
-      body: "Choose a single engagement or combine services into one delivery plan.",
-      link: ["Explore all services", "/services"],
+      eyebrow: "Services",
+      title: "What we create",
+      body: "List the services you offer today.",
+      link: ["All services", "/services"],
       items: [
-        ["Web applications", "Customer portals, dashboards and internal tools built to grow with you.", "monitor-smartphone"],
-        ["Mobile apps", "Native-quality iOS and Android experiences from a single, maintainable codebase.", "smartphone"],
-        ["Integrations & APIs", "Connect payments, identity and the systems your team already relies on.", "workflow"],
-        ["Support & maintenance", "Monitoring, updates and improvements after launch.", "shield-check"],
+        ["Photography & film", "Portraits, products and events captured with care.", "camera"],
+        ["Event planning", "Weddings, launches and celebrations planned end to end.", "party-popper"],
+        ["Interior & spatial design", "Homes, offices and venues designed around how they are used.", "lamp"],
+        ["Brand & marketing", "Identity, campaigns and content that feel like you.", "megaphone"],
       ],
     },
     about: {
-      eyebrow: "Our approach",
-      title: "Practical engineering, clearly communicated.",
-      body: "Every engagement starts by understanding the problem you need solved. We agree the scope, share progress at every stage and hand over documentation your team can use. Replace this text with your own story, team and way of working.",
-      art: "users-round",
+      eyebrow: "About us",
+      title: "Creativity with a clear process.",
+      body: "Introduce your studio, your style and the people behind the work. Feature only projects and clients you have permission to show.",
+      art: "palette",
     },
     features: {
-      eyebrow: "Why work with us",
+      eyebrow: "Working with us",
       title: "What you can expect",
       items: [
-        ["Clear scope", "A written plan with deliverables and milestones before work begins."],
-        ["Regular demos", "See working software early and often, not just at the end."],
-        ["Handover included", "Documentation and access so your product is never locked in."],
+        ["A clear brief", "Goals, budget and timeline agreed before we begin."],
+        ["Regular check-ins", "See progress and share feedback at every stage."],
+        ["Ready-to-use delivery", "Final work delivered in the formats you need."],
       ],
     },
     steps: {
       eyebrow: "How it works",
-      title: "From idea to launch",
+      title: "From idea to delivery",
       items: [
-        ["Discover", "We learn about your users, goals and constraints."],
-        ["Design", "We shape the product flow and agree what to build first."],
-        ["Build", "We deliver in short, reviewable releases."],
-        ["Launch & support", "We go live together and keep improving."],
+        ["Consultation", "We discuss your idea, date, budget and style."],
+        ["Proposal", "You receive a written scope and quotation."],
+        ["Create", "We plan, produce and refine the work with you."],
+        ["Deliver", "Final files, spaces or events delivered as agreed."],
       ],
     },
     extra: {
       type: "gallery",
-      eyebrow: "Selected work",
-      title: "Projects we’re proud of",
-      body: "Add real client projects with their permission, or hide this section until you have them.",
-      items: [["Project one", "Short summary of the problem and outcome."], ["Project two", "Short summary of the problem and outcome."], ["Project three", "Short summary of the problem and outcome."]],
+      eyebrow: "Portfolio",
+      title: "Selected work",
+      body: "Add your best projects with each client’s permission.",
+      items: [["Project name", "Client · Type"], ["Project name", "Client · Type"], ["Project name", "Client · Type"]],
     },
     faqs: [
-      ["How long does a typical project take?", "It depends on scope. After an initial conversation we share a timeline with clear milestones."],
-      ["Do you work with existing systems?", "Yes. We can extend, integrate with or gradually replace software you already use."],
-      ["Who owns the code?", "Describe your ownership and licensing terms here."],
+      ["How far in advance should I book?", "Share your typical lead times for shoots, events and design projects."],
+      ["How do you price your work?", "Explain your packages, day rates or custom quotations."],
+      ["Do you work outside your city?", "List the locations you cover and any travel fees."],
     ],
-    cta: { title: "Have a product in mind?", body: "Tell us what you’re building and we’ll suggest a practical first step.", button: ["Start a conversation", "/contact"] },
-    contact: { title: "Let’s talk about your project", body: "Send us a message and we’ll reply within one business day." },
+    cta: { title: "Let’s create something memorable", body: "Tell us about your idea and we’ll suggest how to bring it to life.", button: ["Start your project", "/contact"] },
+    contact: { title: "Tell us about your project", body: "Share your date, location and what you have in mind." },
   }),
 
   consulting: build("consulting", {
@@ -1337,7 +1338,7 @@ export function kitFor(industry: string | undefined, category: string) {
 
 /** Representative industry used for each template's public preview. */
 export const templatePreviewIndustry: Record<TemplateId, string> = {
-  studio: "technology",
+  studio: "creative",
   trust: "legal",
   care: "healthcare",
   horizon: "construction",
@@ -1405,17 +1406,10 @@ export function previewSite(
       address: "12 Sample Street, Lagos",
       hours: "Monday to Friday, 8am – 6pm",
     },
-    legal: [
-      { title: "Privacy policy", href: "#" },
-      { title: "Terms of use", href: "#" },
-      { title: "Cookie policy", href: "#" },
-      ...(category === "commerce"
-        ? [
-            { title: "Refunds & returns", href: "#" },
-            { title: "Shipping & delivery", href: "#" },
-          ]
-        : []),
-    ],
+    legal: legalSetFor(industry, category).map((type) => ({
+      title: policies[type].title,
+      href: "#",
+    })),
   };
 }
 

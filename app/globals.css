@@ -1596,7 +1596,7 @@ summary:focus-visible {
   border-radius: 8px;
 }
 /* ---- Template family design languages ---- */
-/* Studio — technology & software agencies: bold editorial sans, tight
+/* Studio — creative studios & events: bold editorial sans, tight
    letter-spacing, sharp accent rule under the nav. */
 .rendered-site.studio .rendered-nav {
   border-bottom: 2px solid var(--site-text);

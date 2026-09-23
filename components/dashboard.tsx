@@ -41,6 +41,7 @@ import { RecordExtras } from "./record-extras";
 import { NavigationEditor } from "./navigation-editor";
 import { ContentHistory } from "./content-history";
 import { FormRouting } from "./form-routing";
+import { LegalChecklist } from "./legal-checklist";
 import { BusinessProfile } from "./business-profile";
 import type { Module } from "@/lib/industry";
 import { SectionEditor } from "./section-editor";
@@ -87,8 +88,8 @@ const demoSite: Site = {
   tier: "growth",
   status: "draft",
   subscription: "pending",
-  industry_id: "technology",
-  data: previewSite("technology", "corporate", { name: "Forma Studio" }).data,
+  industry_id: "creative",
+  data: previewSite("creative", "corporate", { name: "Forma Studio" }).data,
   published: null,
 };
 type Row = {
@@ -1490,6 +1491,19 @@ export function Dashboard({ section }: { section: string }) {
                           ))}
                       </div>
                     </>
+                  )}
+                  {section === "legal" && site && (
+                    <LegalChecklist
+                      siteId={site.id}
+                      industry={site.industry_id}
+                      category={site.category}
+                      demo={demo}
+                      onCreated={() =>
+                        api(`sites/${site.id}/legal`)
+                          .then(setRows)
+                          .catch(() => {})
+                      }
+                    />
                   )}
                   {isRecords && site && (
                     <>

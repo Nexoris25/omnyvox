@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import type { Site, Brand } from "./model";
 import { reservedSlugs } from "./industry";
 import { kitFor, pageSections } from "./industry-kits";
+import { legalSetFor, policies } from "./legal-policies";
 export async function provisionBlueprint(client: PoolClient, site: Site) {
   const {
     rows: [industry],
@@ -44,25 +45,25 @@ export async function provisionBlueprint(client: PoolClient, site: Site) {
       footer: false,
     });
   }
-  for (const [type, title, slug] of [
-    ["terms", "Terms of use", "terms"],
-    ["privacy", "Privacy policy", "privacy"],
-    ["cookies", "Cookie policy", "cookies"],
-    ...(site.category === "commerce"
-      ? [
-          ["refund", "Refund & returns policy", "refund-policy"],
-          ["shipping", "Shipping & delivery", "shipping-delivery"],
-        ]
-      : []),
-  ]) {
+  const [profile] = (
+    await client.query("SELECT data FROM business_profiles WHERE site_id=$1", [
+      site.id,
+    ])
+  ).rows;
+  for (const type of legalSetFor(
+    site.industry_id,
+    site.category,
+    profile?.data?.fulfilment,
+  )) {
+    const policy = policies[type];
     await client.query(
       "INSERT INTO records(site_id,kind,data) VALUES($1,'legal',$2)",
       [
         site.id,
         JSON.stringify({
-          title,
-          slug,
-          body: `<h2>Owner review required</h2><p>[Required: describe your actual ${title.toLowerCase()}, contact information, effective date and applicable terms. Review with your legal adviser before publication.]</p>`,
+          title: policy.title,
+          slug: policy.slug,
+          body: policy.body,
           status: "draft",
           category: "general",
           policyType: type,

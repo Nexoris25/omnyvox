@@ -4,6 +4,7 @@ import { pool, query } from "../lib/db";
 import { provisionBlueprint } from "../lib/blueprints";
 import { kitFor } from "../lib/industry-kits";
 import { readiness } from "../lib/readiness";
+import { legalSetFor } from "../lib/legal-policies";
 import { sectionSchema, brandSchema, type Site } from "../lib/model";
 
 if (!/\/omnyvox_test(\?|$)/.test(process.env.DATABASE_URL || ""))
@@ -64,6 +65,8 @@ async function create(industry: string, category: "corporate" | "commerce") {
 try {
   for (const [industry, category] of [
     ["legal", "corporate"],
+    ["creative", "corporate"],
+    ["education", "corporate"],
     ["healthcare", "corporate"],
     ["fashion", "commerce"],
   ] as const) {
@@ -95,13 +98,15 @@ try {
         "contact",
       `${industry}: contact page leads with contact details`,
     );
-    const legal = await query<{ data: { policyType: string } }>(
+    const legal = await query<{ data: { policyType: string; body: string } }>(
       "SELECT data FROM records WHERE site_id=$1 AND kind='legal'",
       [site.id],
     );
     check(
-      legal.length === (category === "commerce" ? 5 : 3),
-      `${industry}: legal drafts provisioned for the footer`,
+      JSON.stringify(legal.map((l) => l.data.policyType).sort()) ===
+        JSON.stringify([...legalSetFor(industry, category)].sort()) &&
+        legal.every((l) => /\[Required:/.test(l.data.body)),
+      `${industry}: industry-specific legal drafts provisioned`,
     );
     const r = await readiness(site);
     check(

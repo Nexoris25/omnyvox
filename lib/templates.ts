@@ -3,11 +3,11 @@ export const templates = [
     id: "studio",
     name: "Business Studio",
     description:
-      "An editorial, product-first home for software agencies and technology teams. Confident type, a clear process and project-led credibility.",
+      "A bold, portfolio-led home for photographers, event planners, designers and creative studios. Confident type, a clear process and work-first presentation.",
     color: "#e7eadd",
     headline: "Good ideas. Thoughtfully delivered.",
     business: "FORM & CO.",
-    type: "Technology & software agencies",
+    type: "Creative studios & events",
   },
   {
     id: "trust",
@@ -83,11 +83,11 @@ export const templateManifests = {
   studio: {
     version: "1.1.0",
     category: "corporate",
-    industries: ["technology"],
+    industries: ["creative"],
     sections: ["hero", "services", "text", "cta", "faq", "insights"],
     references: [
-      "https://enyata.com/services",
-      "https://enyata.com/client-stories",
+      "https://thewheatbakerlagos.com/",
+      "https://kilentar.com/collections",
     ],
   },
   trust: {

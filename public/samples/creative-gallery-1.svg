@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Sample image">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2dfe5"/><stop offset="1" stop-color="#e1b4c1"/></linearGradient>
+<pattern id="d" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.3" fill="#512537" fill-opacity=".09"/></pattern>
+</defs>
+<rect width="800" height="600" fill="url(#g)"/>
+<rect width="800" height="600" fill="url(#d)"/>
+<circle cx="112.00000000000001" cy="96" r="312" fill="#B03A5B" fill-opacity=".12"/>
+<circle cx="720" cy="552" r="168.00000000000003" fill="#1E1A24" fill-opacity=".1"/>
+<rect x="292" y="192" width="216" height="216" rx="51.839999999999996" fill="#ffffff" fill-opacity=".72" stroke="#ffffff" stroke-opacity=".9"/>
+<svg x="340" y="240" xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#512537" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+<rect x="18" y="556" width="118" height="26" rx="13" fill="#ffffff" fill-opacity=".82"/>
+<text x="77" y="573.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#512537">Sample image</text>
+</svg>

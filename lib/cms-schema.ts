@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sectionSchema, indexingSchema, imagePath } from "./model";
+import { policyTypes } from "./legal-policies";
 export const contentSchema = z.object({
   details: z
     .array(
@@ -37,17 +38,6 @@ export const contentSchema = z.object({
   seoTitle: z.string().max(100).optional(),
   description: z.string().max(300).optional(),
   socialImage: imagePath.optional(),
-  policyType: z
-    .enum([
-      "terms",
-      "privacy",
-      "cookies",
-      "refund",
-      "shipping",
-      "returns",
-      "fulfilment",
-      "other",
-    ])
-    .optional(),
+  policyType: z.enum(policyTypes).optional(),
   policyReviewed: z.boolean().optional(),
 });

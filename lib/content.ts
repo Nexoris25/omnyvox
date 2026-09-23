@@ -106,33 +106,3 @@ export function plainText(value: string) {
     .replace(/&nbsp;/g, " ")
     .trim();
 }
-export const legalRecommendations: Record<
-  string,
-  { slug: string; title: string }[]
-> = {
-  general: [
-    { slug: "privacy", title: "Privacy policy" },
-    { slug: "terms", title: "Terms of service" },
-  ],
-  commerce: [
-    { slug: "privacy", title: "Privacy policy" },
-    { slug: "terms", title: "Terms of sale" },
-    { slug: "refund", title: "Refund & returns policy" },
-    { slug: "shipping", title: "Shipping & delivery policy" },
-  ],
-  services: [
-    { slug: "privacy", title: "Privacy policy" },
-    { slug: "terms", title: "Terms of service" },
-    { slug: "cancellation", title: "Cancellation policy" },
-  ],
-  healthcare: [
-    { slug: "privacy", title: "Privacy policy" },
-    { slug: "terms", title: "Terms of use" },
-    { slug: "medical-disclaimer", title: "Medical disclaimer" },
-  ],
-  education: [
-    { slug: "privacy", title: "Privacy policy" },
-    { slug: "terms", title: "Terms of enrolment" },
-    { slug: "refund", title: "Refund & cancellation policy" },
-  ],
-};

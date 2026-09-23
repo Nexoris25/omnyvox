@@ -1,6 +1,5 @@
 "use client";
 import { Brand } from "@/lib/model";
-import { legalRecommendations } from "@/lib/content";
 import { palettes } from "@/lib/theme";
 export function BrandSettings({
   brand,
@@ -43,31 +42,10 @@ export function BrandSettings({
         <a href="/dashboard/enquiries">Forms & enquiries</a>. Your public
         business email is configured separately.
       </p>
-      <label className="field">
-        Nature of business
-        <select
-          value={brand.businessNature || "general"}
-          onChange={(e) =>
-            onChange({
-              ...brand,
-              businessNature: e.target.value as Brand["businessNature"],
-            })
-          }
-        >
-          {["general", "commerce", "services", "healthcare", "education"].map(
-            (n) => (
-              <option key={n}>{n}</option>
-            ),
-          )}
-        </select>
-      </label>
       <p>
-        Recommended legal pages:{" "}
-        {(legalRecommendations[brand.businessNature || "general"] || [])
-          .map((p) => p.title)
-          .join(", ")}
-        . Create and publish these in Legal pages; published policies appear in
-        your footer.
+        Your required legal pages are based on your industry. Track and create
+        them in <a href="/dashboard/legal">Legal pages</a>; published policies
+        appear in your footer.
       </p>
       {[
         "facebook",

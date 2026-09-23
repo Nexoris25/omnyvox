@@ -22,7 +22,7 @@ export async function MarketingShell({
         <div>
           <Brand />
           <p>Business websites. Built for your next step.</p>
-          <SocialLinks links={settings.socials} />
+          <SocialLinks links={settings.socials} businessName="Omnyvox" />
         </div>
         <div>
           <strong>Explore Omnyvox</strong>

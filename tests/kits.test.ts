@@ -12,12 +12,23 @@ import { brandSchema, sectionSchema, isSampleImage } from "../lib/model";
 import { contrast, foreground } from "../lib/theme";
 import { safeHtml } from "../lib/content";
 import { reservedSlugs } from "../lib/industry-routes";
+import { legalSetFor, policies } from "../lib/legal-policies";
 
-/** Industry rows as seeded by migration 003, so link checks use real pages. */
+/** Enabled industries as seeded by the migrations, so link checks use real pages. */
+const rows = (file: string) =>
+  [
+    ...readFileSync(`infrastructure/migrations/${file}`, "utf8").matchAll(
+      /\('([a-z]+)','[^']+','(corporate|commerce)','[^']*','(\[[^\]]*\])'\)/g,
+    ),
+  ].map((m) => ({ id: m[1], category: m[2], pages: JSON.parse(m[3]) as string[] }));
+const disabled = new Set(
+  [...readFileSync("infrastructure/migrations/006-creative-industry.sql", "utf8")
+    .matchAll(/enabled=false WHERE id='([a-z]+)'/g)].map((m) => m[1]),
+);
 const seeded = [
-  ...readFileSync("infrastructure/migrations/003-context-and-forms.sql", "utf8")
-    .matchAll(/\('([a-z]+)','[^']+','(corporate|commerce)','[^']*','(\[[^\]]*\])'\)/g),
-].map((m) => ({ id: m[1], category: m[2], pages: JSON.parse(m[3]) as string[] }));
+  ...rows("003-context-and-forms.sql"),
+  ...rows("006-creative-industry.sql"),
+].filter((i) => !disabled.has(i.id));
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 test("every seeded industry has a kit", () => {
@@ -111,4 +122,44 @@ test("sanitiser keeps bundled sample images and rejects others", () => {
   );
   assert.match(html, /samples\/legal-hero\.svg/);
   assert.doesNotMatch(html, /evil/);
+});
+
+test("software businesses are no longer offered; creative is", () => {
+  assert.ok(!seeded.some((i) => i.id === "technology"));
+  assert.ok(seeded.some((i) => i.id === "creative"));
+  assert.ok(!("technology" in industryKits));
+  assert.equal(templatePreviewIndustry.studio, "creative");
+});
+
+test("each industry gets the legal pages its activities require", () => {
+  const set = (i: string, c = "corporate", f?: "physical" | "digital" | "services") =>
+    legalSetFor(i, c, f);
+  for (const i of seeded)
+    assert.deepEqual(set(i.id, i.category).slice(0, 3), ["terms", "privacy", "cookies"], i.id);
+  assert.ok(set("legal").includes("disclaimer"));
+  assert.ok(set("healthcare").includes("medical-disclaimer"));
+  assert.ok(set("education").includes("safeguarding"));
+  assert.ok(set("community").includes("donations"));
+  assert.ok(set("logistics").includes("carriage"));
+  assert.ok(set("hospitality").includes("booking"));
+  assert.ok(set("property").includes("listing-disclaimer"));
+  assert.ok(set("food", "commerce").includes("allergens"));
+  assert.ok(set("electronics", "commerce").includes("warranty"));
+  assert.deepEqual(set("fashion", "commerce").slice(3), ["refund", "shipping"]);
+  assert.ok(set("books", "commerce", "digital").includes("fulfilment"));
+  assert.ok(!set("books", "commerce", "digital").includes("shipping"));
+  assert.ok(!set("legal").includes("refund"));
+});
+
+test("legal drafts are complete, sanitiser-safe and blocked until filled in", () => {
+  const slugs = new Set<string>();
+  for (const [type, p] of Object.entries(policies)) {
+    assert.ok(p.title && p.reason, type);
+    assert.ok(!slugs.has(p.slug), `duplicate slug ${p.slug}`);
+    slugs.add(p.slug);
+    assert.ok(!reservedSlugs.has(p.slug), `${type} slug is reserved`);
+    assert.match(p.body, /\[Required:/, `${type} must require owner input`);
+    assert.match(p.body, /not legal advice/, `${type} must carry the review notice`);
+    assert.match(safeHtml(p.body), /class="callout"/, `${type} callout survives sanitising`);
+  }
 });

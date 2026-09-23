@@ -1,6 +1,7 @@
 import { query } from "./db";
 import { initialSections, usesSampleImage, type Site } from "./model";
 import { siteEntitlements } from "./entitlements";
+import { legalSetFor, policies } from "./legal-policies";
 export async function readiness(site: Site) {
   const issues: string[] = [];
   const [profile] = await query<{
@@ -8,7 +9,7 @@ export async function readiness(site: Site) {
       summary?: string;
       phone?: string;
       factsConfirmed?: boolean;
-      fulfilment?: string;
+      fulfilment?: "physical" | "digital" | "services";
     };
   }>("SELECT data FROM business_profiles WHERE site_id=$1", [site.id]);
   if (
@@ -33,22 +34,16 @@ export async function readiness(site: Site) {
     "SELECT data FROM records WHERE site_id=$1 AND kind='legal' AND data->>'status'='published'",
     [site.id],
   );
-  const required = [
-    "terms",
-    "privacy",
-    "cookies",
-    ...(site.category === "commerce"
-      ? [
-          "refund",
-          profile?.data.fulfilment === "physical" ? "shipping" : "fulfilment",
-        ]
-      : []),
-  ];
+  const required = legalSetFor(
+    site.industry_id,
+    site.category,
+    profile?.data.fulfilment,
+  );
   for (const type of required)
     if (
       !policy.some((p) => p.data.policyType === type && p.data.policyReviewed)
     )
-      issues.push(`Publish your reviewed ${type} policy.`);
+      issues.push(`Review and publish your ${policies[type].title.toLowerCase()}.`);
   if (site.category === "commerce") {
     if (
       !(
