@@ -44,6 +44,12 @@ import { safeHtml, referencedMediaIds } from "@/lib/content";
 import { containsVideo, videoUpgradeMessage } from "@/lib/video";
 import { kitFor } from "@/lib/industry-kits";
 import { resolveOrderPayment, ResolutionError } from "@/lib/payment-recovery";
+import {
+  planChangePreview,
+  requestPlanChange,
+  cancelScheduledChange,
+  PlanChangeError,
+} from "@/lib/plan-change";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
@@ -71,6 +77,7 @@ import {
   brandSchema,
   sectionSchema,
   limits,
+  tiers,
   entitled,
   usesSampleImage,
   Site,
@@ -78,6 +85,25 @@ import {
 export const runtime = "nodejs";
 const ok = (data: unknown, status = 200) => NextResponse.json(data, { status });
 const fail = (message: string, status = 400) => ok({ error: message }, status);
+/** Opens a Paystack checkout for a platform subscription charge. */
+async function paystackCheckout(email: string, amount: number, reference: string) {
+  const r = await fetch("https://api.paystack.co/transaction/initialize", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      amount,
+      currency: "NGN",
+      reference,
+      callback_url: `${process.env.APP_URL}/dashboard/billing`,
+    }),
+  });
+  const result = await r.json();
+  return r.ok && result.status ? (result.data.authorization_url as string) : null;
+}
 type Context = { params: Promise<{ path: string[] }> };
 async function handle(req: NextRequest, ctx: Context): Promise<Response> {
   try {
@@ -669,6 +695,35 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       }
       return ok({ success: true });
     }
+    if (kind === "plan-change") {
+      try {
+        if (method === "GET") {
+          const tier = z.enum(tiers).parse(req.nextUrl.searchParams.get("tier"));
+          return ok(await planChangePreview(id, tier));
+        }
+        if (method === "DELETE") return ok(await cancelScheduledChange(id, u.id));
+        if (method === "POST") {
+          const { tier } = z.object({ tier: z.enum(tiers) }).parse(await req.json());
+          const result = await requestPlanChange(id, u.id, tier);
+          if (result.status !== "payment_required") return ok(result);
+          if (!process.env.PAYSTACK_SECRET_KEY)
+            return fail("Online payments are not open yet. Contact Nexoris to change plans.", 503);
+          const root = site.subscription_site_id || id;
+          const reference = `upg_${randomUUID()}`;
+          await query(
+            "INSERT INTO billing(reference,site_id,amount,interval,bonus_months,payer_email,purpose,target_tier) VALUES($1,$2,$3,$4,0,$5,'plan_change',$6)",
+            [reference, root, result.charge.amount, result.interval, u.email, tier],
+          );
+          const url = await paystackCheckout(u.email, result.charge.amount, reference);
+          if (!url) return fail("Payment provider is unavailable", 502);
+          return ok({ ...result, url });
+        }
+        return fail("Method not allowed", 405);
+      } catch (e) {
+        if (e instanceof PlanChangeError) return fail(e.message, e.status);
+        throw e;
+      }
+    }
     if (kind === "billing" && method === "POST") {
       const { interval } = z
         .object({ interval: z.enum(["monthly", "annual"]) })
@@ -700,24 +755,9 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           u.email,
         ],
       );
-      const r = await fetch("https://api.paystack.co/transaction/initialize", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: u.email,
-          amount,
-          currency: "NGN",
-          reference,
-          callback_url: `${process.env.APP_URL}/dashboard/billing`,
-        }),
-      });
-      const result = await r.json();
-      if (!r.ok || !result.status)
-        return fail("Payment provider is unavailable", 502);
-      return ok({ url: result.data.authorization_url });
+      const url = await paystackCheckout(u.email, amount, reference);
+      if (!url) return fail("Payment provider is unavailable", 502);
+      return ok({ url });
     }
     if (kind === "media-usage" && method === "GET")
       return ok(await mediaUsage(id));

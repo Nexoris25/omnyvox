@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { BillingSummary } from "./billing-summary";
 import { BillingHistory } from "./billing-history";
+import { PlanChange } from "./plan-change";
 import { BrandSettings, RobotsSettings } from "./brand-settings";
 import { RecordExtras } from "./record-extras";
 import { NavigationEditor } from "./navigation-editor";
@@ -1822,6 +1823,7 @@ export function Dashboard({ section }: { section: string }) {
                                 margin: "30px 0",
                               }}
                             />
+                            {!demo && <PlanChange site={site.id} tier={site.tier} />}
                             {!demo && <BillingHistory site={site.id} />}
                             <h3 style={{ fontSize: 17 }}>
                               Your data stays yours.

@@ -277,9 +277,13 @@ export async function submitEnquiry(req: NextRequest) {
     )
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
   }
+  const [siteRow] = await query<Site>("SELECT * FROM effective_sites WHERE id=$1", [
+    b.site,
+  ]);
+  // After a downgrade, only the earliest recipients within the allowance stay active.
   const secondary = await query<{ email: string }>(
-    "SELECT email FROM form_recipients WHERE site_id=$1 AND verified_at IS NOT NULL",
-    [b.site],
+    "SELECT email FROM form_recipients WHERE site_id=$1 AND verified_at IS NOT NULL ORDER BY created_at LIMIT $2",
+    [b.site, (await siteEntitlements(siteRow)).limits.recipients ?? 0],
   );
   const recipients = [
     form.active_email,

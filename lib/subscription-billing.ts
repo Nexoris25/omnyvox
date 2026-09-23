@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { pool, query } from "./db";
 import { encrypt, decrypt } from "./commerce";
+import { applyTier } from "./plan-change";
 export class BillingStateError extends Error {
   constructor(
     message: string,
@@ -51,6 +52,36 @@ export async function confirmSubscriptionPayment(event: Payment) {
       "SELECT s.*,u.name AS buyer_name,u.email AS buyer_email FROM sites s JOIN users u ON u.id=s.owner_id WHERE s.id=$1 FOR UPDATE OF s",
       [payment.site_id],
     );
+    if (payment.purpose === "plan_change" && payment.target_tier) {
+      // A prorated upgrade: apply the plan now; the paid period is unchanged.
+      await applyTier(client, site.id, payment.target_tier, "paystack");
+      await client.query(
+        "UPDATE billing SET status='paid',paid_at=now() WHERE reference=$1",
+        [payment.reference],
+      );
+      await client.query(
+        "INSERT INTO invoices(reference,site_id,buyer,description,amount,currency,period_start,period_end) VALUES($1,$2,$3,$4,$5,$6,now(),$7)",
+        [
+          payment.reference,
+          site.id,
+          JSON.stringify({ name: site.buyer_name, email: site.buyer_email, business: site.name }),
+          `Upgrade from ${site.tier} to ${payment.target_tier} — prorated for the rest of the current period`,
+          payment.amount,
+          payment.currency,
+          site.paid_until,
+        ],
+      );
+      await client.query(
+        "INSERT INTO email_outbox(recipient,subject,body,site_id) VALUES($1,'Your plan upgrade is active',$2,$3)",
+        [
+          site.buyer_email,
+          `${site.name} is now on the ${payment.target_tier} plan. Your invoice is available in Subscription & billing, and future renewals use the new plan's price.`,
+          site.id,
+        ],
+      );
+      await client.query("COMMIT");
+      return;
+    }
     const {
       rows: [period],
     } = await client.query(
