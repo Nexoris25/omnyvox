@@ -3,7 +3,7 @@ import { provisionBlueprint } from "@/lib/blueprints";
 import { templateIds, templateManifests } from "@/lib/templates";
 import { businessSettings } from "@/lib/business";
 import { readiness } from "@/lib/readiness";
-import { formSettings, submitEnquiry } from "@/lib/forms";
+import { formSettings, formRecipients, submitEnquiry } from "@/lib/forms";
 import {
   availableModules,
   industryFor,
@@ -493,6 +493,8 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (kind === "modules" && method === "GET")
       return ok(await availableModules(site));
     if (kind === "forms") return formSettings(req, id, u.id, recordId);
+    if (kind === "recipients")
+      return formRecipients(req, site, u.id, recordId);
     if (
       collectionKinds.includes(kind) &&
       !(await industryFor(site))?.collections[kind]

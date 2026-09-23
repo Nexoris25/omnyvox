@@ -132,6 +132,15 @@ export default async function Page({ params, searchParams }: Props) {
           [site.id],
         )
       : [];
+  const [businessProfile] = await query<{
+    data: {
+      address: string;
+      showAddress: boolean;
+      phone: string;
+      hours: string;
+      city: string;
+    };
+  }>("SELECT data FROM business_profiles WHERE site_id=$1", [site.id]);
   const organisation = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -143,6 +152,32 @@ export default async function Page({ params, searchParams }: Props) {
       ? { logo: new URL(site.view.brand.logo, process.env.APP_URL).href }
       : {}),
   };
+  const facts = businessProfile?.data;
+  const localBusiness =
+    site.category === "corporate" && facts?.showAddress && facts.address
+      ? {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "@id": base + "/#localbusiness",
+          name: site.view.brand.name,
+          url: base,
+          address: { "@type": "PostalAddress", streetAddress: facts.address },
+          ...(facts.city ? { areaServed: facts.city } : {}),
+          ...(facts.phone ? { telephone: facts.phone } : {}),
+          ...(facts.hours ? { openingHours: facts.hours } : {}),
+        }
+      : null;
+  const serviceSchema =
+    site.category === "corporate" && record?.kind === "offerings"
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: record.data.title,
+          description: plainText(record.data.body).slice(0, 300),
+          provider: { "@id": base + "/#organization" },
+          ...(facts?.city ? { areaServed: facts.city } : {}),
+        }
+      : null;
   const schema =
     record?.kind === "articles"
       ? {
@@ -386,6 +421,18 @@ export default async function Page({ params, searchParams }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
+        />
+      )}
+      {localBusiness && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(localBusiness) }}
+        />
+      )}
+      {serviceSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(serviceSchema) }}
         />
       )}
       {record && (

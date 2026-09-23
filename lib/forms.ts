@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { query, pool, audit } from "./db";
 import { rateLimit } from "./auth";
+import { siteEntitlements } from "./entitlements";
+import type { Site } from "./model";
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 export async function formSettings(
   req: NextRequest,
@@ -117,6 +119,129 @@ export async function formSettings(
     client.release();
   }
 }
+/** Growth/Advanced additional verified recipients, beyond the always-present
+ * primary inbox managed by formSettings(). Same verification mechanics:
+ * a rate-limited, expiring, timing-safe-compared 6-digit code. */
+export async function formRecipients(
+  req: NextRequest,
+  site: Site,
+  actor: string,
+  action?: string,
+) {
+  const entitlements = await siteEntitlements(site);
+  const maxSecondary = entitlements.limits.recipients ?? 0;
+  if (req.method === "GET") {
+    const rows = await query(
+      "SELECT id,email,label,verified_at,sent_at,attempts FROM form_recipients WHERE site_id=$1 ORDER BY created_at",
+      [site.id],
+    );
+    return NextResponse.json({ recipients: rows, limit: maxSecondary });
+  }
+  if (req.method === "DELETE" && action) {
+    if (!z.uuid().safeParse(action).success)
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await query("DELETE FROM form_recipients WHERE id=$1 AND site_id=$2", [
+      action,
+      site.id,
+    ]);
+    await audit(actor, "form.recipient.removed", site.id);
+    return NextResponse.json({ success: true });
+  }
+  if (req.method !== "POST")
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+  if (maxSecondary <= 0)
+    return NextResponse.json(
+      { error: "Additional recipients are available on Growth and Advanced." },
+      { status: 403 },
+    );
+  if (action === "verify") {
+    const { id: recipientId, code } = z
+      .object({ id: z.uuid(), code: z.string().regex(/^\d{6}$/) })
+      .parse(await req.json());
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const {
+        rows: [recipient],
+      } = await client.query(
+        "SELECT * FROM form_recipients WHERE id=$1 AND site_id=$2 FOR UPDATE",
+        [recipientId, site.id],
+      );
+      if (
+        !recipient ||
+        !recipient.verification_hash ||
+        recipient.attempts >= 5 ||
+        new Date(recipient.expires_at) <= new Date()
+      ) {
+        await client.query("ROLLBACK");
+        return NextResponse.json(
+          { error: "The code expired. Request another code." },
+          { status: 400 },
+        );
+      }
+      await client.query(
+        "UPDATE form_recipients SET attempts=attempts+1 WHERE id=$1",
+        [recipientId],
+      );
+      if (
+        !timingSafeEqual(
+          Buffer.from(recipient.verification_hash, "hex"),
+          Buffer.from(hash(recipient.email + ":" + code), "hex"),
+        )
+      ) {
+        await client.query("COMMIT");
+        return NextResponse.json(
+          { error: "Incorrect verification code" },
+          { status: 400 },
+        );
+      }
+      await client.query(
+        "UPDATE form_recipients SET verification_hash=NULL,verified_at=now() WHERE id=$1",
+        [recipientId],
+      );
+      await client.query(
+        "INSERT INTO audit(actor,action,target) VALUES($1,'form.recipient.verified',$2)",
+        [actor, site.id],
+      );
+      await client.query("COMMIT");
+      return NextResponse.json({ success: true });
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+  const { email, label } = z
+    .object({ email: z.email().max(254), label: z.string().max(60).default("") })
+    .parse(await req.json());
+  await rateLimit("recipient-secondary:" + site.id);
+  const [{ count }] = await query<{ count: string }>(
+    "SELECT count(*) FROM form_recipients WHERE site_id=$1",
+    [site.id],
+  );
+  if (Number(count) >= maxSecondary)
+    return NextResponse.json(
+      {
+        error: `Your plan allows ${maxSecondary} additional recipient(s). Remove one before adding another.`,
+      },
+      { status: 403 },
+    );
+  const code = String(randomInt(100000, 1000000));
+  const [recipient] = await query<{ id: string }>(
+    "INSERT INTO form_recipients(site_id,email,label,verification_hash,expires_at,sent_at) VALUES($1,$2,$3,$4,now()+interval '15 minutes',now()) RETURNING id",
+    [site.id, email, label, hash(email + ":" + code)],
+  );
+  await query(
+    "INSERT INTO email_outbox(recipient,subject,body,site_id) VALUES($1,'Verify your website enquiry inbox',$2,$3)",
+    [
+      email,
+      `Your Omnyvox verification code is ${code}. It expires in 15 minutes. Use it only in your website's Forms & enquiries settings. Ignore this email if you did not request this change.`,
+      site.id,
+    ],
+  );
+  return NextResponse.json({ success: true, id: recipient.id });
+}
 export async function submitEnquiry(req: NextRequest) {
   const b = z
     .object({
@@ -152,6 +277,14 @@ export async function submitEnquiry(req: NextRequest) {
     )
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
   }
+  const secondary = await query<{ email: string }>(
+    "SELECT email FROM form_recipients WHERE site_id=$1 AND verified_at IS NOT NULL",
+    [b.site],
+  );
+  const recipients = [
+    form.active_email,
+    ...secondary.map((r) => r.email),
+  ].filter((email, i, all) => all.indexOf(email) === i);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -171,16 +304,17 @@ export async function submitEnquiry(req: NextRequest) {
         }),
       ],
     );
-    await client.query(
-      "INSERT INTO email_outbox(recipient,subject,body,site_id,enquiry_id,reply_to) VALUES($1,'New website enquiry',$2,$3,$4,$5)",
-      [
-        form.active_email,
-        `${b.name} (${b.email})\n\n${b.message}`,
-        b.site,
-        record.id,
-        b.email,
-      ],
-    );
+    for (const recipient of recipients)
+      await client.query(
+        "INSERT INTO email_outbox(recipient,subject,body,site_id,enquiry_id,reply_to) VALUES($1,'New website enquiry',$2,$3,$4,$5)",
+        [
+          recipient,
+          `${b.name} (${b.email})\n\n${b.message}`,
+          b.site,
+          record.id,
+          b.email,
+        ],
+      );
     await client.query("COMMIT");
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (e) {

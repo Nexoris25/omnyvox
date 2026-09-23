@@ -3773,3 +3773,20 @@ summary:focus-visible {
     min-width: 0;
   }
 }
+
+/* Multiple verified contact-form recipients (Growth/Advanced) */
+.panel-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 26px 0;
+}
+.recipient-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  margin-bottom: 10px;
+}

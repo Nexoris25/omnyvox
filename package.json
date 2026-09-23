@@ -13,7 +13,8 @@
     "db:seed-marketing": "node --env-file=.env.local --import tsx scripts/seed-marketing.ts",
     "db:migrate": "node --env-file=.env.local --import tsx scripts/run-migrations.ts",
     "worker:maintenance": "node --env-file=.env.local --import tsx scripts/maintenance.ts",
-    "worker:ai": "node --env-file=.env.local --import tsx scripts/ai-worker.ts"
+    "worker:ai": "node --env-file=.env.local --import tsx scripts/ai-worker.ts",
+    "worker:email": "node --env-file=.env.local scripts/send-email.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",

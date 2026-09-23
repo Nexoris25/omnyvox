@@ -1,0 +1,2 @@
+CREATE TABLE form_recipients(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),site_id uuid NOT NULL REFERENCES sites(id) ON DELETE CASCADE,email text NOT NULL,label text NOT NULL DEFAULT '',verification_hash text,expires_at timestamptz,attempts integer NOT NULL DEFAULT 0,sent_at timestamptz,verified_at timestamptz,created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX form_recipients_site ON form_recipients(site_id);

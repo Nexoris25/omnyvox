@@ -4,14 +4,29 @@ import { templateIds } from "./templates";
 export const tiers = ["basic", "growth", "advanced"] as const;
 export type Tier = (typeof tiers)[number];
 export const limits = {
-  basic: { websites: 1, pages: 5, products: 25, articles: 0, team: 1 },
-  growth: { websites: 1, pages: 15, products: 250, articles: 100, team: 3 },
+  basic: {
+    websites: 1,
+    pages: 5,
+    products: 25,
+    articles: 0,
+    team: 1,
+    recipients: 0,
+  },
+  growth: {
+    websites: 1,
+    pages: 15,
+    products: 250,
+    articles: 100,
+    team: 3,
+    recipients: 2,
+  },
   advanced: {
     websites: 3,
     pages: 100,
     products: 2000,
     articles: 1000,
     team: 10,
+    recipients: 4,
   },
 };
 export function entitled(tier: Tier, feature: string) {

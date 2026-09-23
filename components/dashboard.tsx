@@ -51,7 +51,7 @@ import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { templates, templateManifests, templateIds } from "@/lib/templates";
 import { TemplateCard, TemplatePickerGrid } from "./template-picker";
-import { Site, initialSections, limits, entitled } from "@/lib/model";
+import { Site, initialSections, limits } from "@/lib/model";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
   ["websites", "My websites", Globe2],
@@ -1452,10 +1452,11 @@ export function Dashboard({ section }: { section: string }) {
                   {isRecords && site && (
                     <>
                       {section === "articles" &&
-                      !entitled(site.tier, "blog") ? (
+                      modules.find((m) => m.key === "articles")?.state ===
+                        "upgrade" ? (
                         <Upgrade feature="Blog / Insights" />
                       ) : section === "products" &&
-                        site.category !== "commerce" ? (
+                        !modules.some((m) => m.key === "products") ? (
                         <div className="panel empty">
                           <ShoppingBag />
                           <h2>A storefront starts with a store.</h2>
