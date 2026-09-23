@@ -225,7 +225,13 @@
   align-self: end;
   padding: clamp(96px, 12cqi, 160px) max(24px, calc((100% - var(--site-max)) / 2))
     clamp(48px, 7cqi, 88px);
-  background: linear-gradient(to top, rgb(10 8 6 / 0.78), rgb(10 8 6 / 0.35) 60%, transparent);
+  background: linear-gradient(
+    to top,
+    rgb(10 8 6 / 0.82),
+    rgb(10 8 6 / 0.6) 55%,
+    rgb(10 8 6 / 0.12)
+  );
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.35);
 }
 .rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) h1,
 .rendered-site.haven .hero-section:has(.section-image:not([data-illustration])) p,

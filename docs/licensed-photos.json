@@ -1,0 +1,68 @@
+[
+  {
+    "key": "hospitality-hero",
+    "url": "/samples/hospitality-hero-photo.webp",
+    "small": "/samples/hospitality-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-large-swimming-pool-surrounded-by-palm-trees-KcPPZbRSOdA",
+    "photographer": "Conny Schneider",
+    "photographerUrl": "https://unsplash.com/@choys_",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 195954
+  },
+  {
+    "key": "hospitality-about",
+    "url": "/samples/hospitality-about-photo.webp",
+    "small": "/samples/hospitality-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/brown-wooden-tables-and-chairs-inside-building-TivEEYzzhik",
+    "photographer": "Alexander Faé",
+    "photographerUrl": "https://unsplash.com/@alexfae",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 161880
+  },
+  {
+    "key": "property-hero",
+    "url": "/samples/property-hero-photo.webp",
+    "small": "/samples/property-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/modern-house-exterior-glows-with-lights-4vioYQ9Nn9Y",
+    "photographer": "Arthur BAUDRY",
+    "photographerUrl": "https://unsplash.com/@bipow",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 90640
+  },
+  {
+    "key": "property-about",
+    "url": "/samples/property-about-photo.webp",
+    "small": "/samples/property-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/gray-and-white-sofa-set-trG8989WjFA",
+    "photographer": "Spacejoy",
+    "photographerUrl": "https://unsplash.com/@spacejoy",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 110472
+  },
+  {
+    "key": "beauty-hero",
+    "url": "/samples/beauty-hero-photo.webp",
+    "small": "/samples/beauty-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/skincare-products-with-leaves-on-a-light-background-g6q3lFAe3kA",
+    "photographer": "ibnu ihza",
+    "photographerUrl": "https://unsplash.com/@mahendra_10",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 76024
+  },
+  {
+    "key": "beauty-about",
+    "url": "/samples/beauty-about-photo.webp",
+    "small": "/samples/beauty-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/red-tomato-on-white-ceramic-plate-vuctv0AnlwY",
+    "photographer": "Towfiqu barbhuiya",
+    "photographerUrl": "https://unsplash.com/@towfiqu999999",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-23",
+    "bytes": 87664
+  }
+]

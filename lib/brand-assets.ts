@@ -7,6 +7,9 @@ export const photoIndustries = [
   "fashion",
   "electronics",
   "food",
+  "hospitality",
+  "property",
+  "beauty",
 ] as const;
 export const templateIndustry: Record<string, string> = {
   studio: "creative",
@@ -69,4 +72,17 @@ export const photoAlt: Record<string, string> = {
     "Fresh vegetables and plantains in woven baskets — illustrative sample",
   "food-about":
     "Grocer packing fresh produce into a paper bag — illustrative sample",
+  // Licensed stock photographs (Unsplash License); credits in docs/licensed-photos.json.
+  "hospitality-hero":
+    "Resort pool lined with palm trees beside white guest buildings — sample image",
+  "hospitality-about":
+    "Bright restaurant dining room with wooden tables and pendant lights — sample image",
+  "property-hero":
+    "Modern two-storey home lit warmly at dusk — sample image",
+  "property-about":
+    "Furnished living room with a grey sofa, armchair and plants — sample image",
+  "beauty-hero":
+    "Drops of facial oil and cream beside green leaves on a blush background — sample image",
+  "beauty-about":
+    "Spoonful of natural butter beside a fresh coconut and palm leaves — sample image",
 };
