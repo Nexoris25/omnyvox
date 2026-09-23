@@ -7,7 +7,12 @@ import {
   previewSite,
   templatePreviewIndustry,
 } from "../lib/industry-kits";
-import { templateManifests, templateIds } from "../lib/templates";
+import {
+  allowedSections,
+  ineligibleSections,
+  templateManifests,
+  templateIds,
+} from "../lib/templates";
 import { brandSchema, sectionSchema, isSampleImage } from "../lib/model";
 import { contrast, foreground } from "../lib/theme";
 import { safeHtml } from "../lib/content";
@@ -43,6 +48,29 @@ test("kit templates match the industry's website type", () => {
       i.category,
       i.id,
     );
+});
+
+test("kits only use sections their template supports, on every page", () => {
+  for (const i of seeded) {
+    const kit = industryKits[i.id];
+    assert.deepEqual(ineligibleSections(kit.template, kit.sections), [], i.id);
+    for (const page of ["About", "Contact", "FAQ", "Services", "Gallery", "Pricing"])
+      assert.deepEqual(
+        ineligibleSections(kit.template, pageSections(kit, page)),
+        [],
+        `${i.id} ${page}`,
+      );
+  }
+});
+
+test("templates in a category share one section set, so switching never strands content", () => {
+  for (const category of ["corporate", "commerce"]) {
+    const sets = templateIds
+      .filter((id) => templateManifests[id].category === category)
+      .map((id) => JSON.stringify(allowedSections(id)));
+    assert.equal(new Set(sets).size, 1, category);
+  }
+  assert.ok(!allowedSections("catalogue").includes("team"));
 });
 
 test("kit palettes meet WCAG contrast for text, buttons and controls", () => {

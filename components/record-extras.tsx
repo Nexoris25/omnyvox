@@ -9,7 +9,9 @@ export function RecordExtras({
   initial = {},
   demo = false,
   allowVideo = false,
+  allowedSections,
 }: {
+  allowedSections?: readonly string[];
   siteId: string;
   kind: string;
   allowVideo?: boolean;
@@ -276,6 +278,7 @@ export function RecordExtras({
             onChange={setSections}
             mediaEndpoint={demo ? undefined : `/api/sites/${siteId}/media`}
             allowVideo={allowVideo}
+            allowed={allowedSections}
           />
           <input
             type="hidden"

@@ -53,12 +53,15 @@ import { MediaLibrary } from "./media-library";
 import { WebsiteOperations } from "./website-operations";
 import { FulfilmentSettings } from "./fulfilment-settings";
 import { ProductVariants } from "./product-variants";
+import { useAutosave } from "./use-autosave";
+import { ConflictBanner, RestoreBanner, SaveStatus } from "./save-status";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { ScaledPreview } from "./scaled-preview";
 import {
   templates,
   templateManifests,
+  allowedSections,
   templateIds,
   compatibleTemplate,
 } from "@/lib/templates";
@@ -145,6 +148,7 @@ export function Dashboard({ section }: { section: string }) {
     [rows, setRows] = useState<Row[]>([]),
     [editRow, setEditRow] = useState<Row | null>(null),
     [recordModal, setRecordModal] = useState(false),
+    [recordConflict, setRecordConflict] = useState<Record<string, unknown> | null>(null),
     [filter, setFilter] = useState(""),
     [modules, setModules] = useState<Module[]>([]),
     [industries, setIndustries] = useState<
@@ -254,7 +258,10 @@ export function Dashboard({ section }: { section: string }) {
       body: body ? JSON.stringify(body) : undefined,
     });
     const b = await r.json();
-    if (!r.ok) throw new Error(b.error || "Something went wrong");
+    if (!r.ok)
+      throw Object.assign(new Error(b.error || "Something went wrong"), {
+        status: r.status,
+      });
     return b;
   }
   useEffect(() => {
@@ -314,12 +321,35 @@ export function Dashboard({ section }: { section: string }) {
       .then(setRows)
       .catch((e) => setMessage(e.message));
   }, [site?.id, section, demo, isRecords]);
-  function updateSite(data: Site["data"]) {
+  /** Replaces the current website's draft without counting it as an edit. */
+  function replaceSite(data: Site["data"]) {
     setSites((prev) =>
       prev.map((s) =>
         s.id === site.id ? { ...s, name: data.brand.name, data } : s,
       ),
     );
+  }
+  const autosave = useAutosave({
+    id: site?.id,
+    data: site?.data,
+    enabled: !!site && !demo,
+    save: async (data) => {
+      const saved = await api(`sites/${site.id}`, "PATCH", data);
+      setSites((all) =>
+        all.map((s) =>
+          s.id === site.id
+            ? { ...s, data: { ...s.data, revision: saved.revision } }
+            : s,
+        ),
+      );
+      return saved.revision;
+    },
+    load: async () => (await api(`sites/${site.id}`)).data,
+    apply: replaceSite,
+  });
+  function updateSite(data: Site["data"]) {
+    replaceSite(data);
+    autosave.markDirty();
   }
   async function action(work: () => Promise<void>) {
     setBusy(true);
@@ -333,23 +363,12 @@ export function Dashboard({ section }: { section: string }) {
     }
   }
   async function save() {
-    await action(async () => {
-      if (!demo) {
-        const saved = await api(`sites/${site.id}`, "PATCH", site.data);
-        setSites((all) =>
-          all.map((s) =>
-            s.id === site.id
-              ? { ...s, data: { ...s.data, revision: saved.revision } }
-              : s,
-          ),
-        );
-      }
-      setMessage(
-        demo
-          ? "Saved in this demo session."
-          : "Your changes are saved as a draft.",
-      );
-    });
+    if (demo) return setMessage("Saved in this demo session.");
+    setMessage("");
+    const result = await autosave.saveNow();
+    if (result === "saved") setMessage("Your changes are saved as a draft.");
+    if (result === "error")
+      setMessage("We couldn’t save just now. We’ll keep trying; your edits are kept on this device.");
   }
   async function publish() {
     await action(async () => {
@@ -359,14 +378,11 @@ export function Dashboard({ section }: { section: string }) {
         );
         return;
       }
-      const saved = await api(`sites/${site.id}`, "PATCH", site.data);
-      setSites((all) =>
-        all.map((s) =>
-          s.id === site.id
-            ? { ...s, data: { ...s.data, revision: saved.revision } }
-            : s,
-        ),
-      );
+      const saved = await autosave.saveNow();
+      if (saved === "conflict")
+        throw new Error("Choose which version to keep before publishing.");
+      if (saved === "error")
+        throw new Error("Your latest changes could not be saved, so nothing was published. Try again in a moment.");
       await api(`sites/${site.id}/publish`, "POST");
       setSites(await api("sites"));
       setMessage("Your website is published.");
@@ -595,15 +611,48 @@ export function Dashboard({ section }: { section: string }) {
           JSON.stringify(next),
         );
       } else {
-        await api(
-          `sites/${site.id}/${section}${editRow ? "/" + editRow.id : ""}`,
-          editRow ? "PATCH" : "POST",
-          data,
-        );
+        try {
+          await api(
+            `sites/${site.id}/${section}${editRow ? "/" + editRow.id : ""}`,
+            editRow ? "PATCH" : "POST",
+            data,
+          );
+        } catch (e) {
+          // Someone saved this item since it was opened: let the user choose.
+          if ((e as { status?: number }).status === 409 && editRow) {
+            setRecordConflict(data);
+            return;
+          }
+          throw e;
+        }
         setRows(await api(`sites/${site.id}/${section}`));
       }
       setRecordModal(false);
       setMessage("Saved successfully.");
+    });
+  }
+  async function resolveRecordConflict(keepMine: boolean) {
+    const mine = recordConflict;
+    if (!mine || !editRow) return;
+    await action(async () => {
+      const latest: Row[] = await api(`sites/${site.id}/${section}`);
+      const current = latest.find((r) => r.id === editRow.id);
+      if (keepMine)
+        await api(
+          `sites/${site.id}/${section}${current ? "/" + current.id : ""}`,
+          current ? "PATCH" : "POST",
+          { ...mine, revision: Number(current?.data.revision || 0) },
+        );
+      setRows(await api(`sites/${site.id}/${section}`));
+      setRecordConflict(null);
+      setRecordModal(false);
+      setMessage(
+        keepMine
+          ? current
+            ? "Your copy is saved and replaces the other version."
+            : "The item had been deleted, so your copy was saved as a new one."
+          : "You are now seeing the saved version. Your edits were discarded.",
+      );
     });
   }
   const title =
@@ -805,10 +854,11 @@ export function Dashboard({ section }: { section: string }) {
                     Create website
                   </button>
                 ) : site && ["branding", "seo", "editor"].includes(section) ? (
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div className="save-actions">
+                    <SaveStatus state={autosave.state} savedAt={autosave.savedAt} />
                     <button
                       className="button secondary"
-                      disabled={busy}
+                      disabled={busy || autosave.state === "saving"}
                       onClick={save}
                     >
                       <Save size={14} />
@@ -827,6 +877,23 @@ export function Dashboard({ section }: { section: string }) {
                   </div>
                 ) : null}
               </div>
+              {site && ["branding", "seo", "editor"].includes(section) && (
+                <>
+                  {autosave.state === "conflict" && (
+                    <ConflictBanner
+                      onKeepMine={autosave.keepMine}
+                      onUseTheirs={autosave.useTheirs}
+                    />
+                  )}
+                  {autosave.backup && autosave.state !== "conflict" && (
+                    <RestoreBanner
+                      at={autosave.backup.at}
+                      onRestore={autosave.restoreBackup}
+                      onDiscard={autosave.discardBackup}
+                    />
+                  )}
+                </>
+              )}
               {sites.length > 1 && (
                 <label
                   className="field"
@@ -1492,6 +1559,7 @@ export function Dashboard({ section }: { section: string }) {
                           }
                           allowVideo={entitled(site.tier, "video")}
                           industry={site.industry_id}
+                          allowed={allowedSections(site.data.template)}
                         />
                         <div className="preview-wrap">
                           <ScaledPreview width={preview || 1280}>
@@ -1909,7 +1977,10 @@ export function Dashboard({ section }: { section: string }) {
               </h2>
               <button
                 className="icon-button"
-                onClick={() => setRecordModal(false)}
+                onClick={() => {
+                  setRecordModal(false);
+                  setRecordConflict(null);
+                }}
                 aria-label="Close editor"
               >
                 <X />
@@ -1930,6 +2001,12 @@ export function Dashboard({ section }: { section: string }) {
                   });
                   setTimeout(() => setRecordModal(true), 0);
                 }}
+              />
+            )}
+            {recordConflict && (
+              <ConflictBanner
+                onKeepMine={() => resolveRecordConflict(true)}
+                onUseTheirs={() => resolveRecordConflict(false)}
               />
             )}
             <form onSubmit={saveRecord}>
@@ -2004,6 +2081,7 @@ export function Dashboard({ section }: { section: string }) {
                   initial={editRow?.data}
                   demo={demo}
                   allowVideo={!!site && entitled(site.tier, "video")}
+                  allowedSections={site ? allowedSections(site.data.template) : undefined}
                 />
                 <label className="field">
                   Category

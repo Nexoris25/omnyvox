@@ -91,12 +91,51 @@ export function compatibleTemplate(
     (!industry || (manifest.industries as readonly string[]).includes(industry))
   );
 }
+/** Sections each template family is designed and styled for. The editor only
+ * offers these, and the API refuses anything else. Every template in a
+ * category supports the same set, so switching template never strands
+ * content. */
+const CORPORATE_SECTIONS = [
+  "hero",
+  "text",
+  "services",
+  "features",
+  "steps",
+  "team",
+  "gallery",
+  "faq",
+  "cta",
+  "contact",
+  "insights",
+] as const;
+// Storefronts are product-led; a team grid is not part of these designs.
+const COMMERCE_SECTIONS = [
+  "hero",
+  "text",
+  "services",
+  "features",
+  "steps",
+  "gallery",
+  "faq",
+  "cta",
+  "contact",
+  "insights",
+] as const;
+export function allowedSections(template: string | undefined): readonly string[] {
+  const manifest = templateManifests[template as keyof typeof templateManifests];
+  return manifest ? manifest.sections : CORPORATE_SECTIONS;
+}
+/** Section types in `sections` that the template does not support. */
+export function ineligibleSections(template: string | undefined, sections: { type: string }[] = []) {
+  const allowed = allowedSections(template);
+  return [...new Set(sections.map((s) => s.type).filter((t) => !allowed.includes(t)))];
+}
 export const templateManifests = {
   studio: {
     version: "1.1.0",
     category: "corporate",
     industries: ["creative"],
-    sections: ["hero", "services", "text", "cta", "faq", "insights"],
+    sections: CORPORATE_SECTIONS,
     references: [
       "https://thewheatbakerlagos.com/",
       "https://kilentar.com/collections",
@@ -106,7 +145,7 @@ export const templateManifests = {
     version: "1.0.0",
     category: "corporate",
     industries: ["consulting", "legal"],
-    sections: ["hero", "services", "text", "cta", "faq", "insights"],
+    sections: CORPORATE_SECTIONS,
     references: [
       "https://www.banwo-ighodalo.com/practices/",
       "https://www.templars-law.com/",
@@ -116,7 +155,7 @@ export const templateManifests = {
     version: "1.0.0",
     category: "corporate",
     industries: ["healthcare"],
-    sections: ["hero", "services", "text", "cta", "faq", "insights"],
+    sections: CORPORATE_SECTIONS,
     references: ["https://www.evercare.ng/", "https://mecure.com.ng/"],
   },
   horizon: {
@@ -132,7 +171,7 @@ export const templateManifests = {
       "property",
       "hospitality",
     ],
-    sections: ["hero", "services", "text", "cta", "faq", "insights"],
+    sections: CORPORATE_SECTIONS,
     references: [
       "https://mintyn.com/",
       "https://mintyn.com/bank-account/business-account/",
@@ -142,7 +181,7 @@ export const templateManifests = {
     version: "1.0.0",
     category: "commerce",
     industries: ["fashion", "beauty", "furniture"],
-    sections: ["hero", "text", "cta", "faq", "insights"],
+    sections: COMMERCE_SECTIONS,
     references: [
       "https://kilentar.com/collections",
       "https://orangeculture.com.ng/",
@@ -152,7 +191,7 @@ export const templateManifests = {
     version: "1.0.0",
     category: "commerce",
     industries: ["electronics", "retail", "books"],
-    sections: ["hero", "text", "cta", "faq", "insights"],
+    sections: COMMERCE_SECTIONS,
     references: [
       "https://www.konga.com/category/mobile-phones-5297",
       "https://kara.com.ng/",
@@ -162,7 +201,7 @@ export const templateManifests = {
     version: "1.0.0",
     category: "commerce",
     industries: ["food"],
-    sections: ["hero", "text", "cta", "faq", "insights"],
+    sections: COMMERCE_SECTIONS,
     references: ["https://www.supermart.ng/", "https://www.konga.com/"],
   },
 } as const;

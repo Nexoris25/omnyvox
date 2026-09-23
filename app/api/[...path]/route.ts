@@ -7,6 +7,7 @@ import { provisionBlueprint } from "@/lib/blueprints";
 import {
   templateIds,
   templateManifests,
+  ineligibleSections,
   compatibleTemplate,
 } from "@/lib/templates";
 import { securityApi } from "@/lib/security-api";
@@ -82,6 +83,7 @@ import {
   entitled,
   usesSampleImage,
   Site,
+  sectionTypeLabels,
 } from "@/lib/model";
 export const runtime = "nodejs";
 const ok = (data: unknown, status = 200) => NextResponse.json(data, { status });
@@ -590,6 +592,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         .parse(await req.json());
       if (!entitled(site.tier, "video") && containsVideo(b))
         return fail(videoUpgradeMessage, 403);
+      const unsupported = ineligibleSections(b.template, b.sections);
+      if (unsupported.length)
+        return fail(
+          `This template does not support these sections: ${unsupported.map((t) => sectionTypeLabels[t as keyof typeof sectionTypeLabels] || t).join(", ")}. Remove them or choose another template.`,
+        );
       b.sections?.forEach((section) => {
         section.body = safeHtml(section.body);
       });
@@ -1043,6 +1050,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       } else delete b.options, delete b.variants, delete b.sku;
       if (!entitled(site.tier, "video") && containsVideo(b))
         return fail(videoUpgradeMessage, 403);
+      const unsupported = ineligibleSections(site.data?.template, b.sections);
+      if (unsupported.length)
+        return fail(
+          `Your template does not support these sections: ${unsupported.map((t) => sectionTypeLabels[t as keyof typeof sectionTypeLabels] || t).join(", ")}.`,
+        );
       if (
         ["published", "scheduled"].includes(b.status) &&
         /\[Required:|lorem ipsum/i.test(b.body)

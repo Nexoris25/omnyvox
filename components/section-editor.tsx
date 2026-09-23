@@ -57,7 +57,10 @@ export function SectionEditor({
   mediaEndpoint,
   allowVideo = false,
   industry,
+  allowed,
 }: {
+  /** Section types the website's template supports; all when omitted. */
+  allowed?: readonly string[];
   sections: Section[];
   onChange: (sections: Section[]) => void;
   mediaEndpoint?: string;
@@ -525,7 +528,7 @@ export function SectionEditor({
           }}
         >
           <option value="">Choose a section type…</option>
-          {sectionTypes.map((t) => (
+          {sectionTypes.filter((t) => !allowed || allowed.includes(t)).map((t) => (
             <option key={t} value={t}>
               {sectionTypeLabels[t]}
             </option>
