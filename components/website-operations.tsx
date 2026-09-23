@@ -8,7 +8,18 @@ type Domain = {
   verified_at: string | null;
   active: boolean;
 };
-type Order = ReviewOrder & { fulfilment_status: string };
+type Order = ReviewOrder & {
+  fulfilment_status: string;
+  customer: { phone?: string; address?: string; note?: string };
+  items: { title: string; label?: string; sku?: string; quantity: number; price: number }[];
+  delivery_fee: number | null;
+  fulfilment: { method: "delivery" | "pickup"; name: string; detail?: string } | null;
+};
+const naira = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
+const stages = {
+  delivery: ["unfulfilled", "processing", "shipped", "delivered", "completed"],
+  pickup: ["unfulfilled", "processing", "ready_for_pickup", "completed"],
+};
 export function WebsiteOperations({
   site,
   section,
@@ -252,6 +263,8 @@ export function WebsiteOperations({
                 <thead>
                   <tr>
                     <th>Customer</th>
+                    <th>Items</th>
+                    <th>Delivery</th>
                     <th>Amount</th>
                     <th>Payment</th>
                     <th>Fulfilment</th>
@@ -264,8 +277,52 @@ export function WebsiteOperations({
                         {o.customer.name}
                         <br />
                         <small>{o.customer.email}</small>
+                        {o.customer.phone && (
+                          <>
+                            <br />
+                            <small>{o.customer.phone}</small>
+                          </>
+                        )}
                       </td>
-                      <td>₦{(o.amount / 100).toLocaleString()}</td>
+                      <td>
+                        <ul className="order-items">
+                          {o.items.map((i, n) => (
+                            <li key={n}>
+                              {i.quantity} × {i.title}
+                              {i.label && <small> · {i.label}</small>}
+                              {i.sku && <small className="muted"> · {i.sku}</small>}
+                            </li>
+                          ))}
+                        </ul>
+                        {o.customer.note && (
+                          <small className="order-note">Note: {o.customer.note}</small>
+                        )}
+                      </td>
+                      <td>
+                        {o.fulfilment ? (
+                          <>
+                            {o.fulfilment.method === "pickup" ? "Pickup" : "Delivery"}:{" "}
+                            {o.fulfilment.name}
+                            {o.customer.address && (
+                              <>
+                                <br />
+                                <small>{o.customer.address}</small>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <small>{o.customer.address}</small>
+                        )}
+                      </td>
+                      <td>
+                        {naira(o.amount)}
+                        {!!o.delivery_fee && (
+                          <>
+                            <br />
+                            <small>incl. {naira(o.delivery_fee)} delivery</small>
+                          </>
+                        )}
+                      </td>
                       <td>
                         <span className="badge">
                           {paymentLabels[o.payment_status] || o.payment_status}
@@ -288,12 +345,10 @@ export function WebsiteOperations({
                           }
                         >
                           {[
-                            "unfulfilled",
-                            "processing",
-                            "ready_for_pickup",
-                            "shipped",
-                            "delivered",
-                            "completed",
+                            ...new Set([
+                              ...stages[o.fulfilment?.method || "delivery"],
+                              o.fulfilment_status,
+                            ]),
                           ].map((s) => (
                             <option key={s} value={s}>
                               {s.replaceAll("_", " ")}

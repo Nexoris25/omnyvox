@@ -55,6 +55,7 @@ export async function availableModules(site: Site) {
       ["products", "Products"],
       ["categories", "Product categories"],
       ["orders", "Orders"],
+      ["fulfilment", "Delivery & pickup"],
       ["merchant", "Store payments"],
     ])
       common.push({ key, label, state: "enabled" });

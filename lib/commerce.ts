@@ -8,6 +8,16 @@ import {
 } from "node:crypto";
 import { z } from "zod";
 import { pool, query } from "./db";
+import {
+  fulfilmentChoiceSchema,
+  fulfilmentSettingsSchema,
+  lineKey,
+  MAX_LINE_QUANTITY,
+  resolveFulfilment,
+  resolveLine,
+  type FulfilmentSettings,
+  type StoreProduct,
+} from "./store";
 function key() {
   const value = process.env.ENCRYPTION_KEY;
   if (!value || !/^[a-f0-9]{64}$/i.test(value))
@@ -29,6 +39,58 @@ export function decrypt(secret: string) {
     cipher.final(),
   ]).toString("utf8");
 }
+type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+export type OrderLine = { id: string; variant?: string; quantity: number };
+
+/** Locks a product and moves stock by `delta` for the product or one of its
+ * variants. Returns ok: false (and changes nothing) when stock would go
+ * negative, or the product or variant no longer exists. */
+export async function adjustStock(
+  client: Queryable,
+  site: string,
+  line: OrderLine,
+  delta: number,
+): Promise<{ ok: boolean; title: string }> {
+  const {
+    rows: [p],
+  } = await client.query(
+    "SELECT id,data FROM records WHERE id=$1 AND site_id=$2 AND kind='products' FOR UPDATE",
+    [line.id, site],
+  );
+  if (!p) return { ok: false, title: "an item" };
+  const title = p.data.title || "an item";
+  const variants: { id: string; stock: number }[] = p.data.variants || [];
+  if (variants.length || line.variant) {
+    const index = variants.findIndex((v) => v.id === line.variant);
+    if (index < 0) return { ok: false, title };
+    const next = (variants[index].stock || 0) + delta;
+    if (next < 0) return { ok: false, title };
+    await client.query(
+      "UPDATE records SET data=jsonb_set(data,ARRAY['variants',$1::text,'stock'],to_jsonb($2::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$3",
+      [index, next, line.id],
+    );
+    return { ok: true, title };
+  }
+  const next = (Number(p.data.stock) || 0) + delta;
+  if (next < 0) return { ok: false, title };
+  await client.query(
+    "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb($1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2",
+    [next, line.id],
+  );
+  return { ok: true, title };
+}
+/** Consistent lock order across checkout, release and fulfilment. */
+export const lineOrder = (a: OrderLine, b: OrderLine) =>
+  lineKey(a.id, a.variant).localeCompare(lineKey(b.id, b.variant));
+
+export async function storeFulfilment(site: string) {
+  const [row] = await query<{ settings: FulfilmentSettings }>(
+    "SELECT settings FROM store_fulfilment WHERE site_id=$1",
+    [site],
+  );
+  return row ? fulfilmentSettingsSchema.parse(row.settings) : null;
+}
+
 export async function checkout(
   input: unknown,
   transport: typeof fetch = fetch,
@@ -39,16 +101,22 @@ export async function checkout(
       email: z.email(),
       name: z.string().min(2).max(100),
       phone: z.string().min(7).max(30),
-      address: z.string().min(5).max(500),
+      address: z.string().max(500).optional(),
+      note: z.string().max(500).optional(),
+      fulfilment: fulfilmentChoiceSchema.optional(),
       items: z
         .array(
-          z.object({ id: z.uuid(), quantity: z.number().int().min(1).max(50) }),
+          z.object({
+            id: z.uuid(),
+            variant: z.string().regex(/^[a-z0-9]{4,16}$/).optional(),
+            quantity: z.number().int().min(1).max(MAX_LINE_QUANTITY),
+          }),
         )
         .min(1)
         .max(50),
     })
     .parse(input);
-  if (new Set(b.items.map((i) => i.id)).size !== b.items.length)
+  if (new Set(b.items.map((i) => lineKey(i.id, i.variant))).size !== b.items.length)
     throw new Error("Duplicate cart items are not allowed.");
   const [merchant] = await query<{ secret: string; delivery: number }>(
     "SELECT m.secret,m.delivery FROM merchant_accounts m JOIN effective_sites s ON s.id=m.site_id WHERE m.site_id=$1 AND m.verified=true AND s.status='published' AND s.subscription='active' AND s.service_until>now() AND s.category='commerce'",
@@ -56,42 +124,64 @@ export async function checkout(
   );
   if (!merchant)
     throw new Error("This store is not accepting online payments yet.");
+  // The fee always comes from the store's settings, never from the browser.
+  const fulfilment = resolveFulfilment(
+    await storeFulfilment(b.site),
+    merchant.delivery,
+    b.fulfilment,
+  );
+  const address = b.address?.trim() || "";
+  if (fulfilment.method === "delivery" && address.length < 5)
+    throw new Error("Enter a delivery address.");
   const secret = decrypt(merchant.secret);
   const client = await pool.connect();
   const reference = `store_${randomUUID()}`;
-  let amount = merchant.delivery;
+  let subtotal = 0;
   const items: {
     id: string;
+    variant?: string;
+    label?: string;
+    sku?: string;
     quantity: number;
     price: number;
     title: string;
   }[] = [];
   try {
     await client.query("BEGIN");
-    for (const item of [...b.items].sort((a, b) => a.id.localeCompare(b.id))) {
+    for (const item of [...b.items].sort(lineOrder)) {
       const {
         rows: [p],
       } = await client.query(
-        "SELECT * FROM records WHERE id=$1 AND site_id=$2 AND kind='products' AND data->>'status'='published' FOR UPDATE",
+        "SELECT id,data FROM records WHERE id=$1 AND site_id=$2 AND kind='products' AND data->>'status'='published' FOR UPDATE",
         [item.id, b.site],
       );
-      if (!p || p.data.stock < item.quantity)
+      const line = p && resolveLine(p as StoreProduct, item.variant);
+      if (!line || line.stock < item.quantity)
         throw new Error(
           "One of the products no longer has enough stock. Please update your cart.",
         );
-      if (!Number.isSafeInteger(p.data.price) || p.data.price < 0)
+      if (!Number.isSafeInteger(line.price) || line.price < 0)
         throw new Error("Invalid product price.");
-      amount += p.data.price * item.quantity;
-      items.push({ ...item, price: p.data.price, title: p.data.title });
-      await client.query(
-        "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb($1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2",
-        [p.data.stock - item.quantity, item.id],
-      );
+      subtotal += line.price * item.quantity;
+      items.push({
+        id: item.id,
+        ...(item.variant ? { variant: item.variant, label: line.label } : {}),
+        ...(line.sku ? { sku: line.sku } : {}),
+        quantity: item.quantity,
+        price: line.price,
+        title: p.data.title,
+      });
+      const moved = await adjustStock(client, b.site, item, -item.quantity);
+      if (!moved.ok)
+        throw new Error(
+          "One of the products no longer has enough stock. Please update your cart.",
+        );
     }
-    if (!Number.isSafeInteger(amount) || amount < 100)
+    const total = subtotal + fulfilment.fee;
+    if (!Number.isSafeInteger(total) || total < 100)
       throw new Error("The order total must be at least NGN 1.");
     await client.query(
-      "INSERT INTO orders(site_id,reference,customer,items,amount) VALUES($1,$2,$3,$4,$5)",
+      "INSERT INTO orders(site_id,reference,customer,items,amount,subtotal,delivery_fee,fulfilment) VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
       [
         b.site,
         reference,
@@ -99,10 +189,14 @@ export async function checkout(
           name: b.name,
           email: b.email,
           phone: b.phone,
-          address: b.address,
+          address: fulfilment.method === "delivery" ? address : "",
+          ...(b.note?.trim() ? { note: b.note.trim() } : {}),
         }),
         JSON.stringify(items),
-        amount,
+        total,
+        subtotal,
+        fulfilment.fee,
+        JSON.stringify(fulfilment),
       ],
     );
     await client.query("COMMIT");
@@ -112,6 +206,7 @@ export async function checkout(
   } finally {
     client.release();
   }
+  const amount = subtotal + fulfilment.fee;
   try {
     const r = await transport(
       "https://api.paystack.co/transaction/initialize",
@@ -175,13 +270,8 @@ export async function cancelUnpaidOrder(site: string, reference: string) {
       [site, reference],
     );
     if (order) {
-      for (const item of [...order.items].sort((a, b) =>
-        a.id.localeCompare(b.id),
-      ))
-        await client.query(
-          "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb((data->>'stock')::int+$1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2 AND site_id=$3",
-          [item.quantity, item.id, site],
-        );
+      for (const item of [...order.items].sort(lineOrder))
+        await adjustStock(client, site, item, item.quantity);
       await client.query(
         "UPDATE orders SET payment_status='cancelled' WHERE reference=$1",
         [reference],

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pool, query } from "./db";
-import { cancelUnpaidOrder, confirmStorePayment, decrypt } from "./commerce";
+import { adjustStock, cancelUnpaidOrder, confirmStorePayment, decrypt, lineOrder } from "./commerce";
 
 /** Automatic checks run every five minutes after a reservation expires; after
  * this many inconclusive checks a person must decide. Stock stays reserved. */
@@ -172,7 +172,7 @@ export async function resolveOrderPayment(
   transport: typeof fetch = fetch,
 ) {
   const b = resolution.parse(input);
-  const [order] = await query<Order & { payment_status: string; items: { id: string; quantity: number }[] }>(
+  const [order] = await query<Order & { payment_status: string; items: { id: string; variant?: string; label?: string; quantity: number }[] }>(
     "SELECT id,site_id,reference,amount,currency,payment_status,items FROM orders WHERE id=$1 AND site_id=$2",
     [orderId, siteId],
   );
@@ -244,21 +244,12 @@ export async function resolveOrderPayment(
       [order.id],
     );
     if (!locked) throw new ResolutionError("This order was already resolved.");
-    for (const item of [...order.items].sort((a, b) => a.id.localeCompare(b.id))) {
-      const {
-        rows: [product],
-      } = await client.query(
-        "SELECT data->>'title' AS title,(data->>'stock')::int AS stock FROM records WHERE id=$1 AND site_id=$2 FOR UPDATE",
-        [item.id, siteId],
-      );
-      if (!product || product.stock < item.quantity)
+    for (const item of [...order.items].sort(lineOrder)) {
+      const moved = await adjustStock(client, siteId, item, -item.quantity);
+      if (!moved.ok)
         throw new ResolutionError(
-          `Not enough stock to fulfil ${product?.title || "an item"}. Restock it or record a refund instead.`,
+          `Not enough stock to fulfil ${moved.title}${item.label ? ` (${item.label})` : ""}. Restock it or record a refund instead.`,
         );
-      await client.query(
-        "UPDATE records SET data=jsonb_set(data,'{stock}',to_jsonb((data->>'stock')::int-$1::int))||jsonb_build_object('revision',COALESCE((data->>'revision')::int,0)+1) WHERE id=$2",
-        [item.quantity, item.id],
-      );
     }
     await client.query(
       "UPDATE orders SET payment_status='paid',review_reason=NULL,review_opened_at=NULL WHERE id=$1",

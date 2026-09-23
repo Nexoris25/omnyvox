@@ -7,9 +7,9 @@ export function canSite(role: string, kind: string | undefined, method: string) 
   if (role === 'owner') return true;
   if (!kind) return method === 'GET' || role === 'administrator' && method === 'PATCH';
   if (['billing','billing-history','renewal','export','merchant','domains','recipients','forms','ai','business'].includes(kind)) return false;
-  if (role === 'administrator') return [...editorial,'legal','products','orders','enquiries','publish','support','services'].includes(kind);
+  if (role === 'administrator') return [...editorial,'legal','products','orders','fulfilment','enquiries','publish','support','services'].includes(kind);
   if (role === 'editor') return editorial.includes(kind) && ['GET','POST','PATCH'].includes(method);
-  if (role === 'store_manager') return ['products','categories','orders','media','media-usage','modules','readiness'].includes(kind);
+  if (role === 'store_manager') return ['products','categories','orders','fulfilment','media','media-usage','modules','readiness'].includes(kind);
   if (role === 'analyst') return method === 'GET' && ['modules','readiness','analytics'].includes(kind);
   return false;
 }

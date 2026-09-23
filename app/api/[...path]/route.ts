@@ -40,6 +40,7 @@ import { passwordSchema } from "@/lib/password";
 import { queueOtp } from "@/lib/otp";
 import { extensionsApi } from "@/lib/extensions-api";
 import { contentSchema } from "@/lib/cms-schema";
+import { fulfilmentSettingsSchema, variantsSchema } from "@/lib/store";
 import { safeHtml, referencedMediaIds } from "@/lib/content";
 import { containsVideo, videoUpgradeMessage } from "@/lib/video";
 import { kitFor } from "@/lib/industry-kits";
@@ -573,7 +574,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     )
       return fail("Module not available for this industry", 404);
     if (
-      ["orders", "merchant", "products"].includes(kind) &&
+      ["orders", "merchant", "products", "fulfilment"].includes(kind) &&
       site.category !== "commerce"
     )
       return fail("Module not available for corporate websites", 404);
@@ -868,6 +869,36 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         return ok({ success: true });
       }
     }
+    if (kind === "fulfilment") {
+      const [m] = await query<{ delivery: number }>(
+        "SELECT delivery FROM merchant_accounts WHERE site_id=$1",
+        [id],
+      );
+      if (method === "GET") {
+        const [row] = await query<{ settings: unknown }>(
+          "SELECT settings FROM store_fulfilment WHERE site_id=$1",
+          [id],
+        );
+        return ok({
+          ...fulfilmentSettingsSchema.parse(row?.settings || {}),
+          flatFee: m?.delivery || 0,
+        });
+      }
+      if (method === "POST") {
+        const parsed = fulfilmentSettingsSchema.safeParse(await req.json());
+        if (!parsed.success)
+          return fail(parsed.error.issues[0].message || "Check the delivery settings.");
+        const settings = parsed.data;
+        const ids = [...settings.zones, ...settings.pickup].map((x) => x.id);
+        if (new Set(ids).size !== ids.length) return fail("Each option needs its own ID.");
+        await query(
+          "INSERT INTO store_fulfilment(site_id,settings) VALUES($1,$2) ON CONFLICT(site_id) DO UPDATE SET settings=$2,updated_at=now()",
+          [id, JSON.stringify(settings)],
+        );
+        await audit(u.id, "store.fulfilment.updated", id);
+        return ok(settings);
+      }
+    }
     if (kind === "merchant") {
       if (site.category !== "commerce")
         return fail("An online store is required", 403);
@@ -907,7 +938,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       if (method === "GET")
         return ok(
           await query(
-            "SELECT o.id,o.reference,o.customer,o.items,o.amount,o.currency,o.payment_status,o.fulfilment_status,o.created_at,o.review_reason,o.review_opened_at,o.refund_reference,o.reconcile_error,COALESCE((SELECT json_agg(json_build_object('event',e.event,'note',e.note,'at',e.created_at) ORDER BY e.created_at) FROM order_events e WHERE e.order_id=o.id),'[]') AS events FROM orders o WHERE o.site_id=$1 ORDER BY (o.payment_status IN ('verification_required','review_required')) DESC, o.created_at DESC",
+            "SELECT o.id,o.reference,o.customer,o.items,o.amount,o.subtotal,o.delivery_fee,o.fulfilment,o.currency,o.payment_status,o.fulfilment_status,o.created_at,o.review_reason,o.review_opened_at,o.refund_reference,o.reconcile_error,COALESCE((SELECT json_agg(json_build_object('event',e.event,'note',e.note,'at',e.created_at) ORDER BY e.created_at) FROM order_events e WHERE e.order_id=o.id),'[]') AS events FROM orders o WHERE o.site_id=$1 ORDER BY (o.payment_status IN ('verification_required','review_required')) DESC, o.created_at DESC",
             [id],
           ),
         );
@@ -1005,6 +1036,11 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
     if (method === "POST" || method === "PATCH") {
       if (kind === "enquiries") return fail("Read only", 403);
       const b = contentSchema.parse(await req.json());
+      if (kind === "products") {
+        const v = variantsSchema.safeParse({ options: b.options, variants: b.variants });
+        if (!v.success) return fail(v.error.issues[0].message);
+        if (!b.variants?.length) b.options = [];
+      } else delete b.options, delete b.variants, delete b.sku;
       if (!entitled(site.tier, "video") && containsVideo(b))
         return fail(videoUpgradeMessage, 403);
       if (

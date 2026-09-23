@@ -15,6 +15,7 @@ export function referencedMediaIds(value: unknown): string[] {
   return [...ids];
 }
 export function safeHtml(value: string, { video = true } = {}) {
+  value ??= "";
   const input = /<\/?[a-z][\s\S]*>/i.test(value)
     ? value
     : `<p>${value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>")}</p>`;

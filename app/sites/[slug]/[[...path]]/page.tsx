@@ -10,7 +10,15 @@ import {
 } from "@/lib/public-site";
 import { jsonLd, entitled } from "@/lib/model";
 import { SiteRenderer, RenderSections } from "@/components/site-renderer";
-import { StoreCheckout } from "@/components/checkout";
+import {
+  CartLink,
+  CartPage,
+  CheckoutPage,
+  ProductPurchase,
+  StoreCheckout,
+} from "@/components/checkout";
+import { storeFulfilment } from "@/lib/commerce";
+import { deliveryOptions, priceRange, totalStock, type StoreProduct } from "@/lib/store";
 import { query } from "@/lib/db";
 import { industryFor } from "@/lib/industry";
 import { EnquiryForm } from "@/components/enquiry-form";
@@ -32,8 +40,13 @@ export async function generateMetadata({
     (r) =>
       contentPath(r, site.view.brand.categoryUrls) === "/" + path.join("/"),
   );
-  const title =
-    record?.data.seoTitle || record?.data.title || site.view.brand.name;
+  const storePage =
+    site.category === "commerce" &&
+    path.length === 1 &&
+    ["cart", "checkout"].includes(path[0]);
+  const title = storePage
+    ? `${path[0] === "cart" ? "Your cart" : "Checkout"} · ${site.view.brand.name}`
+    : record?.data.seoTitle || record?.data.title || site.view.brand.name;
   const description = record
     ? record.data.description || plainText(record.data.body).slice(0, 160)
     : site.view.brand.description;
@@ -56,6 +69,7 @@ export async function generateMetadata({
     robots: {
       index:
         !preview &&
+        !storePage &&
         site.view.brand.robots?.index !== false &&
         record?.data.indexing?.index !== false,
       follow:
@@ -107,9 +121,16 @@ export default async function Page({ params, searchParams }: Props) {
   const record = content.find(
     (r) => contentPath(r, site.view.brand.categoryUrls) === pathname,
   );
+  const storePage =
+    site.category === "commerce" &&
+    path.length === 1 &&
+    (path[0] === "cart" || path[0] === "checkout")
+      ? path[0]
+      : null;
   if (
     !record &&
     path.length &&
+    !storePage &&
     !Object.keys(indexKinds).includes(pathname.slice(1))
   ) {
     const alternate = content.find(
@@ -133,6 +154,13 @@ export default async function Page({ params, searchParams }: Props) {
           [site.id],
         )
       : [];
+  const products = content.filter(
+    (r) => r.kind === "products",
+  ) as unknown as (StoreProduct & { data: { body: string } })[];
+  const fulfilmentOptions =
+    storePage === "checkout"
+      ? deliveryOptions(await storeFulfilment(site.id), merchant?.delivery || 0)
+      : null;
   const [businessProfile] = await query<{
     data: {
       address: string;
@@ -209,10 +237,12 @@ export default async function Page({ params, searchParams }: Props) {
             offers: {
               "@type": "Offer",
               url: base + pathname,
-              price: ((record.data.price || 0) / 100).toFixed(2),
+              price: (
+                priceRange(record as unknown as StoreProduct)[0] / 100
+              ).toFixed(2),
               priceCurrency: "NGN",
               availability:
-                (record.data.stock || 0) > 0
+                totalStock(record as unknown as StoreProduct) > 0
                   ? "https://schema.org/InStock"
                   : "https://schema.org/OutOfStock",
               seller: { "@id": base + "/#organization" },
@@ -233,6 +263,11 @@ export default async function Page({ params, searchParams }: Props) {
         contact={contact}
         data={site.view}
         base={base}
+        headerExtra={
+          site.category === "commerce" ? (
+            <CartLink site={site.id} base={base} />
+          ) : undefined
+        }
         navigationPages={content.map((r) => ({
           id: r.id,
           href:
@@ -278,8 +313,7 @@ export default async function Page({ params, searchParams }: Props) {
                   preview={preview}
                   site={site.id}
                   base={base}
-                  products={content.filter((r) => r.kind === "products")}
-                  delivery={merchant?.delivery || 0}
+                  products={products}
                 />
               )}
               <section className="rendered-section">
@@ -368,41 +402,35 @@ export default async function Page({ params, searchParams }: Props) {
               <EnquiryForm site={site.id} formId={contactForm.id} />
             )}
             {record.kind === "products" && (
-              <>
-                <h2>
-                  {new Intl.NumberFormat("en-NG", {
-                    style: "currency",
-                    currency: "NGN",
-                  }).format((record.data.price || 0) / 100)}
-                </h2>
-                <p>{record.data.stock ? "In stock" : "Out of stock"}</p>
-                <StoreCheckout
-                  preview={preview}
-                  site={site.id}
-                  base={base}
-                  products={content.filter((r) => r.kind === "products")}
-                  featuredProductId={record.id}
-                  hideImages
-                  delivery={merchant?.delivery || 0}
-                />
-              </>
-            )}
-          </article>
-        ) : path.length ? (
-          <section className="rendered-section">
-            <h1>
-              {industry?.collections[path[0]] ||
-                (path[0] === "shop" ? "Shop" : "Insights")}
-            </h1>
-            {path[0] === "shop" && (
-              <StoreCheckout
-                preview={preview}
+              <ProductPurchase
                 site={site.id}
                 base={base}
-                products={content.filter((r) => r.kind === "products")}
-                delivery={merchant?.delivery || 0}
+                product={products.find((p) => p.id === record.id)!}
               />
             )}
+          </article>
+        ) : storePage === "cart" ? (
+          <CartPage site={site.id} base={base} products={products} />
+        ) : storePage === "checkout" && fulfilmentOptions ? (
+          <CheckoutPage
+            site={site.id}
+            base={base}
+            products={products}
+            options={fulfilmentOptions}
+            payments={!!merchant}
+            preview={preview}
+          />
+        ) : path[0] === "shop" ? (
+          <StoreCheckout
+            preview={preview}
+            site={site.id}
+            base={base}
+            products={products}
+            page
+          />
+        ) : path.length ? (
+          <section className="rendered-section">
+            <h1>{industry?.collections[path[0]] || "Insights"}</h1>
             <div className="template-grid">
               {content
                 .filter(

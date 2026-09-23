@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { sectionSchema, indexingSchema, imagePath } from "./model";
 import { policyTypes } from "./legal-policies";
+import { MAX_OPTIONS, MAX_VARIANTS, productOptionSchema, productVariantSchema } from "./store";
 export const contentSchema = z.object({
   revision: z.number().int().nonnegative().default(0),
   details: z
@@ -29,6 +30,12 @@ export const contentSchema = z.object({
   authorId: z.uuid().or(z.literal("")).optional(),
   price: z.number().int().nonnegative().default(0),
   stock: z.number().int().nonnegative().default(0),
+  sku: z.string().trim().max(64).optional(),
+  options: z.array(productOptionSchema).max(MAX_OPTIONS).optional(),
+  variants: z
+    .array(productVariantSchema.extend({ image: imagePath.optional() }))
+    .max(MAX_VARIANTS)
+    .optional(),
   image: imagePath.default(""),
   imageAlt: z.string().max(300).optional(),
   sections: z

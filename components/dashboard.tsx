@@ -22,6 +22,7 @@ import {
   LogOut,
   ExternalLink,
   Search,
+  Truck,
   Image as ImageIcon,
   Eye,
   Save,
@@ -50,6 +51,8 @@ import { SectionEditor } from "./section-editor";
 import { RichTextEditor } from "./rich-text-editor";
 import { MediaLibrary } from "./media-library";
 import { WebsiteOperations } from "./website-operations";
+import { FulfilmentSettings } from "./fulfilment-settings";
+import { ProductVariants } from "./product-variants";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
 import { ScaledPreview } from "./scaled-preview";
@@ -79,6 +82,7 @@ const nav = [
   ["legal", "Legal pages", FileText],
   ["products", "Products", ShoppingBag],
   ["orders", "Orders", ShoppingBag],
+  ["fulfilment", "Delivery & pickup", Truck],
   ["merchant", "Store payments", CreditCard],
   ["enquiries", "Enquiries", Inbox],
   ["domains", "Domains", Globe2],
@@ -110,6 +114,9 @@ type Row = {
     category?: string;
     price?: number;
     stock?: number;
+    sku?: string;
+    options?: import("@/lib/store").ProductOption[];
+    variants?: import("@/lib/store").ProductVariant[];
     image?: string;
     imageAlt?: string;
     authorId?: string;
@@ -562,6 +569,12 @@ export function Dashboard({ section }: { section: string }) {
         : "",
       price: Math.round(Number(form.price || 0) * 100),
       stock: Number(form.stock || 0),
+      ...(section === "products"
+        ? {
+            sku: String(form.sku || ""),
+            ...JSON.parse(String(form.variants || '{"options":[],"variants":[]}')),
+          }
+        : { sku: undefined, variants: undefined }),
       indexing: { index: form.index === "on", follow: form.follow === "on" },
       sections: form.sections ? JSON.parse(String(form.sections)) : undefined,
       details: form.details ? JSON.parse(String(form.details)) : undefined,
@@ -1743,6 +1756,9 @@ export function Dashboard({ section }: { section: string }) {
                   {site && section === "media" && (
                     <MediaLibrary site={site.id} demo={demo} />
                   )}
+                  {site && section === "fulfilment" && (
+                    <FulfilmentSettings site={site.id} demo={demo} />
+                  )}
                   {site &&
                     ["domains", "merchant", "orders"].includes(section) && (
                       <WebsiteOperations
@@ -1973,6 +1989,12 @@ export function Dashboard({ section }: { section: string }) {
                         defaultValue={editRow?.data.stock || 0}
                       />
                     </label>
+                    <ProductVariants
+                      key={editRow?.id || "new"}
+                      initial={editRow?.data}
+                      basePrice={editRow?.data.price || 0}
+                      mediaEndpoint={demo ? undefined : `/api/sites/${site?.id}/media`}
+                    />
                   </>
                 )}
                 <RecordExtras

@@ -407,8 +407,10 @@ export function SiteRenderer({
   preview = false,
   videoEnabled = false,
   contact,
+  headerExtra,
 }: {
   data: Site["data"];
+  headerExtra?: ReactNode;
   children?: ReactNode;
   after?: ReactNode;
   base?: string;
@@ -514,6 +516,7 @@ export function SiteRenderer({
             {cta.label}
           </a>
         )}
+        {headerExtra}
         <details className="site-mobile-menu">
           <summary>Menu</summary>
           <nav aria-label="Mobile website navigation">
