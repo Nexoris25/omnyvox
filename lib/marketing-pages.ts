@@ -108,7 +108,7 @@ export const marketingPages: Record<string, MarketingPage> = {
       },
       {
         title: "Your team, your rules",
-        body: "Invite colleagues as administrators, editors, store managers or analysts. Each role only sees what it is allowed to change.",
+        body: "Invite colleagues as administrators, editors or, for stores, store managers. Each role only sees what it is allowed to change.",
       },
     ],
     links: [

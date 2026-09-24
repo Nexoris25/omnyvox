@@ -73,13 +73,15 @@ One rule set (`lib/modules.ts`) decides modules for the server, the dashboard an
 
 ### Website team roles
 
-| Area | Owner | Administrator | Editor | Store manager | Analyst |
-| --- | --- | --- | --- | --- | --- |
-| Homepage, brand, SEO, templates | Edit | Edit | — | — | — |
-| Pages, articles, authors, categories, collections, media | ✓ | ✓ | Drafts only | Media | — |
-| Legal pages, enquiries, publish | ✓ | ✓ | — | — | — |
-| Products, orders, delivery & pickup | ✓ | ✓ | — | ✓ | — |
-| Store payments, domains, business information, billing, team | ✓ | — | — | — | — |
+| Area | Owner | Administrator | Editor | Store manager |
+| --- | --- | --- | --- | --- |
+| Homepage, brand, SEO, templates | Edit | Edit | — | — |
+| Pages, articles, authors, categories, collections, media | ✓ | ✓ | Drafts only | Media |
+| Legal pages, enquiries, publish | ✓ | ✓ | — | — |
+| Products, orders, delivery & pickup | ✓ | ✓ | — | ✓ |
+| Store payments, domains, business information, billing, team | ✓ | — | — | — |
+
+The Analyst role was retired on 24 September 2026 (migration 022).
 
 **Fixed:** the sidebar now shows each role only what the server allows (previously editors saw Billing, Store payments and Domains and were refused on click). The Store manager role can only be given in workspaces that have an online store.
 
@@ -117,7 +119,7 @@ All staff need two-step verification to open the admin.
 
 ## 6. Recommendations not yet built
 
-1. **Analyst role has nothing to analyse.** It only sees the overview and readiness. Either add a website analytics module (visits, top pages, enquiries and orders over time) or retire the role.
+1. ~~Analyst role~~: retired on 24 September 2026. Consider a website analytics screen for owners and administrators instead (visits, top pages, enquiries and orders over time).
 2. **Separate store categories from insight categories.** Stores with Insights share one category list for products and articles; give articles their own list.
 3. **Plan-change prompts in context.** Where a locked feature appears (FAQ page, author links, domains), link straight to the plan change screen with the target plan preselected.
 4. **Template switching preview.** Let owners preview their current content in another template before switching.

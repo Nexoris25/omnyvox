@@ -1,4 +1,4 @@
-export const memberRoles = ['administrator','editor','store_manager','analyst'] as const;
+export const memberRoles = ['administrator','editor','store_manager'] as const;
 export type MemberRole = 'owner' | typeof memberRoles[number];
 export const staffRoles = ['operations','billing','support','designer','content','finance','technical','compliance'] as const;
 export function isStaff(role: string) { return role === 'super_admin' || (staffRoles as readonly string[]).includes(role); }
@@ -10,7 +10,6 @@ export function canSite(role: string, kind: string | undefined, method: string) 
   if (role === 'administrator') return [...editorial,'legal','products','orders','fulfilment','enquiries','publish','support','services'].includes(kind);
   if (role === 'editor') return editorial.includes(kind) && ['GET','POST','PATCH'].includes(method);
   if (role === 'store_manager') return ['products','categories','orders','fulfilment','media','media-usage','modules','readiness'].includes(kind);
-  if (role === 'analyst') return method === 'GET' && ['modules','readiness','analytics'].includes(kind);
   return false;
 }
 /** Deny unknown paths and actions; super-admin is the only unrestricted staff role. */

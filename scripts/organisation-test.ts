@@ -47,7 +47,7 @@ try{
  await query('UPDATE sessions SET mfa_verified=false WHERE user_id=$1',[staff.id]);
  check((await api(staff.cookie,'platform-admin/support')).status===401,'scoped staff still require verified MFA session');
  check(!canInternal('technical',['platform-admin','storage'],'PATCH')&&!canInternal('finance',['platform-admin','merchants'],'PATCH'),'technical and finance roles cannot mutate unauthorised operations');
- check(!canSite('store_manager','billing','POST')&&!canSite('analyst','products','POST'),'commerce and analyst roles cannot escalate');
+ check(!canSite('store_manager','billing','POST')&&!canSite('analyst','products','GET'),'store managers cannot escalate and the retired analyst role has no access');
  const policies=Object.fromEntries((await currentPolicies()).map(p=>[p.slug,p.id]));
  const identity={name:'Consent QA',email:`consent-${randomUUID()}@example.test`,phone:'+2348012345678',passwordHash:hashPassword('ConsentTests1!'),terms:policies.terms,privacy:policies.privacy};
  await assert.rejects(()=>registerAccount({...identity,terms:randomUUID()}),/policies/);check(true,'stale or forged policy version cannot register');
