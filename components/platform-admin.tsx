@@ -7,6 +7,7 @@ import { MediaLibrary } from "./media-library";
 import { Admin } from "./admin";
 import { StorageSettings } from "./storage-settings";
 import { AIOperations } from "./ai-operations";
+import { AdminTable, StatusBadge, fmtDate, fmtDateTime, fmtNaira, type Column } from "./admin-table";
 import { canInternal } from "@/lib/permissions";
 import { StaffSettings } from "./staff-settings";
 import { RecoveryReviews } from './recovery-reviews';
@@ -38,6 +39,8 @@ type Item = {
     image?: string;
     imageAlt?: string;
     reply?: string;
+    role?: string;
+    links?: { website?: string; linkedin?: string; x?: string };
     indexing?: { index: boolean; follow: boolean };
   };
   [key: string]: unknown;
@@ -72,6 +75,8 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
     [message, setMessage] = useState(""),
     [edit, setEdit] = useState<Item | null>(null),
     [authors, setAuthors] = useState<Item[]>([]),
+    [categories, setCategories] = useState<Item[]>([]),
+    [selected, setSelected] = useState<Item | null>(null),
     [image, setImage] = useState(""),
     [settings, setSettings] = useState<Record<string, unknown>>({});
   const endpoint =
@@ -95,10 +100,14 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
     const b = await call(endpoint);
     if (tab === "settings") setSettings(b);
     else setRows(b);
-    if (cms.includes(tab)) setAuthors(await call("/api/marketing/authors"));
+    if (cms.includes(tab)) {
+      setAuthors(await call("/api/marketing/authors"));
+      setCategories(await call("/api/marketing/categories"));
+    }
   }
   useEffect(() => {
     setRows([]);
+    setSelected(null);
     setEdit(null);
     setMessage("");
     load().catch((e) => setMessage(e.message));
@@ -108,11 +117,212 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
       await call(url, method, body);
       setMessage("Saved. Changes are recorded in the audit log.");
       setEdit(null);
+      setSelected(null);
       await load();
     } catch (e) {
       setMessage((e as Error).message);
     }
   }
+  const renderDetail = (r: Item) => (
+    <div className="admin-detail-body">
+
+                    <h2>
+                      {r.data?.title ||
+                        r.business_name ||
+                        r.name ||
+                        r.hostname ||
+                        r.email}
+                    </h2>
+                    {r.email && <p>{r.email}</p>}
+                    {r.topic && <h3>{r.topic}</h3>}
+                    {r.message && <p className="preserve-lines">{r.message}</p>}
+                    {r.cac_number && (
+                      <p>
+                        CAC: {String(r.cac_number)} · {String(r.status)} ·{" "}
+                        {r.verified_via === "registry" ? "checked on the CAC registry" : "manual review"}
+                      </p>
+                    )}
+                    {!!r.registry && (
+                      <dl className="admin-facts">
+                        {Object.entries(r.registry as Record<string, unknown>)
+                          .filter(([k]) => ["name", "entityStatus", "registeredOn", "address", "provider"].includes(k))
+                          .map(([k, v]) => (
+                            <div key={k}>
+                              <dt>
+                                {({ name: "Registry name", entityStatus: "Registry status", registeredOn: "Registered", address: "Registered address", provider: "Source" } as Record<string, string>)[k]}
+                              </dt>
+                              <dd>{String(v)}</dd>
+                            </div>
+                          ))}
+                      </dl>
+                    )}
+                    {["support", "requests"].includes(tab) && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          save(
+                            endpoint + "/" + r.id,
+                            "PATCH",
+                            Object.fromEntries(new FormData(e.currentTarget)),
+                          );
+                        }}
+                      >
+                        {r.data?.body && <p>{r.data.body}</p>}
+                        <label className="field">
+                          Status
+                          <select
+                            name="status"
+                            defaultValue={r.status || r.data?.status}
+                          >
+                            <option value="new">New</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="resolved">Resolved</option>
+                          </select>
+                        </label>
+                        <label className="field">
+                          Reply by email
+                          <textarea
+                            name="reply"
+                            defaultValue={r.reply || r.data?.reply}
+                            rows={4}
+                          />
+                        </label>
+                        <button className="button">Save & queue reply</button>
+                      </form>
+                    )}
+                    {tab === "kyb" && r.status === "pending" && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          save(endpoint, "PATCH", {
+                            ...Object.fromEntries(
+                              new FormData(e.currentTarget),
+                            ),
+                            userId: r.user_id,
+                          });
+                        }}
+                      >
+                        <label className="field">
+                          Registered name found on CAC records
+                          <input
+                            name="registeredName"
+                            required
+                            minLength={2}
+                            defaultValue={String(r.registered_name || r.business_name || "")}
+                          />
+                        </label>
+                        <label className="field">
+                          Review evidence and decision
+                          <textarea name="note" required minLength={10} />
+                        </label>
+                        <label className="field">
+                          Decision
+                          <select name="status">
+                            <option value="verified">Verified</option>
+                            <option value="rejected">
+                              Rejected — corrections required
+                            </option>
+                          </select>
+                        </label>
+                        <button className="button">Save review decision</button>
+                      </form>
+                    )}
+                    {tab === "merchants" && (
+                      <>
+                        <p>
+                          KYB: {r.kyb_status || "Not submitted"} · Payments:{" "}
+                          {r.verified ? "Enabled" : "Awaiting approval"}
+                        </p>
+                        <button
+                          className="button secondary"
+                          onClick={() =>
+                            save(endpoint + "/" + r.site_id, "PATCH", {
+                              verified: !r.verified,
+                            })
+                          }
+                        >
+                          {r.verified ? "Disable payments" : "Approve payments"}
+                        </button>
+                      </>
+                    )}
+                    {tab === "domains" && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          save(endpoint + "/" + r.id, "PATCH", {
+                            active: !r.active,
+                            sslConfirmed: true,
+                          });
+                        }}
+                      >
+                        <p>
+                          Ownership: {r.verified_at ? "Verified" : "Pending"} ·
+                          Routing: {r.active ? "Active" : "Inactive"}
+                        </p>
+                        <label>
+                          <input type="checkbox" required /> TLS certificate and
+                          domain routing have been provisioned.
+                        </label>
+                        <button
+                          className="button secondary"
+                          disabled={!r.verified_at}
+                        >
+                          {r.active ? "Deactivate" : "Activate"}
+                        </button>
+                      </form>
+                    )}
+                    {["users", "subscriptions", "payments"].includes(tab) && (
+                      <dl className="admin-facts">
+                        {Object.entries(r)
+                          .filter(
+                            ([k, v]) =>
+                              !["id", "name", "subscription_site_id", "user_id", "site_id"].includes(k) &&
+                              v !== null &&
+                              v !== "",
+                          )
+                          .map(([k, v]) => (
+                            <div key={k}>
+                              <dt>{k.replaceAll("_", " ").replace(/^\w/, (c) => c.toUpperCase())}</dt>
+                              <dd>
+                                {typeof v === "boolean"
+                                  ? v ? "Yes" : "No"
+                                  : k === "amount"
+                                    ? fmtNaira(v)
+                                    : /(_at|_until)$/.test(k)
+                                      ? fmtDateTime(v)
+                                      : String(v)}
+                              </dd>
+                            </div>
+                          ))}
+                      </dl>
+                    )}
+                    {cms.includes(tab) && (
+                      <>
+                        <p>
+                          {r.data?.status} · {r.data?.category}
+                        </p>
+                        <button
+                          className="button secondary"
+                          onClick={() => {
+                            setEdit(r);
+                            setImage(r.data?.image || "");
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="button secondary"
+                          onClick={() => {
+                            if (confirm("Delete this content permanently?"))
+                              save(endpoint + "/" + r.id, "DELETE", {});
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+    </div>
+  );
   return (
     <div className="platform-admin">
       <header>
@@ -234,186 +444,34 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                   Create {tab === "articles" ? "insight" : tab.slice(0, -1)} +
                 </button>
               )}
-              <div className="admin-records">
-                {rows.map((r) => (
-                  <article
-                    className="panel panel-body"
-                    key={r.id || r.user_id || r.site_id}
-                  >
-                    <h2>
-                      {r.data?.title ||
-                        r.business_name ||
-                        r.name ||
-                        r.hostname ||
-                        r.email}
-                    </h2>
-                    {r.email && <p>{r.email}</p>}
-                    {r.topic && <h3>{r.topic}</h3>}
-                    {r.message && <p className="preserve-lines">{r.message}</p>}
-                    {r.cac_number && (
-                      <p>
-                        CAC: {r.cac_number} · {r.status}
-                      </p>
-                    )}
-                    {["support", "requests"].includes(tab) && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          save(
-                            endpoint + "/" + r.id,
-                            "PATCH",
-                            Object.fromEntries(new FormData(e.currentTarget)),
-                          );
-                        }}
-                      >
-                        {r.data?.body && <p>{r.data.body}</p>}
-                        <label className="field">
-                          Status
-                          <select
-                            name="status"
-                            defaultValue={r.status || r.data?.status}
-                          >
-                            <option value="new">New</option>
-                            <option value="in_progress">In progress</option>
-                            <option value="resolved">Resolved</option>
-                          </select>
-                        </label>
-                        <label className="field">
-                          Reply by email
-                          <textarea
-                            name="reply"
-                            defaultValue={r.reply || r.data?.reply}
-                            rows={4}
-                          />
-                        </label>
-                        <button className="button">Save & queue reply</button>
-                      </form>
-                    )}
-                    {tab === "kyb" && r.status === "pending" && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          save(endpoint, "PATCH", {
-                            ...Object.fromEntries(
-                              new FormData(e.currentTarget),
-                            ),
-                            userId: r.user_id,
-                          });
-                        }}
-                      >
-                        <label className="field">
-                          Registered name found on CAC records
-                          <input name="registeredName" required minLength={2} />
-                        </label>
-                        <label className="field">
-                          Review evidence and decision
-                          <textarea name="note" required minLength={10} />
-                        </label>
-                        <label className="field">
-                          Decision
-                          <select name="status">
-                            <option value="verified">Verified</option>
-                            <option value="rejected">
-                              Rejected — corrections required
-                            </option>
-                          </select>
-                        </label>
-                        <button className="button">Save review decision</button>
-                      </form>
-                    )}
-                    {tab === "merchants" && (
-                      <>
-                        <p>
-                          KYB: {r.kyb_status || "Not submitted"} · Payments:{" "}
-                          {r.verified ? "Enabled" : "Awaiting approval"}
-                        </p>
-                        <button
-                          className="button secondary"
-                          onClick={() =>
-                            save(endpoint + "/" + r.site_id, "PATCH", {
-                              verified: !r.verified,
-                            })
-                          }
-                        >
-                          {r.verified ? "Disable payments" : "Approve payments"}
-                        </button>
-                      </>
-                    )}
-                    {tab === "domains" && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          save(endpoint + "/" + r.id, "PATCH", {
-                            active: !r.active,
-                            sslConfirmed: true,
-                          });
-                        }}
-                      >
-                        <p>
-                          Ownership: {r.verified_at ? "Verified" : "Pending"} ·
-                          Routing: {r.active ? "Active" : "Inactive"}
-                        </p>
-                        <label>
-                          <input type="checkbox" required /> TLS certificate and
-                          domain routing have been provisioned.
-                        </label>
-                        <button
-                          className="button secondary"
-                          disabled={!r.verified_at}
-                        >
-                          {r.active ? "Deactivate" : "Activate"}
-                        </button>
-                      </form>
-                    )}
-                    {["users", "subscriptions", "payments"].includes(tab) && (
-                      <dl>
-                        {Object.entries(r)
-                          .filter(
-                            ([k]) =>
-                              ![
-                                "id",
-                                "name",
-                                "email",
-                                "subscription_site_id",
-                              ].includes(k),
-                          )
-                          .map(([k, v]) => (
-                            <div key={k}>
-                              <dt>{k.replaceAll("_", " ")}</dt>
-                              <dd>{String(v ?? "—")}</dd>
-                            </div>
-                          ))}
-                      </dl>
-                    )}
-                    {cms.includes(tab) && (
-                      <>
-                        <p>
-                          {r.data?.status} · {r.data?.category}
-                        </p>
-                        <button
-                          className="button secondary"
-                          onClick={() => {
-                            setEdit(r);
-                            setImage(r.data?.image || "");
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="button secondary"
-                          onClick={() => {
-                            if (confirm("Delete this content permanently?"))
-                              save(endpoint + "/" + r.id, "DELETE", {});
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </article>
-                ))}
-              </div>
-              {!rows.length && <p>No records here yet.</p>}
+              <AdminTable<Item>
+                key={tab}
+                rows={rows}
+                columns={columnsFor(tab)}
+                rowKey={(r) => String(r.id || r.user_id || r.site_id)}
+                status={statusFor(tab)}
+                onOpen={
+                  cms.includes(tab)
+                    ? (r) => {
+                        setEdit(r);
+                        setImage(r.data?.image || "");
+                      }
+                    : ["support", "requests", "kyb", "merchants", "domains", "users", "subscriptions", "payments"].includes(tab)
+                      ? setSelected
+                      : undefined
+                }
+                searchLabel={`Search ${tabs.find((t) => t[0] === tab)?.[1].toLowerCase() || "records"}`}
+              />
+              {selected && (
+                <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && setSelected(null)}>
+                  <section className="modal admin-detail" role="dialog" aria-modal="true" aria-label="Record details">
+                    <button type="button" className="icon-button admin-detail-close" aria-label="Close" onClick={() => setSelected(null)}>
+                      ×
+                    </button>
+                    {renderDetail(selected)}
+                  </section>
+                </div>
+              )}
             </>
           )}
           {edit && (
@@ -436,6 +494,21 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                       edit.id === "new" ? "POST" : "PATCH",
                       {
                         ...Object.fromEntries(f),
+                        ...(tab === "authors"
+                          ? {
+                              links: {
+                                website: String(f.get("website") || ""),
+                                linkedin: String(f.get("linkedin") || ""),
+                                x: String(f.get("x") || ""),
+                              },
+                              website: undefined,
+                              linkedin: undefined,
+                              x: undefined,
+                            }
+                          : {}),
+                        ...(["authors", "categories", "legal"].includes(tab)
+                          ? { category: "general" }
+                          : {}),
                         image,
                         indexing: {
                           index: f.get("index") === "on",
@@ -446,7 +519,7 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                   }}
                 >
                   <label className="field">
-                    Title
+                    {tab === "authors" ? "Full name" : tab === "categories" ? "Category name" : "Title"}
                     <input
                       name="title"
                       defaultValue={edit.data?.title}
@@ -454,6 +527,28 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                       minLength={2}
                     />
                   </label>
+                  {tab === "authors" && (
+                    <>
+                      <label className="field">
+                        Role or job title
+                        <input name="role" maxLength={100} defaultValue={edit.data?.role || ""} placeholder="e.g. Head of Customer Success" />
+                      </label>
+                      <div className="form-grid">
+                        <label className="field">
+                          Website
+                          <input name="website" type="url" pattern="https://.*" defaultValue={edit.data?.links?.website || ""} placeholder="https://" />
+                        </label>
+                        <label className="field">
+                          LinkedIn
+                          <input name="linkedin" type="url" pattern="https://([a-z]+\.)?linkedin\.com/.*" defaultValue={edit.data?.links?.linkedin || ""} placeholder="https://www.linkedin.com/in/…" />
+                        </label>
+                        <label className="field">
+                          X (Twitter)
+                          <input name="x" type="url" pattern="https://(x|twitter)\.com/.*" defaultValue={edit.data?.links?.x || ""} placeholder="https://x.com/…" />
+                        </label>
+                      </div>
+                    </>
+                  )}
                   <label className="field">
                     URL slug
                     <input
@@ -468,6 +563,9 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                     value={edit.data?.body || ""}
                     mediaEndpoint="/api/marketing/media"
                   />
+                  <span className="field-label">
+                    {tab === "authors" ? "Profile photo" : "Featured image"}
+                  </span>
                   <MediaPicker
                     endpoint="/api/marketing/media"
                     onSelect={setImage}
@@ -486,14 +584,19 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                       defaultValue={edit.data?.imageAlt || ""}
                     />
                   </label>
-                  <label className="field">
-                    Category
-                    <input
-                      name="category"
-                      defaultValue={edit.data?.category || "general"}
-                      required
-                    />
-                  </label>
+                  {["articles", "pages"].includes(tab) && (
+                    <label className="field">
+                      Category
+                      <select name="category" defaultValue={edit.data?.category || "general"}>
+                        <option value="general">General</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.data?.slug}>
+                            {c.data?.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   {tab === "articles" && (
                     <label className="field">
                       Author
@@ -533,7 +636,21 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                     />{" "}
                     Follow links
                   </label>
-                  <button className="button">Save content</button>
+                  <div className="admin-edit-actions">
+                    <button className="button">Save content</button>
+                    {edit.id !== "new" && (
+                      <button
+                        type="button"
+                        className="button secondary danger"
+                        onClick={() => {
+                          if (confirm("Delete this content permanently?"))
+                            save(endpoint + "/" + edit.id, "DELETE", {});
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </form>
               </div>
             </div>
@@ -610,4 +727,92 @@ function AnnualOffers() {
       ))}
     </section>
   );
+}
+
+const title = (r: Item) =>
+  String(r.data?.title || r.registered_name || r.business_name || r.name || r.hostname || r.email || "—");
+const paymentStatus: Record<string, string> = {
+  pending: "Awaiting payment",
+  verification_required: "Payment unconfirmed",
+  review_required: "Paid after release",
+};
+function columnsFor(tab: string): Column<Item>[] {
+  const updated: Column<Item> = {
+    key: "updated",
+    label: "Updated",
+    text: (r) => String(r.updated_at || r.created_at || ""),
+    render: (r) => fmtDate(r.updated_at || r.created_at),
+  };
+  switch (tab) {
+    case "users":
+      return [
+        { key: "name", label: "Account", render: (r) => <><b>{String(r.name)}</b><small>{String(r.email)}</small></>, text: (r) => `${r.name} ${r.email}` },
+        { key: "role", label: "Role", render: (r) => <StatusBadge value="info" label={String(r.role).replaceAll("_", " ")} /> },
+        { key: "email_verified", label: "Email", render: (r) => <StatusBadge value={r.email_verified ? "verified" : "pending"} label={r.email_verified ? "Verified" : "Unverified"} /> },
+        { key: "created_at", label: "Joined", render: (r) => fmtDate(r.created_at) },
+      ];
+    case "subscriptions":
+      return [
+        { key: "name", label: "Website", render: (r) => <><b>{String(r.name)}</b><small>{String(r.email)}</small></>, text: (r) => `${r.name} ${r.email}` },
+        { key: "tier", label: "Plan", render: (r) => <span className="plan-pill">{String(r.tier)}</span> },
+        { key: "subscription", label: "Status", render: (r) => <StatusBadge value={r.subscription} /> },
+        { key: "billing_interval", label: "Billing", render: (r) => String(r.billing_interval || "—") },
+        { key: "paid_until", label: "Paid until", render: (r) => fmtDate(r.paid_until) },
+      ];
+    case "payments":
+      return [
+        { key: "name", label: "Store", render: (r) => <><b>{String(r.name)}</b><small>{String(r.email)}</small></>, text: (r) => `${r.name} ${r.email} ${r.reference}` },
+        { key: "amount", label: "Amount", render: (r) => fmtNaira(r.amount) },
+        { key: "payment_status", label: "Status", render: (r) => <StatusBadge value={r.payment_status} label={paymentStatus[String(r.payment_status)]} /> },
+        { key: "review_reason", label: "Reason", render: (r) => String(r.review_reason || r.reconcile_error || "—") },
+        { key: "opened", label: "Opened", render: (r) => fmtDateTime(r.review_opened_at || r.created_at) },
+      ];
+    case "kyb":
+      return [
+        { key: "business", label: "Business", render: (r) => <><b>{r.registered_name || r.business_name ? String(r.registered_name || r.business_name) : "Awaiting registered name"}</b><small>{String(r.email)}</small></>, text: (r) => `${r.registered_name || ""} ${r.business_name || ""} ${r.email} ${r.cac_number}` },
+        { key: "cac_number", label: "CAC number" },
+        { key: "verified_via", label: "Checked by", render: (r) => (r.verified_via === "registry" ? "CAC registry" : r.verified_via === "manual" ? "Manual review" : "—") },
+        { key: "status", label: "Status", render: (r) => <StatusBadge value={r.status} /> },
+        { key: "submitted_at", label: "Submitted", render: (r) => fmtDate(r.submitted_at) },
+      ];
+    case "merchants":
+      return [
+        { key: "name", label: "Store" },
+        { key: "kyb_status", label: "Business verification", render: (r) => <StatusBadge value={r.kyb_status || "pending"} label={r.kyb_status ? undefined : "Not submitted"} /> },
+        { key: "verified", label: "Payments", render: (r) => <StatusBadge value={r.verified ? "active" : "pending"} label={r.verified ? "Enabled" : "Awaiting approval"} /> },
+        { key: "delivery", label: "Flat delivery", render: (r) => fmtNaira(r.delivery) },
+      ];
+    case "domains":
+      return [
+        { key: "hostname", label: "Domain", render: (r) => <><b>{String(r.hostname)}</b><small>{String(r.name)}</small></>, text: (r) => `${r.hostname} ${r.name}` },
+        { key: "verified_at", label: "Ownership", render: (r) => <StatusBadge value={r.verified_at ? "verified" : "pending"} label={r.verified_at ? "Verified" : "Pending"} /> },
+        { key: "active", label: "Routing", render: (r) => <StatusBadge value={r.active ? "active" : "inactive"} label={r.active ? "Active" : "Inactive"} /> },
+      ];
+    case "support":
+    case "requests":
+      return [
+        { key: "from", label: "From", render: (r) => <><b>{String(r.name || "—")}</b><small>{String(r.email || "")}</small></>, text: (r) => `${r.name} ${r.email}` },
+        { key: "topic", label: "Subject", render: (r) => String(r.topic || r.data?.title || "—"), text: (r) => `${r.topic || r.data?.title || ""} ${r.message || ""}` },
+        { key: "status", label: "Status", render: (r) => <StatusBadge value={r.status || r.data?.status || "new"} /> },
+        { key: "created_at", label: "Received", render: (r) => fmtDateTime(r.created_at) },
+      ];
+    default:
+      return [
+        { key: "title", label: tab === "authors" ? "Name" : "Title", render: (r) => <><b>{title(r)}</b><small>/{String(r.data?.slug || "")}</small></>, text: (r) => `${title(r)} ${r.data?.slug || ""}` },
+        ...(tab === "articles" || tab === "pages"
+          ? [{ key: "category", label: "Category", render: (r: Item) => String(r.data?.category || "general").replaceAll("-", " ") }]
+          : []),
+        ...(tab === "authors" ? [{ key: "role", label: "Role", render: (r: Item) => String(r.data?.role || "—") }] : []),
+        { key: "status", label: "Status", render: (r) => <StatusBadge value={r.data?.status} />, text: (r) => String(r.data?.status || "") },
+        updated,
+      ];
+  }
+}
+function statusFor(tab: string) {
+  if (["users", "merchants", "domains"].includes(tab)) return undefined;
+  if (tab === "subscriptions") return { get: (r: Item) => String(r.subscription || "") };
+  if (tab === "payments") return { get: (r: Item) => String(r.payment_status || ""), labels: paymentStatus };
+  if (["support", "requests"].includes(tab)) return { get: (r: Item) => String(r.status || r.data?.status || "new") };
+  if (tab === "kyb") return { get: (r: Item) => String(r.status || "") };
+  return { get: (r: Item) => String(r.data?.status || "") };
 }

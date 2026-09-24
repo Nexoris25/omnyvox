@@ -573,6 +573,7 @@ export function CheckoutPage({
   options,
   payments,
   preview = false,
+  policies = {},
 }: {
   site: string;
   products: Product[];
@@ -580,6 +581,8 @@ export function CheckoutPage({
   options: Pick<FulfilmentSettings, "zones" | "pickup">;
   payments: boolean;
   preview?: boolean;
+  /** Links to this store's own published policies. */
+  policies?: { terms?: string; refund?: string; privacy?: string };
 }) {
   const { cart, setCart, ready } = useCart(site);
   const { lines } = useLines(cart, products);
@@ -641,6 +644,7 @@ export function CheckoutPage({
                 phone: form.phone,
                 address: method === "delivery" ? form.address : undefined,
                 note: form.note || undefined,
+                consent: form.consent === "on",
                 fulfilment:
                   method === "delivery"
                     ? { method, zone }
@@ -788,6 +792,29 @@ export function CheckoutPage({
             feeLabel={method === "pickup" ? "Pickup" : "Delivery"}
             pending="Choose an area"
           />
+          <label className="store-consent">
+            <input type="checkbox" name="consent" required />
+            <span>
+              I agree to the{" "}
+              {[
+                policies.terms && ["terms of sale", policies.terms],
+                policies.refund && ["refund policy", policies.refund],
+                policies.privacy && ["privacy policy", policies.privacy],
+              ]
+                .filter((x): x is [string, string] => !!x)
+                .map(([label, href], i, all) => (
+                  <span key={label}>
+                    {i > 0 && (i === all.length - 1 ? " and " : ", ")}
+                    <a href={href} target="_blank" rel="noopener">
+                      {label}
+                    </a>
+                  </span>
+                ))}
+              {!policies.terms && !policies.refund && !policies.privacy &&
+                "store’s terms of sale, refund policy and privacy policy"}
+              .
+            </span>
+          </label>
           {error && (
             <p className="store-error" role="alert">
               {error}

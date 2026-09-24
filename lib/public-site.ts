@@ -25,6 +25,10 @@ export type Content = {
     description?: string;
     socialImage?: string;
     details?: { label: string; value: string }[];
+    policyType?: string;
+    authorId?: string;
+    role?: string;
+    links?: { website?: string; linkedin?: string; x?: string };
   };
 };
 export const getSite = cache(async (slug: string, preview = false) => {
@@ -57,7 +61,10 @@ export async function publicContent(site: Site, preview = false) {
       [
         "pages",
         "legal",
-        ...(site.category === "commerce" ? ["products", "categories"] : []),
+        ...(site.category === "commerce" ? ["products"] : []),
+        ...(site.category === "commerce" || entitled(site.tier, "blog")
+          ? ["categories"]
+          : []),
         ...(entitled(site.tier, "blog") ? ["articles", "authors"] : []),
         ...Object.keys(industry?.collections || {}),
       ],

@@ -3,9 +3,11 @@ import { useState } from "react";
 export function EnquiryForm({
   site,
   formId,
+  privacyHref,
 }: {
   site: string;
   formId: string;
+  privacyHref?: string;
 }) {
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -60,10 +62,21 @@ export function EnquiryForm({
             <input name="website" tabIndex={-1} autoComplete="off" />
           </label>
         </div>
-        <label>
-          <input name="consent" type="checkbox" required /> I agree that this
-          business may use my details to respond to this enquiry. See the
-          privacy policy in the footer.
+        <label className="consent-check">
+          <input name="consent" type="checkbox" required />
+          <span>
+            I agree that this business may use my details to respond to this
+            enquiry
+            {privacyHref ? (
+              <>
+                , as described in its{" "}
+                <a href={privacyHref} target="_blank" rel="noopener">
+                  privacy policy
+                </a>
+              </>
+            ) : null}
+            .
+          </span>
         </label>
         <button disabled={busy} className="button" style={{ marginTop: 20 }}>
           Send message ↗

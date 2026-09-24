@@ -69,13 +69,9 @@ try {
   check(
     (
       await call(
-        "onboarding/business",
+        "onboarding/cac-lookup",
         "POST",
-        {
-          businessName: "Test Business",
-          cacNumber: "RC1234567",
-          consent: true,
-        },
+        { companyType: "RC", cacNumber: "1234567" },
         a.cookie,
       )
     ).status === 403,
@@ -105,15 +101,53 @@ try {
       await call(
         "onboarding/business",
         "POST",
-        {
-          businessName: "Test Business",
-          cacNumber: "RC1234567",
-          consent: true,
-        },
+        { companyType: "RC", cacNumber: "1234567", consent: true },
         a.cookie,
       )
-    ).status === 200,
-    "Manual CAC submission",
+    ).status === 409,
+    "A business cannot be submitted without a registry lookup",
+  );
+  check(
+    (
+      await call(
+        "onboarding/cac-lookup",
+        "POST",
+        { companyType: "RC", cacNumber: "9999999" },
+        a.cookie,
+      )
+    ).data.status === "not_found",
+    "Unknown CAC numbers are reported as not found",
+  );
+  const found = await call(
+    "onboarding/cac-lookup",
+    "POST",
+    { companyType: "RC", cacNumber: "RC 1234567" },
+    a.cookie,
+  );
+  check(
+    found.data.status === "found" &&
+      found.data.record.name === "TEST BUSINESS LIMITED" &&
+      found.data.record.reference === "RC1234567",
+    "CAC lookup returns the registered name from the registry",
+  );
+  const submitted = await call(
+    "onboarding/business",
+    "POST",
+    {
+      companyType: "RC",
+      cacNumber: "1234567",
+      consent: true,
+      businessName: "Something Else Ltd",
+    },
+    a.cookie,
+  );
+  const mine = await call("onboarding", "GET", undefined, a.cookie);
+  check(
+    submitted.data.status === "verified" &&
+      mine.data.business.registered_name === "TEST BUSINESS LIMITED" &&
+      mine.data.business.business_name === "TEST BUSINESS LIMITED" &&
+      mine.data.business.verified_via === "registry",
+    "An active registry match verifies automatically; a typed name is ignored",
   );
   check(
     (await call("onboarding", "GET", undefined, b.cookie)).data.business ===
@@ -470,13 +504,35 @@ try {
     (
       await call("contact", "POST", {
         name: "Contact QA",
-        email: prefix + "visitor@example.test",
+        email: prefix + "noconsent@example.test",
         topic: "Website help",
         message: "This is an internal support test.",
         website: "",
       })
+    ).status === 400,
+    "Marketing contact requires consent",
+  );
+  check(
+    (
+      await call("contact", "POST", {
+        name: "Contact QA",
+        email: prefix + "visitor@example.test",
+        topic: "Website help",
+        message: "This is an internal support test.",
+        website: "",
+        consent: "on",
+      })
     ).status === 201,
-    "Marketing contact accepted",
+    "Marketing contact accepted with consent",
+  );
+  check(
+    (
+      await db.query(
+        "SELECT consented_at FROM platform_tickets WHERE email=$1",
+        [prefix + "visitor@example.test"],
+      )
+    ).rows[0]?.consented_at,
+    "Contact consent is recorded",
   );
   check(
     (await call("platform-admin/support", "GET", undefined, b.cookie))
@@ -546,8 +602,37 @@ try {
     ).rows.length === 1,
     "Identical reply is not queued twice",
   );
+  await call("onboarding/resend", "POST", {}, b.cookie);
+  const {
+    rows: [bMail],
+  } = await db.query(
+    "SELECT body FROM email_outbox WHERE recipient=$1 ORDER BY created_at DESC LIMIT 1",
+    [b.email],
+  );
+  await call(
+    "onboarding/otp",
+    "POST",
+    { code: bMail.body.match(/code is (\d{6})/)[1] },
+    b.cookie,
+  );
+  await call(
+    "onboarding/cac-lookup",
+    "POST",
+    { companyType: "RC", cacNumber: "7654321" },
+    b.cookie,
+  );
+  const inactive = await call(
+    "onboarding/business",
+    "POST",
+    { companyType: "RC", cacNumber: "7654321", consent: true },
+    b.cookie,
+  );
+  check(
+    inactive.data.status === "pending",
+    "An inactive registry entity goes to compliance review",
+  );
   const kyb = await call("kyb-admin", "GET", undefined, a.cookie);
-  const own = kyb.data.find((x) => x.email === a.email);
+  const own = kyb.data.find((x) => x.email === b.email);
   check(
     (
       await call(

@@ -162,7 +162,7 @@ export function RecordExtras({
         ))}
       </datalist>
       <label className="field">
-        Featured image
+        {kind === "authors" ? "Profile photo" : "Featured image"}
         {!demo && (
           <MediaPicker
             endpoint={`/api/sites/${siteId}/media`}

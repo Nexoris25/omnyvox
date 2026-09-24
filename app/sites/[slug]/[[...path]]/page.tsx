@@ -22,9 +22,15 @@ import { deliveryOptions, priceRange, totalStock, type StoreProduct } from "@/li
 import { query } from "@/lib/db";
 import { industryFor } from "@/lib/industry";
 import { EnquiryForm } from "@/components/enquiry-form";
+import {
+  ArticleGrid,
+  AuthorCard,
+  CategoryFilter,
+  categoryName,
+} from "@/components/site-insights";
 type Props = {
   params: Promise<{ slug: string; path?: string[] }>;
-  searchParams: Promise<{ preview?: string }>;
+  searchParams: Promise<{ preview?: string; category?: string }>;
 };
 export async function generateMetadata({
   params,
@@ -99,7 +105,8 @@ export async function generateMetadata({
 }
 export default async function Page({ params, searchParams }: Props) {
   const { slug, path = [] } = await params;
-  const preview = (await searchParams).preview === "1";
+  const query_ = await searchParams;
+  const preview = query_.preview === "1";
   const site = await getSite(slug, preview);
   if (!site) notFound();
   const base = await siteBase(site);
@@ -109,6 +116,53 @@ export default async function Page({ params, searchParams }: Props) {
     [site.id],
   );
   const pathname = "/" + path.join("/");
+  const legalHref = (type: string) => {
+    const r = content.find((c) => c.kind === "legal" && c.data.policyType === type);
+    return r ? base + contentPath(r, site.view.brand.categoryUrls) + (preview ? "?preview=1" : "") : undefined;
+  };
+  const privacyHref = legalHref("privacy");
+  const link = (r: (typeof content)[number]) =>
+    base + contentPath(r, site.view.brand.categoryUrls) + (preview ? "?preview=1" : "");
+  const blog = entitled(site.tier, "blog");
+  const articles = content
+    .filter((r) => r.kind === "articles")
+    .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+  const authors = content.filter((r) => r.kind === "authors");
+  const categories = content.filter((r) => r.kind === "categories");
+  const authorLinks = entitled(site.tier, "authorLinks");
+  const insightsHref = (category?: string) =>
+    base +
+    "/insights" +
+    (category || preview
+      ? "?" +
+        new URLSearchParams({
+          ...(category ? { category } : {}),
+          ...(preview ? { preview: "1" } : {}),
+        })
+      : "");
+  // Every blog-enabled homepage shows the latest articles, unless the owner
+  // has placed (or hidden) an Insights section themselves.
+  const homeView =
+    blog && articles.length && !site.view.sections.some((s) => s.type === "insights")
+      ? (() => {
+          const sections = [...site.view.sections];
+          const at = sections.findIndex((s) => s.type === "cta" || s.type === "contact");
+          sections.splice(at < 0 ? sections.length : at, 0, {
+            id: "latest-insights",
+            type: "insights",
+            eyebrow: "Insights",
+            title: "Latest insights",
+            body: "",
+            visible: true,
+            ctas: [{ label: "View all insights", href: "/insights" }],
+          });
+          return { ...site.view, sections };
+        })()
+      : site.view;
+  const [kyb] = await query<{ cac_number: string }>(
+    "SELECT b.cac_number FROM business_verifications b JOIN sites s ON s.owner_id=b.user_id WHERE s.id=$1 AND b.status='verified'",
+    [site.id],
+  );
   const videoEnabled = entitled(site.tier, "video");
   const industry = await industryFor(site);
   const indexKinds: Record<string, string> = {
@@ -261,8 +315,11 @@ export default async function Page({ params, searchParams }: Props) {
         preview={preview}
         videoEnabled={videoEnabled}
         contact={contact}
-        data={site.view}
+        data={homeView}
         base={base}
+        footerLinks={blog && articles.length ? [{ label: "Insights", href: "/insights" }] : []}
+        registration={kyb?.cac_number}
+        platformUrl={process.env.APP_URL || "https://omnyvox.com"}
         headerExtra={
           site.category === "commerce" ? (
             <CartLink site={site.id} base={base} />
@@ -285,24 +342,16 @@ export default async function Page({ params, searchParams }: Props) {
               (preview ? "?preview=1" : ""),
           }))}
         insights={
-          <div className="template-grid">
-            {content
-              .filter((r) => r.kind === "articles")
-              .slice(0, 6)
-              .map((r) => (
-                <a
-                  key={r.id}
-                  href={
-                    base +
-                    contentPath(r, site.view.brand.categoryUrls) +
-                    (preview ? "?preview=1" : "")
-                  }
-                >
-                  <h3>{r.data.title}</h3>
-                  <p>{plainText(r.data.body).slice(0, 120)}</p>
-                </a>
-              ))}
-          </div>
+          articles.length ? (
+            <ArticleGrid
+              articles={articles.slice(0, 3)}
+              authors={authors}
+              categories={categories}
+              href={link}
+            />
+          ) : (
+            <p>New articles will appear here soon.</p>
+          )
         }
 
         after={
@@ -316,47 +365,32 @@ export default async function Page({ params, searchParams }: Props) {
                   products={products}
                 />
               )}
-              <section className="rendered-section">
-                <div className="template-grid">
-                  {content
-                    .filter((r) => r.kind === "pages")
-                    .map((r) => (
-                      <Link
-                        className="panel panel-body"
-                        href={
-                          base +
-                          contentPath(r, site.view.brand.categoryUrls) +
-                          (preview ? "?preview=1" : "")
-                        }
-                        key={r.id}
-                      >
-                        <small>
-                          {r.kind === "articles"
-                            ? "INSIGHTS"
-                            : r.kind === "products"
-                              ? "SHOP"
-                              : "EXPLORE"}
-                        </small>
-                        <h2 style={{ fontSize: 24, marginTop: 16 }}>
-                          {r.data.title}
-                        </h2>
-                        <p>{plainText(r.data.body).slice(0, 100)}</p>
-                        <span>Discover more ↗</span>
-                      </Link>
-                    ))}
-                </div>
-              </section>
               {!preview && contactForm && (
-                <EnquiryForm site={site.id} formId={contactForm.id} />
+                <EnquiryForm site={site.id} formId={contactForm.id} privacyHref={privacyHref} />
               )}
             </>
           )
         }
       >
         {record ? (
-          <article className="rendered-section">
-            <Link href={base + (preview ? "?preview=1" : "")}>Home</Link>
-            <h1 style={{ marginTop: 25 }}>{record.data.title}</h1>
+          <article className={`rendered-section record-page record-${record.kind}`}>
+            <nav className="site-breadcrumbs" aria-label="Breadcrumb">
+              <a href={base + (preview ? "?preview=1" : "")}>Home</a>
+              {record.kind === "articles" && <a href={insightsHref()}>Insights</a>}
+              {record.kind === "products" && <a href={base + "/shop" + (preview ? "?preview=1" : "")}>Shop</a>}
+              {industry?.collections[record.kind] && (
+                <a href={base + "/" + record.kind + (preview ? "?preview=1" : "")}>
+                  {industry.collections[record.kind]}
+                </a>
+              )}
+              <span aria-current="page">{record.data.title}</span>
+            </nav>
+            {record.kind === "articles" && record.data.category && record.data.category !== "general" && (
+              <a className="site-article-category" href={insightsHref(record.data.category)}>
+                {categoryName(record.data.category, categories)}
+              </a>
+            )}
+            <h1>{record.data.title}</h1>
             {!!record.data.details?.length && (
               <dl className="record-facts">
                 {record.data.details.map((d, i) => (
@@ -368,18 +402,34 @@ export default async function Page({ params, searchParams }: Props) {
               </dl>
             )}
             {record.kind === "articles" && (
-              <p>
-                By {record.data.author} ·{" "}
-                {new Date(record.created_at).toLocaleDateString("en-NG")}
+              <p className="site-article-byline">
+                By{" "}
+                {(() => {
+                  const a = authors.find((p) => p.id === record.data.authorId);
+                  return a ? <a href={link(a)}>{a.data.title}</a> : record.data.author;
+                })()}{" "}
+                ·{" "}
+                <time dateTime={record.created_at}>
+                  {new Date(record.created_at).toLocaleDateString("en-NG", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </time>
               </p>
             )}
-            {record.data.image && (
-              <img
-                src={record.data.image}
-                alt={record.data.title}
-                width={900}
-                height={600}
-              />
+            {record.kind === "authors" ? (
+              <AuthorCard author={record} showLinks={authorLinks} />
+            ) : (
+              record.data.image && (
+                <img
+                  className="record-image"
+                  src={record.data.image}
+                  alt={record.data.imageAlt || ""}
+                  width={900}
+                  height={600}
+                />
+              )
             )}
             <div
               className="rich-content"
@@ -398,8 +448,28 @@ export default async function Page({ params, searchParams }: Props) {
                 email={site.view.brand.email}
               />
             )}
+            {record.kind === "articles" &&
+              (() => {
+                const a = authors.find((p) => p.id === record.data.authorId);
+                return a ? <AuthorCard author={a} href={link(a)} showLinks={authorLinks} compact /> : null;
+              })()}
+            {record.kind === "authors" && (
+              <>
+                <h2 className="record-subheading">Articles by {record.data.title}</h2>
+                {articles.some((a) => a.data.authorId === record.id) ? (
+                  <ArticleGrid
+                    articles={articles.filter((a) => a.data.authorId === record.id)}
+                    authors={authors}
+                    categories={categories}
+                    href={link}
+                  />
+                ) : (
+                  <p>No published articles yet.</p>
+                )}
+              </>
+            )}
             {record.data.slug === "contact" && !preview && contactForm && (
-              <EnquiryForm site={site.id} formId={contactForm.id} />
+              <EnquiryForm site={site.id} formId={contactForm.id} privacyHref={privacyHref} />
             )}
             {record.kind === "products" && (
               <ProductPurchase
@@ -419,6 +489,11 @@ export default async function Page({ params, searchParams }: Props) {
             options={fulfilmentOptions}
             payments={!!merchant}
             preview={preview}
+            policies={{
+              terms: legalHref("terms"),
+              refund: legalHref("refund"),
+              privacy: privacyHref,
+            }}
           />
         ) : path[0] === "shop" ? (
           <StoreCheckout
@@ -428,28 +503,66 @@ export default async function Page({ params, searchParams }: Props) {
             products={products}
             page
           />
+        ) : path.length === 1 && path[0] === "insights" ? (
+          (() => {
+            const active = articles.some((a) => a.data.category === query_.category)
+              ? query_.category
+              : undefined;
+            const counts: Record<string, number> = {};
+            for (const a of articles) counts[a.data.category] = (counts[a.data.category] || 0) + 1;
+            const used = Object.keys(counts).filter((c) => c !== "general");
+            const filterList = [
+              ...categories
+                .filter((c) => used.includes(c.data.slug))
+                .map((c) => ({ slug: c.data.slug, title: c.data.title })),
+              ...used
+                .filter((c) => !categories.some((x) => x.data.slug === c))
+                .map((c) => ({ slug: c, title: categoryName(c, categories) })),
+            ];
+            const shown = articles.filter((a) => !active || a.data.category === active);
+            return (
+              <section className="rendered-section site-insights-page">
+                <nav className="site-breadcrumbs" aria-label="Breadcrumb">
+                  <a href={base + (preview ? "?preview=1" : "")}>Home</a>
+                  <span aria-current="page">Insights</span>
+                </nav>
+                <h1>{active ? categoryName(active, categories) : "Insights"}</h1>
+                <p className="site-page-lead">
+                  News, guidance and updates from {site.view.brand.name}.
+                </p>
+                <CategoryFilter
+                  categories={filterList}
+                  active={active}
+                  counts={counts}
+                  href={insightsHref}
+                />
+                {shown.length ? (
+                  <ArticleGrid articles={shown} authors={authors} categories={categories} href={link} />
+                ) : (
+                  <p className="site-empty">No articles have been published yet. Please check back soon.</p>
+                )}
+              </section>
+            );
+          })()
         ) : path.length ? (
-          <section className="rendered-section">
+          <section className="rendered-section site-collection-page">
+            <nav className="site-breadcrumbs" aria-label="Breadcrumb">
+              <a href={base + (preview ? "?preview=1" : "")}>Home</a>
+              <span aria-current="page">{industry?.collections[path[0]] || "Insights"}</span>
+            </nav>
             <h1>{industry?.collections[path[0]] || "Insights"}</h1>
-            <div className="template-grid">
+            <div className="site-collection-grid">
               {content
-                .filter(
-                  (r) => path[0] !== "shop" && r.kind === indexKinds[path[0]],
-                )
+                .filter((r) => path[0] !== "shop" && r.kind === indexKinds[path[0]])
                 .map((r) => (
-                  <Link
-                    className="panel panel-body"
-                    href={
-                      base +
-                      contentPath(r, site.view.brand.categoryUrls) +
-                      (preview ? "?preview=1" : "")
-                    }
-                    key={r.id}
-                  >
-                    <h2>{r.data.title}</h2>
-                    <p>{r.data.body.slice(0, 150)}</p>
-                    <span>Read more →</span>
-                  </Link>
+                  <a className="site-collection-card" href={link(r)} key={r.id}>
+                    {r.data.image && <img src={r.data.image} alt="" width={640} height={420} loading="lazy" />}
+                    <span>
+                      <b>{r.data.title}</b>
+                      <small>{plainText(r.data.body).slice(0, 140)}</small>
+                      <em>View details →</em>
+                    </span>
+                  </a>
                 ))}
             </div>
           </section>

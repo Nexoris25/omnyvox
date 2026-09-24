@@ -349,6 +349,7 @@ try {
     name: "Checkout QA",
     phone: "08012345678",
     address: "Test delivery address",
+    consent: true,
     items: [{ id: product, quantity: 1 }],
   };
   const stock = async () =>

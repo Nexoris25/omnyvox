@@ -2073,26 +2073,96 @@ export const templatePreviewIndustry: Record<TemplateId, string> = {
 /** A complete, self-contained sample site for public template previews.
  * Internal links become on-page anchors because previews have no inner
  * pages; business details are clearly fictitious. */
+const pageSlug = (title: string) =>
+  title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+/** Sample articles for template previews, drawn from the kit's own offers. */
+export function sampleArticles(kit: IndustryKit) {
+  const offers = kit.sections.find((s) => s.id === "services")?.items || [];
+  return offers.slice(0, 3).map((item, i) => ({
+    slug: pageSlug(`guide-${item.title}`),
+    title: [
+      `What to know before choosing ${item.title.toLowerCase()}`,
+      `${item.title}: common questions, answered`,
+      `How we approach ${item.title.toLowerCase()}`,
+    ][i % 3],
+    category: ["Guides", "Advice", "Updates"][i % 3],
+    image: item.image,
+    excerpt: item.text || kit.description,
+    body: `<p>${item.text || kit.description}</p><h2>Start with what matters to you</h2><p>This is sample article content for a template preview. On your website, articles are written and published by your team from your workspace.</p><h2>Questions to ask</h2><ul><li>What is included, and what is not?</li><li>How long does it usually take?</li><li>What will you need from me?</li></ul><p>Contact the business to discuss your needs.</p>`,
+  }));
+}
+
+/**
+ * A complete sample site for public template previews. Business details are
+ * clearly fictitious. With `base`, links point to real preview pages
+ * (`${base}/about`, `${base}/legal/privacy`…); without it they become
+ * on-page anchors for single-page thumbnails.
+ */
 export function previewSite(
   industry: string,
   category: "corporate" | "commerce",
   business: { name: string },
+  opts?: { base: string; pages: string[] },
 ) {
   const kit = kitFor(industry, category);
-  const anchor = (href: string) =>
-    !href.startsWith("/")
-      ? href
-      : /contact/.test(href)
-        ? "#contact"
-        : /about/.test(href)
-          ? "#about"
-          : "#services";
+  const pages = opts?.pages || [];
+  const findPage = (href: string) =>
+    pages.find((p) => href === "/" + pageSlug(p)) ||
+    pages.find((p) => new RegExp(pageSlug(p).split("-")[0]).test(href));
+  const to = (href: string) => {
+    if (!href.startsWith("/")) return href;
+    if (opts) {
+      if (href === "/") return "/";
+      const page = /contact/.test(href) ? "Contact" : findPage(href);
+      return page ? `/${pageSlug(page)}` : "/#services";
+    }
+    return /contact/.test(href) ? "#contact" : /about/.test(href) ? "#about" : "#services";
+  };
   const services = kit.sections.find((s) => s.id === "services");
   const sections = kit.sections.map((s) => ({
     ...s,
-    ctas: s.ctas?.map((c) => ({ ...c, href: anchor(c.href) })),
-    items: s.items?.map((i) => (i.href ? { ...i, href: anchor(i.href) } : i)),
+    ctas: s.ctas?.map((c) => ({ ...c, href: to(c.href) })),
+    items: s.items?.map((i) => (i.href ? { ...i, href: to(i.href) } : i)),
   }));
+  const servicesPage = pages.find((p) =>
+    /services|solutions|practice|rooms|properties|programmes/i.test(p),
+  );
+  const navigation: NonNullable<Brand["navigation"]> = opts
+    ? [
+        { label: "Home", href: "/", footer: false },
+        ...pages
+          .filter((p) => p !== "Contact")
+          .map((p) => ({
+            label: p,
+            href: `/${pageSlug(p)}`,
+            footer: false,
+            ...(p === servicesPage && services?.items?.length
+              ? {
+                  children: services.items.slice(0, 4).map((i) => ({
+                    label: i.title,
+                    href: `/${pageSlug(p)}`,
+                  })),
+                }
+              : {}),
+          })),
+        ...(category === "commerce" ? [] : [{ label: "Insights", href: "/insights", footer: false }]),
+        { label: "Contact", href: "/contact", footer: false },
+      ]
+    : [
+        {
+          label: services?.eyebrow || "Services",
+          href: "#services",
+          footer: false,
+          children: (services?.items || []).slice(0, 4).map((i) => ({
+            label: i.title,
+            href: "#services",
+          })),
+        },
+        { label: "About", href: "#about", footer: false },
+        { label: "FAQ", href: "#faq", footer: false },
+        { label: "Contact", href: "#contact", footer: false },
+      ];
   const brand: Brand = {
     name: business.name,
     description: kit.description,
@@ -2100,29 +2170,17 @@ export function previewSite(
     email: "hello@example.com",
     categoryUrls: false,
     logo: "",
-    navCta: { label: kit.navCta.label, href: anchor(kit.navCta.href) },
+    navCta: { label: kit.navCta.label, href: to(kit.navCta.href) },
     socials: {
       instagram: "https://instagram.com/",
       linkedin: "https://linkedin.com/",
       x: "https://x.com/",
       whatsapp: "https://wa.me/",
     },
-    navigation: [
-      {
-        label: services?.eyebrow || "Services",
-        href: "#services",
-        footer: false,
-        children: (services?.items || []).slice(0, 4).map((i) => ({
-          label: i.title,
-          href: "#services",
-        })),
-      },
-      { label: "About", href: "#about", footer: false },
-      { label: "FAQ", href: "#faq", footer: false },
-      { label: "Contact", href: "#contact", footer: false },
-    ],
+    navigation,
   };
   return {
+    kit,
     data: { template: kit.template, brand, sections },
     contact: {
       phone: "+234 800 000 0000",
@@ -2130,8 +2188,9 @@ export function previewSite(
       hours: "Monday to Friday, 8am – 6pm",
     },
     legal: legalSetFor(industry, category).map((type) => ({
+      type,
       title: policies[type].title,
-      href: "#",
+      href: opts ? `${opts.base}/legal/${policies[type].slug}` : "#",
     })),
   };
 }

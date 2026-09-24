@@ -134,7 +134,14 @@ try {
     ))[0].stock;
   const mugStock = async () =>
     (await query<{ stock: number }>("SELECT (data->>'stock')::int AS stock FROM records WHERE id=$1", [mug.id]))[0].stock;
-  const customer = { site: site.id, name: "Ada Obi", email: "ada@example.test", phone: "08030000000" };
+  const customer = { site: site.id, name: "Ada Obi", email: "ada@example.test", phone: "08030000000", consent: true };
+  check(
+    await fails(
+      () => checkout({ ...customer, consent: false, address: "4 Allen Avenue", items: [{ id: mug.id, quantity: 1 }] }, paystack),
+      /terms|expected/i,
+    ),
+    "checkout requires the shopper to accept the store's policies",
+  );
 
   const legacy = await checkout(
     { ...customer, address: "4 Allen Avenue, Ikeja", items: [{ id: mug.id, quantity: 2 }] },

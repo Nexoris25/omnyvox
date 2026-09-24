@@ -10,6 +10,7 @@ export const limits = {
     pages: 5,
     products: 25,
     articles: 0,
+    authors: 0,
     team: 1,
     recipients: 0,
   },
@@ -18,6 +19,7 @@ export const limits = {
     pages: 15,
     products: 250,
     articles: 100,
+    authors: 3,
     team: 3,
     recipients: 2,
   },
@@ -26,6 +28,7 @@ export const limits = {
     pages: 100,
     products: 2000,
     articles: 1000,
+    authors: 25,
     team: 10,
     recipients: 4,
   },
@@ -33,7 +36,7 @@ export const limits = {
 export function entitled(tier: Tier, feature: string) {
   return feature === "blog" || feature === "domains" || feature === "video"
     ? tier !== "basic"
-    : feature === "integrations"
+    : feature === "integrations" || feature === "authorLinks"
       ? tier === "advanced"
       : true;
 }

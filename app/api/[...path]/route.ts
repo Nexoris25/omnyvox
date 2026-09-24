@@ -144,11 +144,14 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           topic: z.string().min(2).max(120),
           message: z.string().min(10).max(5000),
           website: z.string().max(0),
+          consent: z.literal("on", {
+            error: "Please agree to how we use your details before sending.",
+          }),
         })
         .parse(await req.json());
       await rateLimit("contact:" + b.email.toLowerCase());
       await query(
-        "INSERT INTO platform_tickets(name,email,topic,message) VALUES($1,$2,$3,$4)",
+        "INSERT INTO platform_tickets(name,email,topic,message,consented_at) VALUES($1,$2,$3,$4,now())",
         [b.name, b.email, b.topic, b.message],
       );
       return ok({ success: true }, 201);
@@ -1048,6 +1051,9 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         if (!v.success) return fail(v.error.issues[0].message);
         if (!b.variants?.length) b.options = [];
       } else delete b.options, delete b.variants, delete b.sku;
+      if (kind !== "authors") delete b.role, delete b.links;
+      // Professional links on author profiles are an Advanced feature.
+      else if (!entitled(site.tier, "authorLinks")) delete b.links;
       if (!entitled(site.tier, "video") && containsVideo(b))
         return fail(videoUpgradeMessage, 403);
       const unsupported = ineligibleSections(site.data?.template, b.sections);
@@ -1139,7 +1145,7 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         }
         if (b.status === "published") {
           const cap = (await siteEntitlements(site)).limits[
-            kind as "pages" | "articles" | "products"
+            kind as "pages" | "articles" | "products" | "authors"
           ];
           const {
             rows: [count],

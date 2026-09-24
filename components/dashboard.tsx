@@ -118,6 +118,8 @@ type Row = {
     price?: number;
     stock?: number;
     sku?: string;
+    role?: string;
+    links?: { website?: string; linkedin?: string; x?: string };
     options?: import("@/lib/store").ProductOption[];
     variants?: import("@/lib/store").ProductVariant[];
     image?: string;
@@ -583,6 +585,19 @@ export function Dashboard({ section }: { section: string }) {
       publishAt: form.publishAt
         ? new Date(String(form.publishAt) + "Z").toISOString()
         : "",
+      ...(section === "authors"
+        ? {
+            role: String(form.role || ""),
+            links: {
+              website: String(form.website || ""),
+              linkedin: String(form.linkedin || ""),
+              x: String(form.x || ""),
+            },
+            website: undefined,
+            linkedin: undefined,
+            x: undefined,
+          }
+        : {}),
       price: Math.round(Number(form.price || 0) * 100),
       stock: Number(form.stock || 0),
       ...(section === "products"
@@ -2014,7 +2029,9 @@ export function Dashboard({ section }: { section: string }) {
                 <label className="field full">
                   {["services", "support"].includes(section)
                     ? "Subject"
-                    : "Title"}
+                    : section === "authors"
+                      ? "Full name"
+                      : "Title"}
                   <input
                     name="title"
                     required
@@ -2022,6 +2039,48 @@ export function Dashboard({ section }: { section: string }) {
                     defaultValue={editRow?.data.title}
                   />
                 </label>
+                {section === "authors" && (
+                  <>
+                    <label className="field full">
+                      Role or job title
+                      <input
+                        name="role"
+                        maxLength={100}
+                        placeholder="e.g. Managing Partner"
+                        defaultValue={editRow?.data.role || ""}
+                      />
+                    </label>
+                    <fieldset className="field full author-links">
+                      <legend>
+                        Professional links{" "}
+                        {site && !entitled(site.tier, "authorLinks") && (
+                          <span className="badge">Advanced plan</span>
+                        )}
+                      </legend>
+                      {site && entitled(site.tier, "authorLinks") ? (
+                        <div className="form-grid">
+                          <label className="field">
+                            Website
+                            <input name="website" type="url" pattern="https://.*" placeholder="https://" defaultValue={editRow?.data.links?.website || ""} />
+                          </label>
+                          <label className="field">
+                            LinkedIn
+                            <input name="linkedin" type="url" pattern="https://([a-z]+\.)?linkedin\.com/.*" placeholder="https://www.linkedin.com/in/…" defaultValue={editRow?.data.links?.linkedin || ""} />
+                          </label>
+                          <label className="field">
+                            X (Twitter)
+                            <input name="x" type="url" pattern="https://(x|twitter)\.com/.*" placeholder="https://x.com/…" defaultValue={editRow?.data.links?.x || ""} />
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="field-hint">
+                          Show the author’s website, LinkedIn and X profiles on their
+                          articles with the Advanced plan.
+                        </p>
+                      )}
+                    </fieldset>
+                  </>
+                )}
                 <label className="field full">
                   URL identifier
                   <input
@@ -2033,7 +2092,11 @@ export function Dashboard({ section }: { section: string }) {
                   />
                 </label>
                 <label className="field full">
-                  {section === "products" ? "Product description" : "Content"}
+                  {section === "products"
+                    ? "Product description"
+                    : section === "authors"
+                      ? "Biography"
+                      : "Content"}
                   <RichTextEditor
                     key={editRow?.id || "new"}
                     name="body"

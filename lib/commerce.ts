@@ -103,6 +103,9 @@ export async function checkout(
       phone: z.string().min(7).max(30),
       address: z.string().max(500).optional(),
       note: z.string().max(500).optional(),
+      consent: z.literal(true, {
+        error: "Please accept the store's terms, refund policy and privacy policy.",
+      }),
       fulfilment: fulfilmentChoiceSchema.optional(),
       items: z
         .array(
@@ -191,6 +194,7 @@ export async function checkout(
           phone: b.phone,
           address: fulfilment.method === "delivery" ? address : "",
           ...(b.note?.trim() ? { note: b.note.trim() } : {}),
+          consentedAt: new Date().toISOString(),
         }),
         JSON.stringify(items),
         total,

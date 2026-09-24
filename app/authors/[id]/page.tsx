@@ -18,6 +18,24 @@ export default async function Page({
         <span className="eyebrow">CONTRIBUTOR</span>
         <AuthorAvatar author={author} name={author.data.title} />
         <h1>{author.data.title}</h1>
+        {author.data.role && <p className="author-role">{String(author.data.role)}</p>}
+        {(() => {
+          const links = (author.data.links || {}) as { website?: string; linkedin?: string; x?: string };
+          const items = [
+            ["Website", links.website],
+            ["LinkedIn", links.linkedin],
+            ["X", links.x],
+          ].filter(([, v]) => v) as [string, string][];
+          return items.length ? (
+            <p className="author-links">
+              {items.map(([label, href]) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer">
+                  {label} ↗
+                </a>
+              ))}
+            </p>
+          ) : null;
+        })()}
         <div
           className="rich-content"
           dangerouslySetInnerHTML={{ __html: safeHtml(author.data.body) }}

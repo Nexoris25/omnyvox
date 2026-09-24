@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { limits, Tier } from "@/lib/model";
+import { AdminTable, StatusBadge, fmtDateTime } from "./admin-table";
 type Plan = {
   id: string;
   category: string;
@@ -67,13 +68,9 @@ export function Admin() {
   return (
     <>
       <section className="section" style={{ paddingTop: 35 }}>
-        <div className="page-heading">
-          <div>
-            <span className="eyebrow">NEXORIS TECHNOLOGIES</span>
-            <h1 style={{ marginTop: 15 }}>The bigger picture.</h1>
-            <p>Manage websites, commercial plans, and platform activity.</p>
-          </div>
-        </div>
+        <p className="admin-intro">
+          Platform health at a glance, with every website, plan price and audited action.
+        </p>
         {message && (
           <div className="notice" role="status">
             {message}
@@ -186,7 +183,6 @@ export function Admin() {
                           </label>
                         ),
                       )}
-                      <button className="button small">Save plan</button>
                       <label className="field">
                         Storage per website (GB)
                         <input
@@ -213,87 +209,70 @@ export function Admin() {
                           defaultValue={p.entitlements?.collections || 100}
                         />
                       </label>
+                      <button className="button small">Save plan</button>
                     </div>
                   </form>
                 ))}
               </div>
             ) : section === "audit" ? (
-              <div className="panel table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>Action</th>
-                      <th>Actor</th>
-                      <th>Target</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.audit.map((a) => (
-                      <tr key={a.id}>
-                        <td>{new Date(a.created_at).toLocaleString()}</td>
-                        <td>{a.action}</td>
-                        <td>{a.actor}</td>
-                        <td>{a.target}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <AdminTable
+                rows={data.audit as unknown as Record<string, unknown>[]}
+                rowKey={(a) => String(a.id)}
+                searchLabel="Search actions, actors or targets"
+                columns={[
+                  { key: "created_at", label: "Time", render: (a) => fmtDateTime(a.created_at) },
+                  { key: "action", label: "Action", render: (a) => <code>{String(a.action)}</code> },
+                  { key: "actor", label: "Actor" },
+                  { key: "target", label: "Target" },
+                ]}
+              />
             ) : (
-              <div className="panel table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Website</th>
-                      <th>Plan</th>
-                      <th>Status</th>
-                      <th>Subscription</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.sites.map((s) => (
-                      <tr key={s.id}>
-                        <td>
-                          <b>{s.name}</b>
-                          <br />
-                          {s.slug}
-                        </td>
-                        <td>
-                          {s.category} / {s.tier}
-                        </td>
-                        <td>
-                          <span className="badge">{s.status}</span>
-                        </td>
-                        <td>{s.subscription}</td>
-                        <td>
-                          <button
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `${s.status === "suspended" ? "Restore to draft" : "Suspend"} ${s.name}? Content will be preserved.`,
-                                )
-                              )
-                                patch("sites", {
-                                  id: s.id,
-                                  status:
-                                    s.status === "suspended"
-                                      ? "draft"
-                                      : "suspended",
-                                });
-                            }}
-                          >
-                            {s.status === "suspended"
-                              ? "Restore draft"
-                              : "Suspend"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <AdminTable
+                rows={data.sites as unknown as Record<string, unknown>[]}
+                rowKey={(s) => String(s.id)}
+                searchLabel="Search websites by name or address"
+                status={{ get: (s) => String(s.status) }}
+                columns={[
+                  {
+                    key: "name",
+                    label: "Website",
+                    render: (s) => (
+                      <>
+                        <b>{String(s.name)}</b>
+                        <small>{String(s.slug)}</small>
+                      </>
+                    ),
+                    text: (s) => `${s.name} ${s.slug}`,
+                  },
+                  { key: "plan", label: "Plan", render: (s) => <span className="plan-pill">{`${s.category} · ${s.tier}`}</span>, text: (s) => `${s.category} ${s.tier}` },
+                  { key: "status", label: "Website", render: (s) => <StatusBadge value={s.status} /> },
+                  { key: "subscription", label: "Subscription", render: (s) => <StatusBadge value={s.subscription} /> },
+                  {
+                    key: "action",
+                    label: "",
+                    text: () => "",
+                    render: (s) => (
+                      <button
+                        type="button"
+                        className={`button small ${s.status === "suspended" ? "secondary" : "secondary danger"}`}
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `${s.status === "suspended" ? "Restore to draft" : "Suspend"} ${s.name}? Content will be preserved.`,
+                            )
+                          )
+                            patch("sites", {
+                              id: s.id,
+                              status: s.status === "suspended" ? "draft" : "suspended",
+                            });
+                        }}
+                      >
+                        {s.status === "suspended" ? "Restore" : "Suspend"}
+                      </button>
+                    ),
+                  },
+                ]}
+              />
             )}
           </>
         )}

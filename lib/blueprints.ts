@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import type { Site, Brand } from "./model";
+import { entitled, type Site, type Brand } from "./model";
 import { reservedSlugs } from "./industry";
 import { kitFor, pageSections } from "./industry-kits";
 import { legalSetFor, policies } from "./legal-policies";
@@ -75,6 +75,14 @@ export async function provisionBlueprint(client: PoolClient, site: Site) {
   }
   if (site.category === "commerce")
     navigation.splice(1, 0, { label: "Shop", href: "/shop", footer: false });
+  if (entitled(site.tier, "blog")) {
+    const contact = navigation.findIndex((n) => /contact/i.test(n.label));
+    navigation.splice(contact < 0 ? navigation.length : contact, 0, {
+      label: "Insights",
+      href: "/insights",
+      footer: false,
+    });
+  }
   site.data.brand.navigation = navigation;
   await client.query("UPDATE sites SET data=$1 WHERE id=$2", [
     JSON.stringify(site.data),

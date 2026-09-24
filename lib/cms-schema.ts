@@ -47,5 +47,20 @@ export const contentSchema = z.object({
   description: z.string().max(300).optional(),
   socialImage: imagePath.optional(),
   policyType: z.enum(policyTypes).optional(),
+  /** Author profiles: job title and professional links. */
+  role: z.string().trim().max(100).optional(),
+  links: z
+    .object({
+      website: z.url({ protocol: /^https$/ }).or(z.literal("")).optional(),
+      linkedin: z
+        .url({ protocol: /^https$/, hostname: /(^|\.)linkedin\.com$/ })
+        .or(z.literal(""))
+        .optional(),
+      x: z
+        .url({ protocol: /^https$/, hostname: /(^|\.)(x|twitter)\.com$/ })
+        .or(z.literal(""))
+        .optional(),
+    })
+    .optional(),
   policyReviewed: z.boolean().optional(),
 });

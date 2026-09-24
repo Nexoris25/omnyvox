@@ -68,11 +68,21 @@ export function ContactForm() {
         className="honeypot"
         aria-hidden="true"
       />
+      <label className="consent-check">
+        <input type="checkbox" name="consent" required />
+        <span>
+          I agree that Omnyvox may use these details to respond to my enquiry, as
+          described in the{" "}
+          <a href="/legal/privacy" target="_blank" rel="noopener">
+            Privacy notice
+          </a>
+          .
+        </span>
+      </label>
       <button className="button" disabled={busy}>
         {busy ? "Sending…" : "Send your message →"}
       </button>
       <p role="status">{message}</p>
-      <small>We use your details to respond to this enquiry.</small>
     </form>
   );
 }

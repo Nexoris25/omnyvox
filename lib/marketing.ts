@@ -14,6 +14,8 @@ export type MarketingRecord = {
     imageAlt?: string;
     updatedAt?: string;
     indexing?: { index: boolean; follow: boolean };
+    role?: string;
+    links?: { website?: string; linkedin?: string; x?: string };
   };
 };
 export async function marketingContent(kind?: string) {

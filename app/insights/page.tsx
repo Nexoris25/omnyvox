@@ -15,11 +15,17 @@ export default async function Page({
   searchParams: Promise<{ category?: string }>;
 }) {
   const category = (await searchParams).category;
-  const [all, authors] = await Promise.all([
+  const [all, authors, defined] = await Promise.all([
     marketingContent("articles"),
     marketingContent("authors"),
+    marketingContent("categories"),
   ]);
-  const articles = all.filter((a) => !category || a.data.category === category);
+  const counts: Record<string, number> = {};
+  for (const a of all) counts[a.data.category] = (counts[a.data.category] || 0) + 1;
+  // Only categories defined in the CMS that have published articles.
+  const categories = defined.filter((c) => counts[c.data.slug]);
+  const active = categories.some((c) => c.data.slug === category) ? category : undefined;
+  const articles = all.filter((a) => !active || a.data.category === active);
   return (
     <MarketingShell>
       <main id="main" className="marketing-page">
@@ -34,11 +40,17 @@ export default async function Page({
             making it easier for customers to choose you.
           </p>
         </header>
-        <nav className="category-links" aria-label="Article categories">
-          <Link href="/insights">All insights</Link>
-          {[...new Set(all.map((a) => a.data.category))].map((c) => (
-            <Link key={c} href={"/insights?category=" + encodeURIComponent(c)}>
-              {c.replaceAll("-", " ")}
+        <nav className="category-links" aria-label="Filter insights by category">
+          <Link href="/insights" aria-current={!active ? "page" : undefined}>
+            All insights <span>{all.length}</span>
+          </Link>
+          {categories.map((c) => (
+            <Link
+              key={c.id}
+              href={"/insights?category=" + encodeURIComponent(c.data.slug)}
+              aria-current={active === c.data.slug ? "page" : undefined}
+            >
+              {c.data.title} <span>{counts[c.data.slug]}</span>
             </Link>
           ))}
         </nav>

@@ -10,6 +10,8 @@ import { contentSchema } from "./cms-schema";
 import { safeHtml, referencedMediaIds } from "./content";
 import { imagePath, safeLink } from "./model";
 import { canInternal } from "./permissions";
+import { rateLimit } from "./auth";
+import { cacInput, lookupCac, needsReview, type CacRecord } from "./kyb";
 type Account = {
   id: string;
   name: string;
@@ -30,7 +32,7 @@ export async function extensionsApi(
   if (area === "onboarding") {
     if (req.method === "GET") {
       const [business] = await query(
-        "SELECT business_name,cac_number,status,registered_name,review_note,submitted_at FROM business_verifications WHERE user_id=$1",
+        "SELECT business_name,cac_number,company_type,status,registered_name,review_note,verified_via,registry,submitted_at FROM business_verifications WHERE user_id=$1",
         [u.id],
       );
       return response({
@@ -62,21 +64,36 @@ export async function extensionsApi(
             429,
           );
     }
+    if (kind === "cac-lookup" && req.method === "POST") {
+      const b = cacInput.parse(await req.json());
+      if (!u.email_verified)
+        return response(
+          { error: "Verify your email before verifying your business." },
+          403,
+        );
+      await rateLimit(`cac-lookup:${u.id}`);
+      const result = await lookupCac(b);
+      if (result.status === "found") {
+        await query(
+          "INSERT INTO kyb_lookups(user_id,reference,record,expires_at) VALUES($1,$2,$3,now()+interval '30 minutes') ON CONFLICT(user_id) DO UPDATE SET reference=$2,record=$3,expires_at=now()+interval '30 minutes'",
+          [u.id, b.reference, JSON.stringify(result.record)],
+        );
+        await audit(u.id, "kyb.lookup.found", u.id);
+      }
+      return response(
+        result.status === "found"
+          ? { status: "found", record: result.record }
+          : result.status === "not_found"
+            ? { status: "not_found" }
+            : { status: "unavailable" },
+      );
+    }
     if (kind === "business" && req.method === "POST") {
-      const b = z
-        .object({
-          businessName: z.string().min(2).max(160),
-          cacNumber: z
-            .string()
-            .trim()
-            .toUpperCase()
-            .regex(
-              /^(?:RC|BN|IT|LP|LLP)?\s?\d{4,10}$/,
-              "Enter a valid CAC number, for example RC1234567",
-            ),
-          consent: z.literal(true),
-        })
-        .parse(await req.json());
+      const raw = await req.json();
+      const b = cacInput.parse(raw);
+      const { consent, manual } = z
+        .object({ consent: z.literal(true), manual: z.boolean().default(false) })
+        .parse(raw);
       if (!u.email_verified)
         return response(
           { error: "Verify your email before submitting business details." },
@@ -94,12 +111,45 @@ export async function extensionsApi(
           },
           409,
         );
-      await query(
-        "INSERT INTO business_verifications(user_id,business_name,cac_number) VALUES($1,$2,$3) ON CONFLICT(user_id) DO UPDATE SET business_name=$2,cac_number=$3,status='pending',registered_name=NULL,review_note=NULL,reviewed_by=NULL,reviewed_at=NULL,submitted_at=now()",
-        [u.id, b.businessName, b.cacNumber.replace(/\s/g, "")],
+      void consent;
+      // The registered name only ever comes from a registry lookup made by
+      // this server for this account and CAC number.
+      const [lookup] = await query<{ record: CacRecord }>(
+        "SELECT record FROM kyb_lookups WHERE user_id=$1 AND reference=$2 AND expires_at>now()",
+        [u.id, b.reference],
       );
-      await audit(u.id, "kyb.submitted", u.id);
-      return response({ success: true });
+      if (!lookup && !manual)
+        return response(
+          { error: "Look up your CAC number and confirm the registered name first." },
+          409,
+        );
+      if (lookup) {
+        const review = needsReview(lookup.record);
+        await query(
+          "INSERT INTO business_verifications(user_id,business_name,cac_number,company_type,status,registered_name,review_note,verified_via,registry,reviewed_at) VALUES($1,$2,$3,$4,$5,$2,$6,'registry',$7,CASE WHEN $5='verified' THEN now() END) ON CONFLICT(user_id) DO UPDATE SET business_name=$2,cac_number=$3,company_type=$4,status=$5,registered_name=$2,review_note=$6,verified_via='registry',registry=$7,reviewed_by=NULL,reviewed_at=CASE WHEN $5='verified' THEN now() END,submitted_at=now()",
+          [
+            u.id,
+            lookup.record.name,
+            b.reference,
+            b.companyType,
+            review ? "pending" : "verified",
+            review
+              ? `The CAC registry lists this entity as "${lookup.record.entityStatus}". Our compliance team will review it.`
+              : `Matched on the CAC registry (${lookup.record.provider}) on ${new Date().toISOString().slice(0, 10)}.`,
+            JSON.stringify(lookup.record),
+          ],
+        );
+        await query("DELETE FROM kyb_lookups WHERE user_id=$1", [u.id]);
+        await audit(u.id, review ? "kyb.submitted" : "kyb.verified.registry", u.id);
+        return response({ success: true, status: review ? "pending" : "verified" });
+      }
+      // Registry unavailable: staff confirm the registered name manually.
+      await query(
+        "INSERT INTO business_verifications(user_id,business_name,cac_number,company_type,status,verified_via) VALUES($1,NULL,$2,$3,'pending','manual') ON CONFLICT(user_id) DO UPDATE SET business_name=NULL,cac_number=$2,company_type=$3,status='pending',registered_name=NULL,review_note=NULL,reviewed_by=NULL,reviewed_at=NULL,verified_via='manual',registry=NULL,submitted_at=now()",
+        [u.id, b.reference, b.companyType],
+      );
+      await audit(u.id, "kyb.submitted.manual", u.id);
+      return response({ success: true, status: "pending" });
     }
     return response({ error: "Not found" }, 404);
   }
@@ -122,7 +172,7 @@ export async function extensionsApi(
         })
         .parse(await req.json());
       const rows = await query(
-        "UPDATE business_verifications SET status=$1,registered_name=$2,review_note=$3,reviewed_by=$4,reviewed_at=now() WHERE user_id=$5 AND status='pending' RETURNING user_id",
+        "UPDATE business_verifications SET status=$1,registered_name=$2,business_name=COALESCE(business_name,$2),review_note=$3,reviewed_by=$4,reviewed_at=now() WHERE user_id=$5 AND status='pending' RETURNING user_id",
         [b.status, b.registeredName, b.note, u.id, b.userId],
       );
       if (!rows.length)

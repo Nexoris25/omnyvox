@@ -413,9 +413,17 @@ export function SiteRenderer({
   videoEnabled = false,
   contact,
   headerExtra,
+  footerLinks: extraLinks = [],
+  registration,
+  platformUrl = "https://omnyvox.com",
 }: {
   data: Site["data"];
   headerExtra?: ReactNode;
+  /** System pages (e.g. Insights) added to the footer when not in the menu. */
+  footerLinks?: { label: string; href: string }[];
+  /** Verified CAC registration, e.g. "RC1234567". */
+  registration?: string;
+  platformUrl?: string;
   children?: ReactNode;
   after?: ReactNode;
   base?: string;
@@ -444,10 +452,15 @@ export function SiteRenderer({
       : brand.navigation;
   const primary = entries.filter((n) => !n.footer);
   const footerLinks = entries.filter((n) => n.footer);
-  const explore = (footerLinks.length ? footerLinks : primary).flatMap((n) => [
-    n,
-    ...(n.children || []).map((c) => ({ ...c, footer: true })),
-  ]);
+  const explore = [
+    ...(footerLinks.length ? footerLinks : primary).flatMap((n) => [
+      n,
+      ...(n.children || []).map((c) => ({ ...c, footer: true })),
+    ]),
+    ...extraLinks
+      .filter((l) => !entries.some((n) => n.href === l.href))
+      .map((l) => ({ label: l.label, href: l.href, footer: true })),
+  ];
   function menu(mobile: boolean) {
     return primary.map((n, i) => {
       const url = href(n);
@@ -580,24 +593,50 @@ export function SiteRenderer({
               ))}
             </nav>
           )}
-          <div className="footer-col">
+          <div className="footer-col footer-contact">
             <h2>Contact</h2>
-            {contact?.phone && <a href={tel(contact.phone)}>{contact.phone}</a>}
-            {brand.email && <a href={`mailto:${brand.email}`}>{brand.email}</a>}
-            {whatsapp && (
-              <a href={whatsapp} target="_blank" rel="noopener noreferrer">
-                WhatsApp
+            {contact?.phone && (
+              <a href={tel(contact.phone)}>
+                <Phone size={15} aria-hidden="true" />
+                {contact.phone}
               </a>
             )}
-            {contact?.address && <span>{contact.address}</span>}
-            {contact?.hours && <span>{contact.hours}</span>}
+            {brand.email && (
+              <a href={`mailto:${brand.email}`}>
+                <Mail size={15} aria-hidden="true" />
+                {brand.email}
+              </a>
+            )}
+            {whatsapp && (
+              <a href={whatsapp} target="_blank" rel="noopener noreferrer">
+                <BrandIcon icon={whatsappIcon} size={15} />
+                Chat on WhatsApp
+              </a>
+            )}
+            {contact?.address && (
+              <span>
+                <MapPin size={15} aria-hidden="true" />
+                {contact.address}
+              </span>
+            )}
+            {contact?.hours && (
+              <span>
+                <Clock size={15} aria-hidden="true" />
+                {contact.hours}
+              </span>
+            )}
           </div>
         </div>
         <div className="footer-bottom">
           <span>
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
+            {registration && (
+              <> Registered with the Corporate Affairs Commission, {registration}.</>
+            )}
           </span>
-          <a href="/">Website by Omnyvox</a>
+          <a href={platformUrl} target="_blank" rel="noopener">
+            Website by Omnyvox
+          </a>
         </div>
       </footer>
     </div>

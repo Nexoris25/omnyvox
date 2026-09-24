@@ -46,6 +46,14 @@ textarea,
 select {
   font: inherit;
 }
+/* Text areas never resize by dragging; they grow with their content
+   instead, so every layout stays intact. */
+textarea {
+  resize: none !important;
+  field-sizing: content;
+  max-height: 60vh;
+  overflow-y: auto;
+}
 button,
 a,
 input,
@@ -1428,7 +1436,6 @@ summary:focus-visible {
 }
 .field textarea {
   min-height: 110px;
-  resize: vertical;
 }
 .field small {
   color: var(--muted);
