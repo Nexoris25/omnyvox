@@ -130,6 +130,27 @@ reviewing agent); production authentication was not changed.
   page. The copy on these pages was rewritten in Batch 2. Screenshots were
   spot checks only (home at 320px).
 
+## Batch 6 — final 320px regression of private workspaces
+
+- **Coverage:** in the isolated `omnyvox_test` server, I checked 17 subscriber
+  workspace destinations and all 22 internal admin tabs (through the phone
+  picker) at 320px. Batch 3 had covered 375px. Access used test-DB sessions for
+  the QA accounts, not the normal sign-in UI, because passwords cannot be typed
+  in this environment. No production data or authentication was touched.
+- **Fixed:** below 360px, legacy rules shrank workspace text to 9–11px. Affected:
+  sidebar group labels, overview checklist and quick-card descriptions, the
+  site preview bar, "View all" links, editor tabs and section tools, legal
+  status labels, preview labels, template "best for" captions, the
+  create-website note and the admin tabs. All now sit at 12–13px, and tabs are
+  40px tall.
+- **Result:**
+  - No horizontal overflow and one h1 per page. The editor's second h1 is
+    inside the `inert` preview, so screen readers never reach it.
+  - No text under 12px on the checked destinations.
+  - The sites-content (46), integration (36), organisation (25) and admin-ops
+    (28) suites pass against the rebuilt server, 53 unit tests pass, and the
+    production build succeeds.
+
 ## Remaining review coverage (continuing)
 
 - Every family: Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow,

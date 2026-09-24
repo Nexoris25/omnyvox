@@ -251,3 +251,37 @@
     font-size: 15px;
   }
 }
+
+/* ---- Small phones: keep workspace chrome at the 12px floor ---- */
+.workspace .sidebar .nav-group {
+  font-size: 12px;
+}
+.workspace .account .avatar {
+  font-size: 12px;
+}
+.workspace .panel-header a {
+  font-size: 13px;
+}
+.workspace .site-preview-bar span {
+  font-size: 12px;
+}
+.workspace .tabs button,
+.platform-admin .tabs button {
+  font-size: 13px;
+  min-height: 40px;
+}
+.workspace .checklist p,
+.workspace .quick-card p,
+.workspace .help-banner p,
+.workspace .site-preview-content p {
+  font-size: 13px;
+}
+.workspace .check-circle,
+.workspace .legal-status,
+.workspace .panel-body .muted,
+.workspace .scaled-preview-label {
+  font-size: 12px;
+}
+.workspace .section-tools button {
+  font-size: 13px;
+}

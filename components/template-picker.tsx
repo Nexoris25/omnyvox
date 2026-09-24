@@ -79,7 +79,7 @@ export function TemplateCard({
       </div>
       <div className="panel-body">
         <h3 style={{ fontSize: 18 }}>{t.name}</h3>
-        <span className="muted" style={{ fontSize: 11 }}>
+        <span className="muted" style={{ fontSize: 12.5 }}>
           {t.type}
         </span>
         <p className="muted" style={{ fontSize: 12 }}>

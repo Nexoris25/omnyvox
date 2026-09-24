@@ -598,7 +598,7 @@ export function Dashboard({ section }: { section: string }) {
                 <input type="hidden" name="template" value={creationTemplate} />
               </div>
             </div>
-            <p className="muted" style={{ fontSize: 11, marginTop: 18 }}>
+            <p className="muted" style={{ fontSize: 13, marginTop: 18 }}>
               Start with a draft. Subscription payment is required before your
               website goes live.
             </p>
@@ -1444,7 +1444,7 @@ export function Dashboard({ section }: { section: string }) {
                         >
                           <span
                             style={{
-                              fontSize: 11,
+                              fontSize: 12,
                               color: site.data.brand.primary,
                               fontWeight: 600,
                             }}
