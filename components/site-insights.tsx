@@ -6,17 +6,19 @@ import type { Content } from "@/lib/public-site";
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
-const initials = (name: string) =>
-  name
+const initials = (name: string | undefined) =>
+  (name || "")
     .split(/\s+/)
     .map((w) => w[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
 
-export const categoryName = (slug: string, categories: Content[]) =>
-  categories.find((c) => c.data.slug === slug)?.data.title ||
-  slug.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+export const categoryName = (slug: string | undefined, categories: Content[]) =>
+  !slug
+    ? "Insights"
+    : categories.find((c) => c.data.slug === slug)?.data.title ||
+      slug.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
 /** Article cards shared by the homepage section and the Insights page. */
 export function ArticleGrid({
@@ -153,7 +155,7 @@ export function AuthorCard({
         )}
         {compact && href && (
           <a className="site-author-more" href={href}>
-            <Link2 size={14} /> More from {author.data.title.split(" ")[0]}
+            <Link2 size={14} /> More from {(author.data.title || "this author").split(" ")[0]}
           </a>
         )}
       </div>
