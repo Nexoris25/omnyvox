@@ -93,6 +93,43 @@ reviewing agent); production authentication was not changed.
   The eight new photo sets were confirmed through the kit-to-file mapping,
   not through a live preview of every industry.
 
+## Batch 5 — marketing detail review and responsive regression
+
+- **Coverage:** an automated sweep in the production build at 320, 375 and 1440px
+  covered 67 routes:
+  - Home, pricing and both category pricing pages, and templates.
+  - Contact and Insights, plus all three articles.
+  - Both solution pages, features and all seven feature pages.
+  - How it works, setup, services and migration, about, help, guides, FAQ and security.
+  - All five legal pages.
+  - Sign in, register and password reset.
+  - The about and contact pages of all 10 template previews.
+
+  The sweep checks horizontal overflow, h1 count, missing alt text, readable
+  text under 12px and tap targets under 32px.
+- **Fixed:**
+  - Legacy rules shrank phone text to 8–11px. Affected: eyebrows (8px at 320px), the
+    header button (9px), hero buttons (11px), the trust strip, solution tags,
+    template meta, the "On this page" index numbers, the footer copyright and
+    the password hints. The marketing layer now sets a 12px floor, with hero
+    buttons at 15px and 48px tall.
+  - Standalone links and controls now have 36–48px targets: the logo, "Compare
+    all features", "← All insights", "Back to website", "Forgot your password",
+    the pricing FAQ summaries, the "Pay yearly" toggle, desktop nav links
+    (previously 21px) and template breadcrumb, contact and logo links.
+  - Template miniatures on home and templates are now `aria-hidden`. Screen
+    readers no longer announce their decorative 6px "Menu" or "Discover more"
+    text.
+  - Template section eyebrows are now 12px (were 11px), breadcrumbs 13px, and footer column headings 12px.
+- **Result:** after the fixes, the sweep reports no issues on any route at 320 or
+  375px. At 1440px, the only remaining items are inline text links inside
+  sentences, such as Terms and Privacy in the consent label, which are exempt.
+  The "On this page" index scrolls sideways on purpose. Unit tests (53) pass
+  and the production build succeeds.
+- **Limits:** this sweep measures layout and does not review copy page by
+  page. The copy on these pages was rewritten in Batch 2. Screenshots were
+  spot checks only (home at 320px).
+
 ## Remaining review coverage (continuing)
 
 - Every family: Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow,

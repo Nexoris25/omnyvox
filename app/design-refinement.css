@@ -638,3 +638,136 @@
     transform: none !important;
   }
 }
+
+/* ---- Marketing type floor: nothing readable below 12px on any phone ---- */
+.marketing-site .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+.marketing-site .editorial-index nav a > span {
+  font-size: 12px;
+}
+.marketing-site footer small {
+  font-size: 12.5px;
+}
+@media (max-width: 600px) {
+  .marketing-site .hero-actions .button {
+    font-size: 15px;
+    min-height: 48px;
+  }
+  .marketing-nav .button {
+    font-size: 13px;
+    min-height: 40px;
+  }
+}
+@media (max-width: 360px) {
+  .marketing-site .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .marketing-nav .button {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+}
+
+/* ---- Marketing detail pass: small-phone readability and targets ---- */
+.marketing-site .trust-strip p,
+.marketing-site .trust-strip span {
+  font-size: 13px;
+}
+.marketing-site .solution-tags span {
+  font-size: 12px;
+}
+.marketing-site .template-meta p {
+  font-size: 13px;
+}
+.marketing-site .section-heading .button {
+  font-size: 14px;
+}
+.marketing-site .compare-jump,
+.marketing-site .article-page > a:first-child,
+.auth-topline a,
+.auth-form .auth-forgot,
+.auth-form > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+.marketing-site .faq summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.marketing-site label:has(> input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.marketing-site label > input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+.auth-form .eyebrow {
+  font-size: 12px;
+}
+.password-requirements span,
+.auth-form .password-field small {
+  font-size: 12.5px;
+}
+@media (max-width: 600px) {
+  .marketing-site .brand-hero .hero-actions .button {
+    font-size: 15px;
+    min-height: 48px;
+  }
+}
+/* Template footers: readable column headings, tappable contact links */
+.rendered-site .footer-col h2 {
+  font-size: 12px;
+}
+.rendered-site .footer-contact a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+.template-sample-note {
+  font-size: 12.5px;
+}
+.marketing-nav .brand,
+.marketing-site .solution-card > a,
+.template-preview-bar a,
+.rendered-site .site-logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+.template-frame-copy b {
+  font-size: 12px;
+}
+.rendered-site .section-eyebrow {
+  font-size: 12px;
+}
+.rendered-site .site-breadcrumbs,
+.rendered-site .site-breadcrumbs a,
+.rendered-site .site-breadcrumbs span {
+  font-size: 13px;
+}
+.rendered-site .site-breadcrumbs a,
+.rendered-site .contact-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+.marketing-nav nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+}
+.auth-story .eyebrow {
+  font-size: 12px;
+}
+.auth-story small {
+  font-size: 12.5px;
+}

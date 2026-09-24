@@ -31,7 +31,7 @@ export function TemplateCard({
         className={`template-card-compact${selected ? " template-card-selected" : ""}`}
         aria-pressed={selected}
       >
-        <span className={`template-art template-art-compact ${id}`}>
+        <span className={`template-art template-art-compact ${id}`} aria-hidden="true">
           <span className="tiny-nav">
             {t.name}. <span>Menu ↗</span>
           </span>
@@ -58,7 +58,7 @@ export function TemplateCard({
     <article
       className={`template-card panel${selected ? " template-card-selected" : ""}`}
     >
-      <div className={`template-art ${id}`}>
+      <div className={`template-art ${id}`} aria-hidden="true">
         <div className="tiny-nav">
           {t.name}. <span>Menu ↗</span>
         </div>

@@ -42,7 +42,7 @@ export function TemplateShowcase({ templates }: { templates: ShowcaseTemplate[] 
       <div className="template-grid template-showcase">
         {shown.map((t) => (
           <Link className="template-card" href={`/templates/${t.id}`} key={t.id}>
-            <div className={`template-art ${t.id}`}>
+            <div className={`template-art ${t.id}`} aria-hidden="true">
               <div className="tiny-nav">
                 {t.name.toLowerCase()}. <span>Menu ↗</span>
               </div>
