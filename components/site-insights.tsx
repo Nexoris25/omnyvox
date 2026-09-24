@@ -6,8 +6,8 @@ import type { Content } from "@/lib/public-site";
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
-const initials = (name: string) =>
-  name
+const initials = (name: string | undefined) =>
+  (name || "")
     .split(/\s+/)
     .map((w) => w[0])
     .slice(0, 2)
@@ -155,7 +155,7 @@ export function AuthorCard({
         )}
         {compact && href && (
           <a className="site-author-more" href={href}>
-            <Link2 size={14} /> More from {author.data.title.split(" ")[0]}
+            <Link2 size={14} /> More from {(author.data.title || "this author").split(" ")[0]}
           </a>
         )}
       </div>

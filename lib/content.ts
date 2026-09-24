@@ -100,8 +100,8 @@ export function safeHtml(value: string, { video = true } = {}) {
           ))),
   });
 }
-export function plainText(value: string) {
-  return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} })
+export function plainText(value: string | undefined) {
+  return sanitizeHtml(value || "", { allowedTags: [], allowedAttributes: {} })
     .replace(/&amp;/g, "&")
     .replace(/&nbsp;/g, " ")
     .trim();
