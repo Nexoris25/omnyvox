@@ -237,7 +237,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Services",
       title: "What we create",
-      body: "List the services you offer today.",
+      body: "Four ways we help people and brands tell their story.",
       link: ["All services", "/services"],
       items: [
         [
@@ -265,7 +265,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Creativity with a clear process.",
-      body: "Introduce your studio, your style and the people behind the work. Feature only projects and clients you have permission to show.",
+      body: "We are a small team of photographers, planners and designers who love turning a loose idea into something people remember. Every project starts with listening, and ends with work you are proud to share.",
       art: "palette",
     },
     features: {
@@ -297,25 +297,25 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Portfolio",
       title: "Selected work",
-      body: "Add your best projects with each client’s permission.",
+      body: "A few recent projects, shared with our clients’ permission.",
       items: [
-        ["Project name", "Client · Type"],
-        ["Project name", "Client · Type"],
-        ["Project name", "Client · Type"],
+        ["Brand launch", "Product photography and styling"],
+        ["Garden wedding", "Planning, décor and photography"],
+        ["Office refresh", "Interior design for a small team"],
       ],
     },
     faqs: [
       [
         "How far in advance should I book?",
-        "Share your typical lead times for shoots, events and design projects.",
+        "For photo shoots, two to three weeks is usually enough. Weddings and large events are best booked three to six months ahead. Get in touch even at short notice and we will tell you honestly what is possible.",
       ],
       [
         "How do you price your work?",
-        "Explain your packages, day rates or custom quotations.",
+        "Most work is quoted per project, based on the time, team and materials involved. You receive a written quotation before anything is booked.",
       ],
       [
         "Do you work outside your city?",
-        "List the locations you cover and any travel fees.",
+        "Yes. We are happy to travel, and any travel or accommodation costs are included in your quotation upfront.",
       ],
     ],
     cta: {
@@ -381,7 +381,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About the firm",
       title: "Advice grounded in your reality.",
-      body: "Introduce your firm here: who you serve, how you work and the qualifications of your team. Only include registrations and accreditations you can verify.",
+      body: "We work with owner-managed businesses, growing companies and not-for-profits that want clear numbers and practical advice. You deal with the same adviser from the first meeting, and we explain every recommendation in plain language.",
       art: "landmark",
     },
     features: {
@@ -419,25 +419,25 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "team",
       eyebrow: "Our people",
       title: "Meet the team",
-      body: "Add your partners and advisers with their roles and verified qualifications.",
+      body: "The advisers you will work with. Each profile lists the person’s role and the areas they look after.",
       items: [
-        ["Full name", "Role or title"],
-        ["Full name", "Role or title"],
-        ["Full name", "Role or title"],
+        ["Managing partner", "Leads client relationships and advisory work."],
+        ["Tax manager", "Looks after tax planning and compliance."],
+        ["Senior accountant", "Prepares accounts and management reports."],
       ],
     },
     faqs: [
       [
         "Which organisations do you work with?",
-        "Describe the sectors and business sizes you serve.",
+        "Mostly small and medium-sized businesses, from start-ups to established family companies, across trade, services, manufacturing and the not-for-profit sector.",
       ],
       [
         "How are your fees structured?",
-        "Explain whether you charge fixed fees, retainers or hourly rates.",
+        "Most ongoing work is on an agreed monthly fee, and one-off projects are quoted in advance. You always see the fee in writing before work begins.",
       ],
       [
         "Can we meet in person?",
-        "Share your office location and whether you offer virtual meetings.",
+        "Yes. You are welcome at our office, and we are just as happy to meet by video call if that suits you better.",
       ],
     ],
     cta: {
@@ -475,7 +475,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Practice areas",
       title: "How we can help",
-      body: "List only the areas in which your firm actively practises.",
+      body: "The areas in which we regularly advise clients.",
       link: ["View all practice areas", "/practice-areas"],
       items: [
         [
@@ -503,7 +503,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "The firm",
       title: "Your matter, handled with care.",
-      body: "Describe your firm, its history and the principles that guide your practice. Include enrolment details and memberships only where accurate and current.",
+      body: "We are a practice built on careful preparation and straight answers. We tell clients where they stand, what their options are and what each will cost, so that decisions are made with a clear head.",
       art: "landmark",
     },
     features: {
@@ -534,25 +534,25 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "team",
       eyebrow: "Our people",
       title: "Partners and associates",
-      body: "Add each lawyer with their role, practice areas and verified qualifications.",
+      body: "The lawyers who will handle your matter, with their roles and practice areas.",
       items: [
-        ["Full name", "Partner"],
-        ["Full name", "Senior Associate"],
-        ["Full name", "Associate"],
+        ["Partner", "Leads client matters and advises on strategy."],
+        ["Senior associate", "Manages matters day to day and prepares documents."],
+        ["Associate", "Supports research, drafting and client updates."],
       ],
     },
     faqs: [
       [
         "Is the first consultation free?",
-        "State your consultation policy and any fees.",
+        "We offer a short introductory call to understand your matter and explain how we can help. If a full consultation is needed, we confirm the fee before it is booked.",
       ],
       [
         "Is my enquiry confidential?",
-        "Explain how enquiries are handled before an engagement is confirmed.",
+        "Yes. Enquiries are treated in confidence and seen only by the lawyers who need to review them. A formal engagement begins only once terms are agreed in writing.",
       ],
       [
         "Do you act outside your city?",
-        "Describe the jurisdictions and locations you cover.",
+        "We advise clients across Nigeria and can attend meetings and hearings outside our home city by arrangement.",
       ],
     ],
     cta: {
@@ -590,7 +590,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Medical services",
       title: "Care when you need it",
-      body: "List the services your facility currently provides.",
+      body: "Everyday care and specialist support, under one roof.",
       link: ["View all services", "/medical-services"],
       items: [
         [
@@ -618,7 +618,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "A welcoming place to be cared for.",
-      body: "Introduce your facility, your team and the standards you work to. Include registration details only where accurate. Avoid promises about treatment outcomes.",
+      body: "We are a friendly clinic where patients are seen on time, listened to properly and told clearly what happens next. Our team works to high standards of hygiene, privacy and care.",
       art: "hospital",
     },
     features: {
@@ -658,21 +658,21 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "team",
       eyebrow: "Our professionals",
       title: "Meet our clinicians",
-      body: "Add your doctors, nurses and specialists with their verified qualifications.",
+      body: "The clinicians who look after our patients, with their roles and areas of care.",
       items: [
-        ["Full name", "Medical Officer"],
-        ["Full name", "Nursing Lead"],
-        ["Full name", "Laboratory Scientist"],
+        ["Medical officer", "Sees patients for consultations and ongoing care."],
+        ["Nursing lead", "Leads nursing care and patient support."],
+        ["Laboratory scientist", "Runs tests and reports results to your clinician."],
       ],
     },
     faqs: [
       [
         "What are your opening hours?",
-        "Add your opening hours, including weekends and public holidays.",
+        "We are open Monday to Saturday. Please check our contact page for today’s hours and public holiday arrangements.",
       ],
       [
         "Do you accept health insurance?",
-        "List the insurance providers or HMOs you accept, if any.",
+        "We work with a number of HMOs. Contact us with your provider’s name and we will confirm whether we can accept it before your visit.",
       ],
       [
         "What should I do in an emergency?",
@@ -733,7 +733,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Local knowledge, honest advice.",
-      body: "Tell visitors about your agency, the areas you cover and how you work. Only list properties you’re authorised to market.",
+      body: "We help people buy, rent and let homes and commercial spaces with honest advice and no surprises. Every property we list is one we are authorised to market, and we tell you everything we know about it.",
       art: "map-pinned",
     },
     features: {
@@ -762,7 +762,7 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Featured",
       title: "Featured properties",
-      body: "Replace these with your own listings and photographs.",
+      body: "A selection of homes and spaces currently available.",
       items: [
         ["Property name", "Location · Type"],
         ["Property name", "Location · Type"],
@@ -776,11 +776,11 @@ export const industryKits: Record<string, IndustryKit> = {
       ],
       [
         "What fees should I expect?",
-        "Explain agency, legal and service fees clearly.",
+        "We explain every fee before you commit, including agency, legal and service charges, so the total cost is clear from the start.",
       ],
       [
         "Which areas do you cover?",
-        "List the neighbourhoods and cities you serve.",
+        "We focus on a handful of neighbourhoods we know well, and can recommend trusted partners elsewhere.",
       ],
     ],
     cta: {
@@ -818,7 +818,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Capabilities",
       title: "What we deliver",
-      body: "Add only the services your team provides today.",
+      body: "From the first drawing to the final handover.",
       link: ["All services", "/services"],
       items: [
         [
@@ -846,7 +846,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Quality you can see on site.",
-      body: "Describe your company, its experience and the standards you follow. Include licences and certifications only where you can verify them.",
+      body: "We build homes, offices and commercial spaces with a site team that takes pride in the detail. Clients get a named project lead, regular site updates and a clear record of every change.",
       art: "construction",
     },
     features: {
@@ -878,25 +878,25 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Projects",
       title: "Recent projects",
-      body: "Showcase completed work with the client’s permission.",
+      body: "A few completed projects, shared with our clients’ permission.",
       items: [
-        ["Project name", "Location · Scope"],
-        ["Project name", "Location · Scope"],
-        ["Project name", "Location · Scope"],
+        ["Family home", "New build · Four bedrooms"],
+        ["Office fit-out", "Renovation · Two floors"],
+        ["Retail unit", "Extension and finishing"],
       ],
     },
     faqs: [
       [
         "How do you price a project?",
-        "Explain how quotations are prepared and what they include.",
+        "After a site visit and review of your drawings, we prepare an itemised quotation covering materials, labour and timelines, so you can compare like for like.",
       ],
       [
         "Do you handle permits and approvals?",
-        "Describe the approvals support you provide.",
+        "We guide you through the approvals your project needs and work with your architect and engineers to prepare the documents.",
       ],
       [
         "Which locations do you serve?",
-        "List the cities or regions you work in.",
+        "We work across our home state and neighbouring states. Tell us where your site is and we will confirm.",
       ],
     ],
     cta: {
@@ -962,7 +962,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Power planned around how you live and work.",
-      body: "Introduce your company, your installation standards and the brands you work with. Avoid savings or output figures you cannot support.",
+      body: "We design solar and battery systems around how you actually use power, install them neatly and safely, and stay on hand for maintenance. You get an honest assessment, not a sales pitch.",
       art: "solar-panel",
     },
     features: {
@@ -994,7 +994,7 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Installations",
       title: "Recent installations",
-      body: "Add photographs of completed installations with permission.",
+      body: "A few recent installations, shared with our customers’ permission.",
       items: [
         ["Installation", "Location · System size"],
         ["Installation", "Location · System size"],
@@ -1008,11 +1008,11 @@ export const industryKits: Record<string, IndustryKit> = {
       ],
       [
         "Do you offer payment plans?",
-        "Describe any financing options you provide.",
+        "We can spread the cost of some systems over agreed instalments. Ask us for the options available for your installation.",
       ],
       [
         "What warranty is included?",
-        "State the warranties that apply to equipment and installation.",
+        "Panels, inverters and batteries carry their manufacturers’ warranties, and our installation work is covered by our own workmanship guarantee. Full terms are included in your quotation.",
       ],
     ],
     cta: {
@@ -1078,7 +1078,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Reliable logistics, clearly communicated.",
-      body: "Describe your fleet, coverage and service standards. Only describe tracking features if you actually offer them.",
+      body: "We move parcels, pallets and full loads for businesses and individuals, with drivers who know their routes and a team that keeps you updated from pickup to delivery.",
       art: "warehouse",
     },
     features: {
@@ -1100,12 +1100,12 @@ export const industryKits: Record<string, IndustryKit> = {
       ],
     },
     faqs: [
-      ["Which areas do you cover?", "List your cities and delivery zones."],
+      ["Which areas do you cover?", "We deliver within our home city every day and run scheduled routes to other major cities. Share your destination and we will confirm."],
       [
         "How is pricing calculated?",
-        "Explain how weight, size and distance affect your rates.",
+        "Prices depend on the size and weight of your items, the distance and how quickly you need them delivered. You always get the price before we collect.",
       ],
-      ["What items can’t you carry?", "List prohibited or restricted items."],
+      ["What items can’t you carry?", "We cannot carry illegal, hazardous or perishable goods without prior arrangement. Ask us if you are unsure about an item."],
     ],
     cta: {
       title: "Need something delivered?",
@@ -1142,7 +1142,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Programmes",
       title: "Learning pathways",
-      body: "List the levels, classes or courses you currently offer.",
+      body: "Programmes for every stage of a learner’s journey.",
       link: ["All programmes", "/programmes"],
       items: [
         ["Early years", "Play-based learning for young children.", "blocks"],
@@ -1166,7 +1166,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "A place to learn and belong.",
-      body: "Share your school’s mission, curriculum and values. Include accreditation and examination body details only where current and accurate.",
+      body: "We are a school where children are known by name, encouraged to ask questions and supported to do their best. Small classes, caring teachers and strong links with families are at the heart of what we do.",
       art: "school",
     },
     features: {
@@ -1198,25 +1198,25 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Campus life",
       title: "Life at our school",
-      body: "Add photographs of your facilities and activities, with consent.",
+      body: "A glimpse of daily life, shared with the consent of those pictured.",
       items: [
-        ["Classrooms", "Describe the space"],
-        ["Library", "Describe the space"],
-        ["Sports & activities", "Describe the space"],
+        ["Classrooms", "Bright, well-equipped rooms for focused learning"],
+        ["Library", "A quiet space to read, research and study"],
+        ["Sports & activities", "Room to play, compete and try something new"],
       ],
     },
     faqs: [
       [
         "When does admission open?",
-        "Share your admission calendar and deadlines.",
+        "Admission for the new session opens each spring, and we welcome enquiries all year for any spaces that become available.",
       ],
       [
         "What are the school fees?",
-        "Explain your fee structure or invite families to request it.",
+        "Fees depend on the class and programme. Contact admissions and we will send you the current fee schedule.",
       ],
       [
         "Do you offer transport?",
-        "Describe any transport or boarding options.",
+        "We offer school transport on selected routes. Ask admissions whether your area is covered.",
       ],
     ],
     cta: {
@@ -1254,7 +1254,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Our programmes",
       title: "Where we focus",
-      body: "Describe the programmes you actively run.",
+      body: "The work we do with and for our community.",
       link: ["All programmes", "/programmes"],
       items: [
         [
@@ -1277,7 +1277,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "Our mission",
       title: "Change that starts with people.",
-      body: "Share your mission, registration details and the communities you serve. Report only impact you can evidence.",
+      body: "We are a community organisation that brings people together to learn, grow and support each other. Our programmes are shaped by the people they serve, and we report openly on how we use every donation.",
       art: "handshake",
     },
     features: {
@@ -1302,7 +1302,7 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Our work",
       title: "Stories from the field",
-      body: "Share real stories and photographs, with consent from those featured.",
+      body: "Stories and photographs shared with the consent of those featured.",
       items: [
         ["Programme story", "Short description"],
         ["Programme story", "Short description"],
@@ -1312,12 +1312,12 @@ export const industryKits: Record<string, IndustryKit> = {
     faqs: [
       [
         "Are you a registered organisation?",
-        "State your registration details here.",
+        "Yes. Our registration details are shown on this website and on every receipt we issue.",
       ],
-      ["How can I volunteer?", "Explain your volunteering process."],
+      ["How can I volunteer?", "Send us a message with the skills and time you can offer, and our volunteer coordinator will be in touch."],
       [
         "How are donations used?",
-        "Describe how you allocate and report on funds.",
+        "Donations go directly to our programmes and essential running costs, and we publish a yearly summary of how funds were used.",
       ],
     ],
     cta: {
@@ -1355,7 +1355,7 @@ export const industryKits: Record<string, IndustryKit> = {
     offers: {
       eyebrow: "Stay with us",
       title: "Rooms & facilities",
-      body: "Describe the rooms and facilities available to guests.",
+      body: "Comfortable rooms and thoughtful facilities for business and leisure stays.",
       link: ["View rooms", "/rooms"],
       items: [
         [
@@ -1371,18 +1371,18 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Hospitality with a personal touch.",
-      body: "Tell guests what makes your property special: its location, character and the service they can expect.",
+      body: "We are a small, personal hotel where guests are greeted by name and looked after with care. Our location puts you close to business districts, restaurants and the places worth seeing.",
       art: "hotel",
     },
     features: {
       eyebrow: "Amenities",
       title: "Everything you need",
       items: [
-        ["Comfort", "List your room amenities here."],
-        ["Connectivity", "Describe Wi-Fi and workspace availability."],
+        ["Comfort", "Air-conditioned rooms with quality bedding and a quiet night’s sleep."],
+        ["Connectivity", "Fast Wi-Fi throughout and a desk in every room."],
         [
           "Convenience",
-          "Describe parking, airport transfers or concierge services.",
+          "Secure parking and airport transfers on request.",
         ],
       ],
     },
@@ -1402,7 +1402,7 @@ export const industryKits: Record<string, IndustryKit> = {
       type: "gallery",
       eyebrow: "Gallery",
       title: "A look inside",
-      body: "Replace these with photographs of your property.",
+      body: "A look at our rooms, restaurant and shared spaces.",
       items: [
         ["Lobby", ""],
         ["Rooms", ""],
@@ -1412,12 +1412,12 @@ export const industryKits: Record<string, IndustryKit> = {
     faqs: [
       [
         "What are check-in and check-out times?",
-        "Add your check-in and check-out times.",
+        "Check-in is from 2pm and check-out is by 12 noon. Early arrival or late departure can often be arranged.",
       ],
-      ["Is breakfast included?", "Explain what your rates include."],
+      ["Is breakfast included?", "Breakfast is included with most room rates. Your booking confirmation shows exactly what is included."],
       [
         "What is your cancellation policy?",
-        "Summarise your cancellation terms.",
+        "Bookings can usually be cancelled free of charge up to 48 hours before arrival. Full terms are in our booking policy.",
       ],
     ],
     cta: {
@@ -1569,7 +1569,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "Our story",
       title: "Designed with intention.",
-      body: "Tell customers where your pieces are designed and made, and the materials you use. Only describe sourcing you can verify.",
+      body: "Every piece starts as a sketch in our studio and is made in small batches with fabrics chosen for how they feel and wear. We would rather make fewer things, better.",
       art: "scissors",
     },
     features: {
@@ -1578,7 +1578,7 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Size guidance", "Measurements for every piece."],
         ["Secure checkout", "Pay safely online."],
-        ["Easy returns", "Summarise your returns policy here."],
+        ["Easy returns", "Changed your mind? Returns are simple."],
       ],
     },
     steps: {
@@ -1587,13 +1587,13 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Choose your pieces", "Add items to your bag."],
         ["Checkout securely", "Enter delivery details and pay."],
-        ["Delivered to you", "Describe your delivery times and areas."],
+        ["Delivered to you", "Delivered to your door, or collect in store."],
       ],
     },
     faqs: [
-      ["How do I find my size?", "Link to your size guide."],
-      ["How long does delivery take?", "State delivery times by location."],
-      ["Can I return an item?", "Summarise your returns and exchanges policy."],
+      ["How do I find my size?", "Our size guide lists measurements for every size. If you are between sizes, choose the larger one."],
+      ["How long does delivery take?", "Most orders arrive within 2–4 working days, depending on where you are. You will see delivery options and costs at checkout."],
+      ["Can I return an item?", "Yes. Unworn items with tags attached can be returned or exchanged. See our refund policy for details."],
     ],
     cta: {
       title: "Discover the collection",
@@ -1641,7 +1641,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "Our story",
       title: "Beauty, honestly.",
-      body: "Share your brand story and product philosophy. Avoid medical or treatment claims, and list ingredients as provided by manufacturers.",
+      body: "We choose every product for how it feels and how well it works in our climate. We list full ingredients on each product page, so you always know what you are putting on your skin.",
       art: "flower-2",
     },
     features: {
@@ -1659,16 +1659,16 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Choose", "Browse by category or concern."],
         ["Checkout", "Pay securely online."],
-        ["Delivery", "Describe your delivery options."],
+        ["Delivery", "Fast delivery to your door."],
       ],
     },
     faqs: [
       [
         "Are your products authentic?",
-        "Explain where your products are sourced.",
+        "Yes. We buy directly from brands and their authorised distributors, never from unofficial sellers.",
       ],
-      ["How long does delivery take?", "State delivery times by location."],
-      ["Can I return an opened product?", "Summarise your returns policy."],
+      ["How long does delivery take?", "Most orders arrive within 2–4 working days, depending on where you are. You will see delivery options and costs at checkout."],
+      ["Can I return an opened product?", "Unopened products can be returned within the period set out in our refund policy. For hygiene reasons, opened products can only be returned if they are faulty."],
     ],
     cta: {
       title: "Treat yourself",
@@ -1721,7 +1721,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Shop with confidence.",
-      body: "Explain where your products come from and what warranty applies. State warranty terms only as provided by the manufacturer or your store.",
+      body: "We stock genuine devices from trusted suppliers, test what we sell and stand behind every sale. If something is not right, our support team is here to help.",
       art: "store",
     },
     features: {
@@ -1739,19 +1739,19 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Find your product", "Search or browse categories."],
         ["Checkout", "Pay securely online."],
-        ["Delivery or pickup", "Describe your delivery and pickup options."],
+        ["Delivery or pickup", "Delivered to you, or collect from our store."],
       ],
     },
     faqs: [
       [
         "Are products new and original?",
-        "Describe product condition and sourcing.",
+        "Yes. Unless a product is clearly marked as refurbished, everything we sell is brand new and sourced from authorised suppliers.",
       ],
       [
         "What warranty applies?",
-        "Explain warranty terms per product or brand.",
+        "Each product page shows the warranty that applies. Keep your receipt, and contact us if you need to make a claim.",
       ],
-      ["How long does delivery take?", "State delivery times by location."],
+      ["How long does delivery take?", "Most orders arrive within 2–4 working days, depending on where you are. You will see delivery options and costs at checkout."],
     ],
     cta: {
       title: "Need help choosing?",
@@ -1800,7 +1800,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "Our craft",
       title: "Pieces built to last.",
-      body: "Describe how and where your furniture is made, and the materials you use.",
+      body: "Our furniture is made by skilled craftspeople using solid wood and durable fabrics, finished by hand and built for everyday family life.",
       art: "hammer",
     },
     features: {
@@ -1809,7 +1809,7 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Exact dimensions", "Measurements listed for every piece."],
         ["Material details", "Know exactly what you’re buying."],
-        ["Delivery options", "Describe delivery and assembly."],
+        ["Delivery options", "Scheduled delivery, with assembly available."],
       ],
     },
     steps: {
@@ -1818,18 +1818,18 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Choose", "Check dimensions against your space."],
         ["Order", "Checkout securely online."],
-        ["Delivery", "Describe delivery scheduling and assembly."],
+        ["Delivery", "We agree a delivery date with you and can assemble on arrival."],
       ],
     },
     faqs: [
       [
         "Do you deliver and assemble?",
-        "Explain delivery areas and assembly options.",
+        "Yes. We deliver within our city and to selected locations beyond, and our team can assemble your furniture on the day.",
       ],
-      ["Can I customise a piece?", "Describe any customisation options."],
+      ["Can I customise a piece?", "Many pieces can be made in a different size, finish or fabric. Contact us with what you have in mind."],
       [
         "What if an item arrives damaged?",
-        "Summarise your returns and damage policy.",
+        "Check your order on delivery and tell us straight away if anything is damaged. We will repair or replace it at no cost to you.",
       ],
     ],
     cta: {
@@ -1879,7 +1879,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "A bookshop for curious readers.",
-      body: "Tell readers about your shop and the books you champion.",
+      body: "We are an independent bookshop for curious readers of every age, with a carefully chosen range of fiction, non-fiction, children’s books and African writing.",
       art: "library-big",
     },
     features: {
@@ -1897,13 +1897,13 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Browse", "Search by title, author or subject."],
         ["Checkout", "Pay securely online."],
-        ["Delivery", "Describe your delivery options."],
+        ["Delivery", "Fast delivery to your door."],
       ],
     },
     faqs: [
-      ["Can you order a book you don’t stock?", "Explain special orders."],
-      ["How long does delivery take?", "State delivery times by location."],
-      ["Do you supply schools?", "Describe bulk and institutional orders."],
+      ["Can you order a book you don’t stock?", "Yes. Send us the title and author and we will tell you when we can get it."],
+      ["How long does delivery take?", "Most orders arrive within 2–4 working days, depending on where you are. You will see delivery options and costs at checkout."],
+      ["Do you supply schools?", "Yes. We supply schools, libraries and organisations. Send us your list for a quotation."],
     ],
     cta: {
       title: "Find your next book",
@@ -1952,7 +1952,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "Your neighbourhood store, online.",
-      body: "Tell customers about your store, where you deliver and how you keep products fresh. List allergen and ingredient information as supplied.",
+      body: "We are a neighbourhood grocer with fresh produce, pantry staples and household essentials, picked and packed with care. Order online and choose delivery or collection.",
       art: "store",
     },
     features: {
@@ -1970,15 +1970,15 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Fill your basket", "Browse by aisle or search."],
         ["Choose delivery or pickup", "Select your preferred option."],
-        ["Receive your order", "Describe your delivery times."],
+        ["Receive your order", "Delivered to your door, often on the same day."],
       ],
     },
     faqs: [
-      ["Where do you deliver?", "List your delivery areas and fees."],
-      ["Is there a minimum order?", "State any minimum order value."],
+      ["Where do you deliver?", "We deliver to nearby neighbourhoods. You will see the areas we cover and their delivery fees at checkout."],
+      ["Is there a minimum order?", "There is no minimum order for collection. Delivery orders may have a small minimum, shown at checkout."],
       [
         "How do you handle fresh items?",
-        "Describe your freshness and substitution policy.",
+        "We pick fresh items on the day of delivery. If something is unavailable, we will only substitute a similar item with your agreement.",
       ],
     ],
     cta: {
@@ -2027,7 +2027,7 @@ export const industryKits: Record<string, IndustryKit> = {
     about: {
       eyebrow: "About us",
       title: "A store you can rely on.",
-      body: "Tell customers who you are and what you sell.",
+      body: "We are a family-run store with a well-chosen range of everyday essentials and gifts, fair prices and friendly service, in store and online.",
       art: "store",
     },
     features: {
@@ -2045,15 +2045,15 @@ export const industryKits: Record<string, IndustryKit> = {
       items: [
         ["Browse", "Find what you need."],
         ["Checkout", "Pay securely online."],
-        ["Delivery", "Describe your delivery options."],
+        ["Delivery", "Fast delivery to your door."],
       ],
     },
     faqs: [
-      ["How long does delivery take?", "State delivery times by location."],
-      ["Can I return an item?", "Summarise your returns policy."],
+      ["How long does delivery take?", "Most orders arrive within 2–4 working days, depending on where you are. You will see delivery options and costs at checkout."],
+      ["Can I return an item?", "Unopened products can be returned within the period set out in our refund policy. For hygiene reasons, opened products can only be returned if they are faulty."],
       [
         "Which payment methods do you accept?",
-        "List accepted payment methods.",
+        "You can pay online by card, bank transfer or USSD through our secure checkout, and in store by card or transfer.",
       ],
     ],
     cta: {
@@ -2260,19 +2260,19 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
     section("team", "team", {
       eyebrow: "Our people",
       title: "The team you will work with",
-      body: "Introduce the people customers will deal with. Use real names, roles and photos, and only list qualifications each person holds.",
+      body: "The people you will deal with, with their roles and areas of responsibility.",
       items: [
         {
-          title: "Full name",
-          text: "Role — a line about their experience and what they look after.",
+          title: "Team lead",
+          text: "Leads client relationships and oversees every piece of work.",
         },
         {
-          title: "Full name",
-          text: "Role — a line about their experience and what they look after.",
+          title: "Specialist",
+          text: "Looks after the detail and keeps work on schedule.",
         },
         {
-          title: "Full name",
-          text: "Role — a line about their experience and what they look after.",
+          title: "Client support",
+          text: "Your first point of contact for questions and updates.",
         },
       ],
     });
@@ -2281,12 +2281,12 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
     section("gallery", "gallery", {
       eyebrow: title,
       title: "Selected work",
-      body: "Show recent work you are proud of. Add a short caption with the client type, location and what you delivered.",
+      body: "A few recent projects, shared with our clients’ permission.",
       items: offerItems
         .slice(0, 6)
         .map((i) => ({
           title: i.title,
-          text: "Project name, location",
+          text: "A recent project, shared with permission.",
           image: i.image,
           imageAlt: i.imageAlt,
         })),
@@ -2361,7 +2361,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("admissions-intro", "text", {
         eyebrow: "Admissions",
         title: "Joining us",
-        body: "<p>We welcome applications throughout the year. Visiting us is the best way to see how we teach and to ask questions about your child’s needs.</p><p>Replace this with your admission periods, the age groups or classes with spaces, and any entrance assessment.</p>",
+        body: "<p>We welcome applications throughout the year. Visiting us is the best way to see how we teach and to ask questions about your child’s needs.</p><p>Places are offered across our classes when spaces are available, and new pupils join after a short, friendly assessment.</p>",
       }),
       section("admissions-steps", "steps", {
         eyebrow: "How to apply",
@@ -2392,14 +2392,14 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         body: "<ul><li>Birth certificate or passport</li><li>Recent school report, where applicable</li><li>Passport photographs</li><li>Immunisation record</li></ul><p>Update this list to match your requirements.</p>",
       }),
       faq("admissions-faq", [
-        ["When can we apply?", "State your admission periods and deadlines."],
+        ["When can we apply?", "Applications for the new session open each spring, and we consider applications during the year when spaces are available."],
         [
           "Is there an entrance assessment?",
-          "Explain whether you assess new pupils and what it involves.",
+          "New pupils take a short, friendly assessment so that we can place them in the right class and plan any support they need.",
         ],
         [
           "How are fees paid?",
-          "Describe your payment schedule and accepted payment methods.",
+          "Fees are paid termly by bank transfer. Contact the school office for the current fee schedule.",
         ],
       ]),
       cta(
@@ -2413,7 +2413,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("impact-intro", "text", {
         eyebrow: "Impact",
         title: "The difference your support makes",
-        body: "<p>Explain the change your programmes create, who benefits and where you work. Share only results you can evidence and say how you measure them.</p>",
+        body: "<p>Our programmes help young people, families and small businesses gain skills, confidence and support close to home. We track what each programme delivers and share what we learn with our supporters.</p>",
       }),
       section("impact-areas", "features", {
         eyebrow: "Where we focus",
@@ -2426,7 +2426,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("impact-reports", "text", {
         eyebrow: "Accountability",
         title: "Reports and accounts",
-        body: "<p>Link to your annual reports, audited accounts or impact reports so supporters can see how funds are used.</p>",
+        body: "<p>We publish yearly reports and accounts so supporters can see exactly how funds are used. Contact us for copies of past reports.</p>",
       }),
       cta(
         "Support our work",
@@ -2439,7 +2439,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("rooms", "services", {
         eyebrow: "Rooms",
         title: "Rooms and suites",
-        body: "Describe each room type, who it suits and what is included. Add a clear photo of every room.",
+        body: "Choose the room that suits your stay, from a comfortable standard room to a spacious suite.",
         items: [
           {
             title: "Standard room",
@@ -2467,28 +2467,28 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         items: [
           {
             title: "Reliable power",
-            text: "Say how power is supplied, for example 24-hour supply with backup.",
+            text: "Uninterrupted power, with backup when it is needed.",
           },
           { title: "Wi-Fi", text: "Free wireless internet throughout." },
           {
             title: "Breakfast",
-            text: "State whether breakfast is included or available.",
+            text: "A fresh breakfast served every morning.",
           },
-          { title: "Security", text: "Describe on-site security and parking." },
+          { title: "Security", text: "Round-the-clock security and secure parking." },
         ],
       }),
       faq("rooms-faq", [
         [
           "What are check-in and check-out times?",
-          "State your check-in and check-out times and any early or late options.",
+          "Check-in is from 2pm and check-out is by 12 noon. Ask us about early arrival or late departure.",
         ],
         [
           "Can I cancel a booking?",
-          "Summarise your cancellation terms and link to your booking policy.",
+          "Most bookings can be cancelled free of charge up to 48 hours before arrival. See our booking policy for full terms.",
         ],
         [
           "Do you have parking?",
-          "Explain parking availability and any charges.",
+          "Yes. Secure parking is available for guests at no extra charge.",
         ],
       ]),
       cta(
@@ -2502,7 +2502,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("coverage-intro", "text", {
         eyebrow: "Coverage",
         title: "Where we deliver",
-        body: "<p>List the cities, states or routes you serve and how often. If you deliver nationwide through partners, say so clearly.</p>",
+        body: "<p>We deliver across our home city every day and run scheduled routes to other major cities each week. Tell us your destination and we will confirm the next available collection.</p>",
       }),
       section("coverage-areas", "features", {
         eyebrow: "Service areas",
@@ -2558,7 +2558,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
   if (key === "size guide")
     return guide(
       "Find your size",
-      "Measurements are in centimetres. If you are between sizes, choose the larger size for a relaxed fit. Replace this table with your own size chart.",
+      "Measurements are in centimetres. If you are between sizes, choose the larger size for a relaxed fit.",
       "<table><thead><tr><th>Size</th><th>Chest</th><th>Waist</th><th>Hips</th></tr></thead><tbody><tr><td>S</td><td>86–91</td><td>71–76</td><td>89–94</td></tr><tr><td>M</td><td>94–99</td><td>79–84</td><td>97–102</td></tr><tr><td>L</td><td>102–107</td><td>86–91</td><td>104–109</td></tr><tr><td>XL</td><td>109–114</td><td>94–99</td><td>112–117</td></tr></tbody></table>",
       [
         [
@@ -2574,18 +2574,18 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       [
         [
           "What if it doesn’t fit?",
-          "Summarise your exchange and returns process and link to your refund policy.",
+          "Send it back unworn with the tags attached and we will exchange it or refund you, as set out in our refund policy.",
         ],
         [
           "Do sizes run small?",
-          "Tell customers how your items fit compared with standard sizes.",
+          "Our pieces are true to size. Where a style fits differently, we say so on the product page.",
         ],
       ],
     );
   if (key === "measurements")
     return guide(
       "Measuring for furniture",
-      "Check the space and the route into your home before you order. Product dimensions are listed on each product page. Replace these examples with your own guidance.",
+      "Check the space and the route into your home before you order. Product dimensions are listed on each product page.",
       "<table><thead><tr><th>Item</th><th>Allow around it</th></tr></thead><tbody><tr><td>Sofa</td><td>60 cm walkway in front</td></tr><tr><td>Dining table</td><td>90 cm behind each chair</td></tr><tr><td>Bed</td><td>60 cm on each side</td></tr></tbody></table>",
       [
         ["Measure the space", "Note the width, depth and height available."],
@@ -2598,18 +2598,18 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       [
         [
           "Do you assemble on delivery?",
-          "Explain whether assembly is included or can be booked.",
+          "Assembly can be added at checkout, and our team will set everything up on delivery.",
         ],
         [
           "Can I return large items?",
-          "Summarise returns for furniture and link to your refund policy.",
+          "Large items can be returned in their original condition. We arrange collection, and our refund policy explains any charges.",
         ],
       ],
     );
   if (key === "buying guide")
     return guide(
       "Choosing the right device",
-      "Not sure what to buy? These pointers help you compare options. Replace them with guidance for the products you sell.",
+      "Not sure what to buy? These pointers will help you compare options with confidence.",
       "",
       [
         [
@@ -2628,18 +2628,18 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       [
         [
           "Are your products genuine?",
-          "Explain where your stock comes from and how you guarantee authenticity.",
+          "Yes. We buy only from manufacturers and authorised distributors, and every product is brand new unless clearly marked otherwise.",
         ],
         [
           "What warranty do you offer?",
-          "State the warranty period and how to make a claim.",
+          "Warranty periods are shown on each product page. Keep your receipt, and contact us to start a claim.",
         ],
       ],
     );
   if (key === "product guide")
     return guide(
       "Finding the right products for you",
-      "Every skin and hair type is different. Use this guide to narrow down your options, and check ingredient lists on each product page. Replace this with your own guidance.",
+      "Every skin and hair type is different. Use this guide to narrow down your options, and check the ingredient list on each product page.",
       "",
       [
         [
@@ -2655,11 +2655,11 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       [
         [
           "Are your products suitable for sensitive skin?",
-          "Say which products suit sensitive skin and advise a patch test.",
+          "Products suited to sensitive skin are marked on their product pages. We always recommend a patch test before first use.",
         ],
         [
           "Are your products original?",
-          "Explain how you source your products and guarantee authenticity.",
+          "Yes. We buy directly from brands and their authorised distributors.",
         ],
       ],
     );
@@ -2668,7 +2668,7 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("facilities", "features", {
         eyebrow: "Facilities",
         title: "Our facilities",
-        body: "Describe the spaces and equipment available and who can use them.",
+        body: "Modern spaces and equipment, designed around the people who use them.",
         items: offerItems
           .slice(0, 4)
           .map((i) => ({ title: i.title, text: i.text || "" })),

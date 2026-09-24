@@ -11,6 +11,14 @@ export const photoIndustries = [
   "hospitality",
   "property",
   "beauty",
+  "consulting",
+  "solar",
+  "logistics",
+  "education",
+  "community",
+  "books",
+  "furniture",
+  "retail",
 ] as const;
 export const templateIndustry: Record<string, string> = {
   studio: "creative",
@@ -46,6 +54,23 @@ export function photoSourceSet(src: string) {
     : undefined;
 }
 export const photoAlt: Record<string, string> = {
+  // Licensed stock photographs (Unsplash License); credits in docs/licensed-photos.json.
+  "consulting-hero": "Desk with a laptop, notebook, phone calculator and printed financial charts — sample image",
+  "consulting-about": "Bright open-plan office with desks, chairs and plants — sample image",
+  "solar-hero": "Aerial view of rows of solar panels — sample image",
+  "solar-about": "Engineer in a hard hat and safety vest inspecting a solar farm — sample image",
+  "logistics-hero": "Two white delivery trucks on a highway — sample image",
+  "logistics-about": "Warehouse aisle with tall shelves of boxed stock — sample image",
+  "education-hero": "Bright classroom with rows of wooden desks and a chalkboard — sample image",
+  "education-about": "Quiet library with bookshelves, study tables and large windows — sample image",
+  "community-hero": "Many hands joined together in the middle of a group — sample image",
+  "community-about": "Vegetables growing in raised bamboo planters in a community garden — sample image",
+  "books-hero": "Bookshop shelves packed with books — sample image",
+  "books-about": "A row of books standing on a table — sample image",
+  "furniture-hero": "Light living room with sofas, a wooden coffee table and a large window — sample image",
+  "furniture-about": "Furniture maker marking a wooden board with a pencil — sample image",
+  "retail-hero": "Shop shelves displaying ceramic vases and bowls — sample image",
+  "retail-about": "Shopper holding colourful paper shopping bags — sample image",
   "general-hero":
     "Colleagues discussing a business brief around a meeting table — sample photograph",
   "general-about":

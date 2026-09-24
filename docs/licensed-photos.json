@@ -174,5 +174,181 @@
     "license": "Unsplash License (https://unsplash.com/license)",
     "downloaded": "2026-09-24",
     "bytes": 61826
+  },
+  {
+    "key": "consulting-hero",
+    "url": "/samples/consulting-hero-photo.webp",
+    "small": "/samples/consulting-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/office-desk-with-smartphone-and-financial-charts-heiYgqp0Tsk",
+    "photographer": "Jakub Żerdzicki",
+    "photographerUrl": "https://unsplash.com/@jakubzerdzicki",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 34484
+  },
+  {
+    "key": "consulting-about",
+    "url": "/samples/consulting-about-photo.webp",
+    "small": "/samples/consulting-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/chairs-beside-table-zCQsBI7ZltQ",
+    "photographer": "Raj Rana",
+    "photographerUrl": "https://unsplash.com/@theranaman",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 92808
+  },
+  {
+    "key": "solar-hero",
+    "url": "/samples/solar-hero-photo.webp",
+    "small": "/samples/solar-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-large-array-of-blue-and-white-tiles-O6t9RkVkjNE",
+    "photographer": "Bernd Dittrich",
+    "photographerUrl": "https://unsplash.com/@hdbernd",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 194308
+  },
+  {
+    "key": "solar-about",
+    "url": "/samples/solar-about-photo.webp",
+    "small": "/samples/solar-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-man-wearing-a-safety-vest-and-hard-hat-hBE96YanOlM",
+    "photographer": "Sikwe Scarter",
+    "photographerUrl": "https://unsplash.com/@sikwe",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 94972
+  },
+  {
+    "key": "logistics-hero",
+    "url": "/samples/logistics-hero-photo.webp",
+    "small": "/samples/logistics-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/two-white-trucks-driving-on-a-highway-neCb34TcLEg",
+    "photographer": "Nishat Samadzai",
+    "photographerUrl": "https://unsplash.com/@nishatsamadzai2001",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 52688
+  },
+  {
+    "key": "logistics-about",
+    "url": "/samples/logistics-about-photo.webp",
+    "small": "/samples/logistics-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-large-warehouse-filled-with-lots-of-shelves-h3pVxOIpnzk",
+    "photographer": "Lance Chang",
+    "photographerUrl": "https://unsplash.com/@carmendis",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 98384
+  },
+  {
+    "key": "education-hero",
+    "url": "/samples/education-hero-photo.webp",
+    "small": "/samples/education-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-classroom-filled-with-wooden-desks-and-chairs-T921iC2fkJk",
+    "photographer": "Haseeb Modi",
+    "photographerUrl": "https://unsplash.com/@haseebm",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 97884
+  },
+  {
+    "key": "education-about",
+    "url": "/samples/education-about-photo.webp",
+    "small": "/samples/education-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/library-interior-with-bookshelves-and-tables-n4y3eiQSIoc",
+    "photographer": "Drahomír Hugo Posteby-Mach",
+    "photographerUrl": "https://unsplash.com/@postebymach",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 214222
+  },
+  {
+    "key": "community-hero",
+    "url": "/samples/community-hero-photo.webp",
+    "small": "/samples/community-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-group-of-people-holding-hands-eMB60hNHFL8",
+    "photographer": "Marlis Trio Akbar",
+    "photographerUrl": "https://unsplash.com/@marlis_akbar",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 87562
+  },
+  {
+    "key": "community-about",
+    "url": "/samples/community-about-photo.webp",
+    "small": "/samples/community-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-bunch-of-plants-that-are-in-a-garden-Y0y5kwKdZVA",
+    "photographer": "David Clode",
+    "photographerUrl": "https://unsplash.com/@davidclode",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 177532
+  },
+  {
+    "key": "books-hero",
+    "url": "/samples/books-hero-photo.webp",
+    "small": "/samples/books-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/books-on-brown-wooden-shelf-jedKD4yaTvk",
+    "photographer": "Rudy Issa",
+    "photographerUrl": "https://unsplash.com/@rudy_issa",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 92846
+  },
+  {
+    "key": "books-about",
+    "url": "/samples/books-about-photo.webp",
+    "small": "/samples/books-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/book-lot-on-table-9BoqXzEeQqM",
+    "photographer": "Tom Hermans",
+    "photographerUrl": "https://unsplash.com/@tomhermans",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 73346
+  },
+  {
+    "key": "furniture-hero",
+    "url": "/samples/furniture-hero-photo.webp",
+    "small": "/samples/furniture-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-large-window-x3mSC1WnWhc",
+    "photographer": "Spacejoy",
+    "photographerUrl": "https://unsplash.com/@spacejoy",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 118654
+  },
+  {
+    "key": "furniture-about",
+    "url": "/samples/furniture-about-photo.webp",
+    "small": "/samples/furniture-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/person-marking-wooden-board-with-pencil-GfYA6q5ESLI",
+    "photographer": "Craft Kitties",
+    "photographerUrl": "https://unsplash.com/@craftkitties",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 79208
+  },
+  {
+    "key": "retail-hero",
+    "url": "/samples/retail-hero-photo.webp",
+    "small": "/samples/retail-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-display-case-filled-with-lots-of-white-vases-gIK8upCKV9A",
+    "photographer": "Zoshua Colah",
+    "photographerUrl": "https://unsplash.com/@zoshuacolah",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 125082
+  },
+  {
+    "key": "retail-about",
+    "url": "/samples/retail-about-photo.webp",
+    "small": "/samples/retail-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/woman-holding-shopping-bags-against-a-wall-tjdAzT2HCXA",
+    "photographer": "Iuliia Pilipeichenko",
+    "photographerUrl": "https://unsplash.com/@pilipeichenko",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 46302
   }
 ]

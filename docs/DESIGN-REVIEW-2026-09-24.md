@@ -62,6 +62,37 @@ reviewing agent); production authentication was not changed.
   layout was verified with measurements plus spot screenshots. Desktop
   widths were measured rather than visually reviewed in full.
 
+## Batch 4 — template art direction and sample copy
+
+- **Photography:** consulting, solar, logistics, education, community, books,
+  furniture and retail used illustrated SVG hero/about art. Each now has a
+  distinct licensed Unsplash hero and about photograph (1440px and 640px WebP,
+  all under 210KB) with accurate alt text marked "sample image". No photo is
+  reused across industries, and none shows readable third-party branding or
+  book titles. The source, photographer and licence for each are recorded in
+  `docs/licensed-photos.json`. All 19 kits now resolve to photographs, which
+  was checked against the files on disk.
+- **Sample copy:** about 130 editor-directed instructions in `lib/industry-kits.ts`
+  ("List the services you offer today.", "Describe the space", "State your
+  consultation policy…") became natural, clearly fictional copy written for
+  visitors. It makes no credentials, client names, figures, testimonials or
+  invented staff names:
+  - Team cards show role titles only (e.g. "Partner — Leads client matters…").
+  - Gallery cards show project types.
+  - FAQ answers are sensible, generic sample answers.
+- **Unchanged:** all starter content stays `sample: true`. The publish gate
+  still blocks until it is reviewed, because it checks the flag and not the
+  wording. The legal page `[Required: …]` markers are intentionally left for
+  the owner's adviser to complete.
+- **Checked:**
+  - Crawled every core, legal and Insights page of all 10 template previews:
+    all returned 200, with no instruction wording.
+  - The Trust people page at 375px has no overflow.
+  - 53 unit tests pass and the production build succeeds.
+- **Limit:** template previews render only each family's primary industry.
+  The eight new photo sets were confirmed through the kit-to-file mapping,
+  not through a live preview of every industry.
+
 ## Remaining review coverage (continuing)
 
 - Every family: Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow,
