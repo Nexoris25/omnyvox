@@ -47,6 +47,8 @@ export const contentSchema = z.object({
   description: z.string().max(300).optional(),
   socialImage: imagePath.optional(),
   policyType: z.enum(policyTypes).optional(),
+  /** Testimonials: confirms the person agreed to be quoted publicly. */
+  consentConfirmed: z.boolean().optional(),
   /** Author profiles: job title and professional links. */
   role: z.string().trim().max(100).optional(),
   links: z

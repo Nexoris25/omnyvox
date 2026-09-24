@@ -15,6 +15,7 @@ export type MarketingRecord = {
     updatedAt?: string;
     indexing?: { index: boolean; follow: boolean };
     role?: string;
+    consentConfirmed?: boolean;
     links?: { website?: string; linkedin?: string; x?: string };
   };
 };

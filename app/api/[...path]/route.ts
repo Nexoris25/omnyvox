@@ -291,12 +291,18 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
           password: string;
           mfa_enabled: boolean;
           role: string;
+          disabled_at: string | null;
         }>(
-          "SELECT id,password,mfa_secret IS NOT NULL AS mfa_enabled,role FROM users WHERE email=$1",
+          "SELECT id,password,mfa_secret IS NOT NULL AS mfa_enabled,role,disabled_at FROM users WHERE email=$1",
           [body.email],
         );
         if (!u || !verifyPassword(body.password, u.password))
           return fail("Email or password is incorrect", 401);
+        if (u.disabled_at)
+          return fail(
+            "This account has been disabled. Contact Omnyvox support for help.",
+            403,
+          );
         if (
           u.mfa_enabled &&
           (!body.code || !(await consumeSecondFactor(u.id, body.code)))

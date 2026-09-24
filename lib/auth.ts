@@ -31,7 +31,7 @@ export async function user() {
     mfa_verified: boolean;
     session_id: string;
   }>(
-    "SELECT u.id,u.name,u.email,u.role,u.email_verified,u.mfa_secret IS NOT NULL AS mfa_enabled,s.mfa_verified,s.id AS session_id FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now()",
+    "SELECT u.id,u.name,u.email,u.role,u.email_verified,u.mfa_secret IS NOT NULL AS mfa_enabled,s.mfa_verified,s.id AS session_id FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now() AND u.disabled_at IS NULL",
     [createHash("sha256").update(token).digest("hex")],
   );
   return u ?? null;

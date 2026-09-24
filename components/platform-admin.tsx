@@ -40,6 +40,7 @@ type Item = {
     imageAlt?: string;
     reply?: string;
     role?: string;
+    consentConfirmed?: boolean;
     links?: { website?: string; linkedin?: string; x?: string };
     indexing?: { index: boolean; follow: boolean };
   };
@@ -53,6 +54,7 @@ const tabs = [
   ["requests", "Customer requests"],
   ["kyb", "Business verification"],
   ["users", "Accounts"],
+  ["emails", "Email delivery"],
   ["subscriptions", "Subscriptions"],
   ["merchants", "Merchant payments"],
   ["payments", "Payment reviews"],
@@ -61,13 +63,14 @@ const tabs = [
   ["pages", "Marketing pages"],
   ["categories", "Categories"],
   ["authors", "Authors"],
+  ["testimonials", "Testimonials"],
   ["legal", "Legal pages"],
   ["media", "Media library"],
   ["storage", "Media storage"],
   ["ai", "Local AI operations"],
   ["settings", "Marketing settings"],
 ];
-const cms = ["pages", "articles", "categories", "authors", "legal"];
+const cms = ["pages", "articles", "categories", "authors", "legal", "testimonials"];
 export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
   const allowedTabs = tabs.filter(([key])=>canInternal(role,key==='overview'?['admin']:key==='kyb'?['kyb-admin']:cms.includes(key)||['media','settings'].includes(key)?['marketing',key]:['platform-admin',key],'GET'));
   const [tab, setTab] = useState(allowedTabs[0]?.[0] || "overview"),
@@ -125,6 +128,74 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
   }
   const renderDetail = (r: Item) => (
     <div className="admin-detail-body">
+      {tab === "users" && (
+        <div className="admin-actions">
+          <StatusBadge
+            value={r.disabled_at ? "suspended" : "active"}
+            label={r.disabled_at ? "Sign-in disabled" : "Sign-in allowed"}
+          />
+          {r.disabled_reason ? <p className="admin-note">Reason: {String(r.disabled_reason)}</p> : null}
+          {!r.email_verified && (
+            <button
+              type="button"
+              className="button secondary small"
+              onClick={() => save(endpoint + "/" + r.id, "PATCH", { action: "resend-verification" })}
+            >
+              Resend verification code
+            </button>
+          )}
+          {r.disabled_at ? (
+            <button
+              type="button"
+              className="button small"
+              onClick={() => save(endpoint + "/" + r.id, "PATCH", { action: "enable" })}
+            >
+              Restore sign-in
+            </button>
+          ) : (
+            <form
+              className="admin-inline-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const reason = String(new FormData(e.currentTarget).get("reason") || "");
+                if (confirm("Disable sign-in for this account? All of its sessions will end immediately."))
+                  save(endpoint + "/" + r.id, "PATCH", { action: "disable", reason });
+              }}
+            >
+              <label className="field">
+                Reason for disabling (recorded in the audit log)
+                <input name="reason" required minLength={10} maxLength={500} placeholder="e.g. Reported for phishing; under investigation" />
+              </label>
+              <button className="button secondary small danger">Disable sign-in</button>
+            </form>
+          )}
+        </div>
+      )}
+      {tab === "emails" && (
+        <>
+          <h2>{String(r.subject)}</h2>
+          <dl className="admin-facts">
+            <div><dt>Recipient</dt><dd>{String(r.recipient)}</dd></div>
+            <div><dt>Status</dt><dd><StatusBadge value={emailTone[String(r.status)]} label={String(r.status)} /></dd></div>
+            <div><dt>Queued</dt><dd>{fmtDateTime(r.created_at)}</dd></div>
+            <div><dt>{r.sent_at ? "Delivered to provider" : "Next attempt"}</dt><dd>{fmtDateTime(r.sent_at || r.next_attempt_at)}</dd></div>
+            <div><dt>Attempts</dt><dd>{String(r.attempts)}</dd></div>
+            {r.site ? <div><dt>Website</dt><dd>{String(r.site)}</dd></div> : null}
+            {r.provider_id ? <div className="wide"><dt>Provider reference</dt><dd>{String(r.provider_id)}</dd></div> : null}
+            {r.last_error ? <div className="wide"><dt>Last error</dt><dd>{String(r.last_error)}</dd></div> : null}
+          </dl>
+          <p className="admin-note">Message bodies are not shown here because they can contain sign-in codes or personal details.</p>
+          {!r.sent_at && (
+            <button
+              type="button"
+              className="button small"
+              onClick={() => save(endpoint + "/" + r.id, "PATCH", {})}
+            >
+              Retry delivery now
+            </button>
+          )}
+        </>
+      )}
 
                     <h2>
                       {r.data?.title ||
@@ -456,7 +527,7 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                         setEdit(r);
                         setImage(r.data?.image || "");
                       }
-                    : ["support", "requests", "kyb", "merchants", "domains", "users", "subscriptions", "payments"].includes(tab)
+                    : ["support", "requests", "kyb", "merchants", "domains", "users", "subscriptions", "payments", "emails"].includes(tab)
                       ? setSelected
                       : undefined
                 }
@@ -506,8 +577,19 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                               x: undefined,
                             }
                           : {}),
-                        ...(["authors", "categories", "legal"].includes(tab)
+                        ...(["authors", "categories", "legal", "testimonials"].includes(tab)
                           ? { category: "general" }
+                          : {}),
+                        ...(tab === "testimonials"
+                          ? {
+                              consentConfirmed: f.get("consentConfirmed") === "on",
+                              slug:
+                                String(f.get("slug") || "") ||
+                                `${String(f.get("title") || "testimonial")
+                                  .toLowerCase()
+                                  .replace(/[^a-z0-9]+/g, "-")
+                                  .replace(/^-|-$/g, "")}-${Math.random().toString(36).slice(2, 7)}`,
+                            }
                           : {}),
                         image,
                         indexing: {
@@ -519,7 +601,7 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                   }}
                 >
                   <label className="field">
-                    {tab === "authors" ? "Full name" : tab === "categories" ? "Category name" : "Title"}
+                    {tab === "authors" || tab === "testimonials" ? "Customer name" : tab === "categories" ? "Category name" : "Title"}
                     <input
                       name="title"
                       defaultValue={edit.data?.title}
@@ -527,6 +609,21 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                       minLength={2}
                     />
                   </label>
+                  {tab === "testimonials" && (
+                    <>
+                      <label className="field">
+                        Role and business
+                        <input name="role" maxLength={100} required defaultValue={edit.data?.role || ""} placeholder="e.g. Founder, Adaeze Fabrics, Aba" />
+                      </label>
+                      <label className="consent-check">
+                        <input type="checkbox" name="consentConfirmed" defaultChecked={!!edit.data?.consentConfirmed} />
+                        <span>
+                          This customer gave written permission to publish their name, words
+                          and photo on the Omnyvox website. Required before publishing.
+                        </span>
+                      </label>
+                    </>
+                  )}
                   {tab === "authors" && (
                     <>
                       <label className="field">
@@ -549,15 +646,20 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                       </div>
                     </>
                   )}
-                  <label className="field">
-                    URL slug
-                    <input
-                      name="slug"
-                      defaultValue={edit.data?.slug}
-                      pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                      required
-                    />
-                  </label>
+                  {tab === "testimonials" ? (
+                    <input type="hidden" name="slug" value={edit.data?.slug || ""} />
+                  ) : (
+                    <label className="field">
+                      URL slug
+                      <input
+                        name="slug"
+                        defaultValue={edit.data?.slug}
+                        pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                        required
+                      />
+                    </label>
+                  )}
+                  {tab === "testimonials" && <span className="field-label">Testimonial (their own words)</span>}
                   <RichTextEditor
                     name="body"
                     value={edit.data?.body || ""}
@@ -731,6 +833,7 @@ function AnnualOffers() {
 
 const title = (r: Item) =>
   String(r.data?.title || r.registered_name || r.business_name || r.name || r.hostname || r.email || "—");
+const emailTone: Record<string, string> = { sent: "verified", queued: "new", retrying: "pending", failed: "rejected" };
 const paymentStatus: Record<string, string> = {
   pending: "Awaiting payment",
   verification_required: "Payment unconfirmed",
@@ -749,6 +852,8 @@ function columnsFor(tab: string): Column<Item>[] {
         { key: "name", label: "Account", render: (r) => <><b>{String(r.name)}</b><small>{String(r.email)}</small></>, text: (r) => `${r.name} ${r.email}` },
         { key: "role", label: "Role", render: (r) => <StatusBadge value="info" label={String(r.role).replaceAll("_", " ")} /> },
         { key: "email_verified", label: "Email", render: (r) => <StatusBadge value={r.email_verified ? "verified" : "pending"} label={r.email_verified ? "Verified" : "Unverified"} /> },
+        { key: "access", label: "Sign-in", render: (r) => <StatusBadge value={r.disabled_at ? "suspended" : "active"} label={r.disabled_at ? "Disabled" : r.two_factor ? "Allowed · 2FA" : "Allowed"} /> },
+        { key: "last_sign_in", label: "Last sign-in", render: (r) => fmtDate(r.last_sign_in) },
         { key: "created_at", label: "Joined", render: (r) => fmtDate(r.created_at) },
       ];
     case "subscriptions":
@@ -788,6 +893,14 @@ function columnsFor(tab: string): Column<Item>[] {
         { key: "verified_at", label: "Ownership", render: (r) => <StatusBadge value={r.verified_at ? "verified" : "pending"} label={r.verified_at ? "Verified" : "Pending"} /> },
         { key: "active", label: "Routing", render: (r) => <StatusBadge value={r.active ? "active" : "inactive"} label={r.active ? "Active" : "Inactive"} /> },
       ];
+    case "emails":
+      return [
+        { key: "recipient", label: "Recipient", render: (r) => <><b>{String(r.recipient)}</b><small>{String(r.site || "Omnyvox")}</small></>, text: (r) => `${r.recipient} ${r.site || ""} ${r.subject}` },
+        { key: "subject", label: "Subject" },
+        { key: "status", label: "Status", render: (r) => <StatusBadge value={emailTone[String(r.status)]} label={String(r.status)} /> },
+        { key: "attempts", label: "Attempts" },
+        { key: "created_at", label: "Queued", render: (r) => fmtDateTime(r.created_at) },
+      ];
     case "support":
     case "requests":
       return [
@@ -802,14 +915,19 @@ function columnsFor(tab: string): Column<Item>[] {
         ...(tab === "articles" || tab === "pages"
           ? [{ key: "category", label: "Category", render: (r: Item) => String(r.data?.category || "general").replaceAll("-", " ") }]
           : []),
-        ...(tab === "authors" ? [{ key: "role", label: "Role", render: (r: Item) => String(r.data?.role || "—") }] : []),
+        ...(tab === "authors" || tab === "testimonials" ? [{ key: "role", label: "Role", render: (r: Item) => String(r.data?.role || "—") }] : []),
+        ...(tab === "testimonials"
+          ? [{ key: "consent", label: "Consent", render: (r: Item) => <StatusBadge value={r.data?.consentConfirmed ? "verified" : "pending"} label={r.data?.consentConfirmed ? "Confirmed" : "Missing"} /> }]
+          : []),
         { key: "status", label: "Status", render: (r) => <StatusBadge value={r.data?.status} />, text: (r) => String(r.data?.status || "") },
         updated,
       ];
   }
 }
 function statusFor(tab: string) {
-  if (["users", "merchants", "domains"].includes(tab)) return undefined;
+  if (["merchants", "domains"].includes(tab)) return undefined;
+  if (tab === "users") return { get: (r: Item) => (r.disabled_at ? "disabled" : r.email_verified ? "active" : "unverified") };
+  if (tab === "emails") return { get: (r: Item) => String(r.status || "") };
   if (tab === "subscriptions") return { get: (r: Item) => String(r.subscription || "") };
   if (tab === "payments") return { get: (r: Item) => String(r.payment_status || ""), labels: paymentStatus };
   if (["support", "requests"].includes(tab)) return { get: (r: Item) => String(r.status || r.data?.status || "new") };

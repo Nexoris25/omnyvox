@@ -23,6 +23,7 @@
     "test:payment-review": "node --import tsx scripts/payment-review-test.ts",
     "test:store": "node --import tsx scripts/store-test.ts",
     "test:sites": "node --import tsx scripts/sites-content-test.ts",
+    "test:admin-ops": "node --import tsx scripts/admin-ops-test.ts",
     "test:plan-change": "node --import tsx scripts/plan-change-test.ts"
   },
   "dependencies": {

@@ -946,3 +946,41 @@ input.locked {
   .admin-table td:empty::before, .admin-table td[data-label=""]::before { display: none; }
   .admin-facts { grid-template-columns: 1fr; }
 }
+.admin-detail-body h2:empty { display: none; }
+.admin-actions {
+  display: grid; gap: 12px; justify-items: start; padding: 16px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+}
+.admin-inline-form { display: grid; gap: 10px; width: 100%; justify-items: start; }
+.admin-inline-form .field { width: 100%; margin: 0; }
+.admin-note { margin: 0; font-size: 13px; color: var(--muted); }
+.admin-facts .wide { grid-column: 1 / -1; }
+
+/* Homepage template filter, testimonials, pricing extras */
+.template-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+.template-filter button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 16px;
+  border: 1px solid var(--line); border-radius: 999px; background: #fff; font-weight: 600; font-size: 14px;
+}
+.template-filter button span { font-size: 12px; font-weight: 500; color: var(--muted); }
+.template-filter button[aria-selected="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.template-filter button[aria-selected="true"] span { color: #e3d5ff; }
+.template-showcase { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+.testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
+.testimonial-card {
+  margin: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 24px;
+  padding: 28px; border-radius: 18px; background: #fff; border: 1px solid var(--line);
+}
+.testimonial-card blockquote { margin: 0; font-size: 17px; line-height: 1.7; }
+.testimonial-card blockquote::before { content: "“"; display: block; font-size: 48px; line-height: 0.6; color: var(--primary); }
+.testimonial-card figcaption { display: flex; align-items: center; gap: 12px; }
+.testimonial-card figcaption img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.testimonial-card figcaption span { display: grid; }
+.testimonial-card figcaption small { color: var(--muted); }
+.testimonial-initials {
+  display: inline-grid !important; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+  background: #ede5ff; color: var(--primary); font-weight: 700;
+}
+.compare-jump { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--primary); }
+#compare { scroll-margin-top: 90px; }
+.pricing-faq p a { color: var(--primary); text-decoration: underline; }

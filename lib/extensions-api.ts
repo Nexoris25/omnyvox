@@ -263,7 +263,7 @@ export async function extensionsApi(
         return response({ url: `/api/media/${m.id}` }, 201);
       }
     }
-    if (!["pages", "articles", "categories", "authors", "legal"].includes(kind))
+    if (!["pages", "articles", "categories", "authors", "legal", "testimonials"].includes(kind))
       return response({ error: "Not found" }, 404);
     if (req.method === "GET")
       return response(
@@ -302,6 +302,15 @@ export async function extensionsApi(
             .default(""),
         })
         .parse(await req.json());
+      if (kind === "testimonials") {
+        // Only real, consented testimonials may appear on the website.
+        if (b.status === "published" && !b.consentConfirmed)
+          return response(
+            { error: "Confirm the customer agreed to be quoted before publishing." },
+            400,
+          );
+        b.category = "general";
+      } else delete b.consentConfirmed;
       let author = u.name;
       if (b.authorId) {
         const [a] = await query<{ data: { title: string } }>(

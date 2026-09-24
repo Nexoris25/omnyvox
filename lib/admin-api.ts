@@ -6,6 +6,7 @@ import { aiSettingsSchema } from "./local-ai";
 import { canInternal, staffRoles } from "./permissions";
 import { verifyPassword, rateLimit } from "./auth";
 import { consumeSecondFactor } from "./mfa";
+import { queueOtp } from "./otp";
 import { reviewRecovery } from './account-recovery';
 export async function platformAdmin(
   req: NextRequest,
@@ -88,7 +89,14 @@ export async function platformAdmin(
     if (kind === "users")
       return response(
         await query(
-          "SELECT id,name,email,role,email_verified,created_at FROM users ORDER BY created_at DESC",
+          "SELECT u.id,u.name,u.email,u.role,u.email_verified,u.mfa_secret IS NOT NULL AS two_factor,u.disabled_at,u.disabled_reason,u.created_at,(SELECT max(a.created_at) FROM audit a WHERE a.actor=u.id::text AND a.action='account.login') AS last_sign_in FROM users u ORDER BY u.created_at DESC",
+        ),
+      );
+    if (kind === "emails")
+      // Message bodies may contain codes or personal data and are never listed.
+      return response(
+        await query(
+          "SELECT e.id,e.recipient,e.subject,e.created_at,e.sent_at,e.attempts,e.last_error,e.next_attempt_at,e.provider_id,s.name AS site,CASE WHEN e.sent_at IS NOT NULL THEN 'sent' WHEN e.attempts>=5 THEN 'failed' WHEN e.attempts>0 THEN 'retrying' ELSE 'queued' END AS status FROM email_outbox e LEFT JOIN sites s ON s.id=e.site_id ORDER BY (e.sent_at IS NULL AND e.attempts>=5) DESC, e.created_at DESC LIMIT 1000",
         ),
       );
     if (kind === "merchants")
@@ -121,6 +129,48 @@ export async function platformAdmin(
           "SELECT r.*,s.name,u.email FROM records r JOIN sites s ON s.id=r.site_id JOIN users u ON u.id=s.owner_id WHERE r.kind IN ('support','services') ORDER BY r.created_at DESC",
         ),
       );
+  }
+  if (req.method === "PATCH" && kind === "emails" && id) {
+    const rows = await query(
+      "UPDATE email_outbox SET attempts=0,last_error=NULL,next_attempt_at=now() WHERE id=$1 AND sent_at IS NULL RETURNING id",
+      [id],
+    );
+    if (!rows.length) return response({ error: "This message was already delivered." }, 409);
+    await audit(u.id, "email.retry", id);
+    return response({ success: true, message: "Queued for another delivery attempt." });
+  }
+  if (req.method === "PATCH" && kind === "users" && id) {
+    const b = z
+      .discriminatedUnion("action", [
+        z.object({ action: z.literal("disable"), reason: z.string().trim().min(10).max(500) }),
+        z.object({ action: z.literal("enable") }),
+        z.object({ action: z.literal("resend-verification") }),
+      ])
+      .parse(await req.json());
+    const [target] = await query<{ id: string; email: string; role: string; email_verified: boolean; disabled_at: string | null }>(
+      "SELECT id,email,role,email_verified,disabled_at FROM users WHERE id=$1",
+      [id],
+    );
+    if (!target) return response({ error: "Account not found" }, 404);
+    if (b.action === "resend-verification") {
+      if (target.email_verified) return response({ error: "This email address is already verified." }, 409);
+      if (!(await queueOtp(target.id, target.email)))
+        return response({ error: "A code was sent less than a minute ago. Try again shortly." }, 429);
+      await audit(u.id, "account.verification.resent", target.id);
+      return response({ success: true, message: "A new verification code was sent." });
+    }
+    if (b.action === "disable") {
+      if (target.id === u.id) return response({ error: "You cannot disable your own account." }, 409);
+      if (target.role === "super_admin" && u.role !== "super_admin")
+        return response({ error: "Only a super administrator can disable this account." }, 403);
+      await query("UPDATE users SET disabled_at=now(),disabled_reason=$2 WHERE id=$1", [target.id, b.reason]);
+      await query("DELETE FROM sessions WHERE user_id=$1", [target.id]);
+      await audit(u.id, "account.disabled", target.id);
+      return response({ success: true, message: "Sign-in disabled and all sessions ended." });
+    }
+    await query("UPDATE users SET disabled_at=NULL,disabled_reason=NULL WHERE id=$1", [target.id]);
+    await audit(u.id, "account.enabled", target.id);
+    return response({ success: true, message: "Sign-in restored." });
   }
   if (req.method === "PATCH") {
     if (kind === "offers") {

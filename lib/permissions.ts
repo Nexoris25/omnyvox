@@ -20,7 +20,7 @@ export function canInternal(role: string, path: string[], method: string) {
   const [area,kind] = path;
   if (area === 'kyb-admin') return role === 'compliance' && ['GET','PATCH'].includes(method);
   if (area === 'marketing') {
-    if (role === 'content') return ['articles','authors','categories','pages','media'].includes(kind) && ['GET','POST','PATCH','DELETE'].includes(method);
+    if (role === 'content') return ['articles','authors','categories','pages','media','testimonials'].includes(kind) && ['GET','POST','PATCH','DELETE'].includes(method);
     if (role === 'designer') return ['pages','media'].includes(kind) && ['GET','POST','PATCH'].includes(method);
     if (role === 'compliance') return kind === 'legal' && ['GET','POST','PATCH'].includes(method);
     return false;
@@ -28,11 +28,11 @@ export function canInternal(role: string, path: string[], method: string) {
   if (area !== 'platform-admin') return false;
   if(kind==='recovery')return role==='compliance'&&['GET','POST'].includes(method);
   const allowed: Record<string,string[]> = {
-    operations:['users','subscriptions','requests','payments'], billing:['subscriptions'],
-    finance:['subscriptions','merchants','payments'], support:['support','requests','payments'],
-    technical:['domains','storage','ai'], compliance:['merchants'], designer:[],content:[],
+    operations:['users','subscriptions','requests','payments','emails'], billing:['subscriptions'],
+    finance:['subscriptions','merchants','payments'], support:['support','requests','payments','emails','users'],
+    technical:['domains','storage','ai','emails'], compliance:['merchants'], designer:[],content:[],
   };
   if (!(allowed[role] || []).includes(kind)) return false;
   if (method === 'GET') return true;
-  return method === 'PATCH' && ((role === 'support' && ['support','requests'].includes(kind)) || (role === 'technical' && ['domains','ai'].includes(kind)) || (role === 'compliance' && kind === 'merchants'));
+  return method === 'PATCH' && ((role === 'support' && ['support','requests'].includes(kind)) || (role === 'technical' && ['domains','ai','emails'].includes(kind)) || (role === 'operations' && ['users','emails'].includes(kind)) || (role === 'compliance' && kind === 'merchants'));
 }

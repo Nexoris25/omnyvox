@@ -133,7 +133,7 @@ export function PricingComparison({
           );
         })}
       </div>
-      <section className="comparison">
+      <section className="comparison" id="compare">
         <h2>Compare the details.</h2>
         <div className="table-scroll">
           <table>

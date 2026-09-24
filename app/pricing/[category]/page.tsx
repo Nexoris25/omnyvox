@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { MarketingShell } from "@/components/marketing-shell";
+import { PricingFaq } from "@/components/pricing-faq";
 import {
   PricingComparison,
   type PricingPlan,
@@ -26,11 +27,15 @@ export default async function Page({
             Compare published content allowances, website features and billing
             options.
           </p>
+          <a className="compare-jump" href="#compare">
+            Compare all features ↓
+          </a>
         </header>
         <PricingComparison
           plans={await query<PricingPlan>("SELECT * FROM plans ORDER BY id")}
           initialCategory={category === "ecommerce" ? "commerce" : "corporate"}
         />
+        <PricingFaq />
       </main>
     </MarketingShell>
   );

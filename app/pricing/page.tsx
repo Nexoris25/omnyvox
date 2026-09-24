@@ -1,5 +1,6 @@
 import { marketingMetadata } from "@/lib/marketing";
 import { MarketingShell } from "@/components/marketing-shell";
+import { PricingFaq } from "@/components/pricing-faq";
 import {
   PricingComparison,
   PricingPlan,
@@ -28,8 +29,12 @@ export default async function Page() {
             Start with your website type, choose how you’d like to pay, then
             compare the features that matter to your business.
           </p>
+          <a className="compare-jump" href="#compare">
+            Compare all features ↓
+          </a>
         </header>
         <PricingComparison plans={plans} />
+        <PricingFaq />
       </main>
     </MarketingShell>
   );

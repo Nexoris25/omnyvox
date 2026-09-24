@@ -19,6 +19,9 @@ import { PlanPrice } from "@/components/plan-price";
 import { Brand } from "@/components/brand";
 import { jsonLd } from "@/lib/model";
 import { BrandHero } from "@/components/brand-hero";
+import { TemplateShowcase } from "@/components/template-showcase";
+import { templates, templateManifests } from "@/lib/templates";
+import { plainText } from "@/lib/content";
 import {
   starterImage,
   templateIndustry,
@@ -33,6 +36,10 @@ export async function generateMetadata() {
 export default async function Home() {
   const authors = await marketingContent("authors");
   const articles = (await marketingContent("articles")).slice(0, 3);
+  // Only testimonials with confirmed consent are ever shown.
+  const testimonials = (await marketingContent("testimonials")).filter(
+    (t) => t.data.consentConfirmed,
+  );
   return (
     <MarketingShell>
       <main id="main">
@@ -150,66 +157,21 @@ export default async function Home() {
               Browse templates <ArrowUpRight size={16} />
             </Link>
           </div>
-          <div className="template-grid">
-            {[
-              [
-                "Business Studio",
-                "For bold ideas and creative businesses.",
-                "studio",
-              ],
-              [
-                "Boutique Store",
-                "For carefully curated online stores.",
-                "atelier",
-              ],
-              [
-                "Modern Company",
-                "For expertise that speaks for itself.",
-                "horizon",
-              ],
-            ].map(([name, desc, style]) => (
-              <Link
-                className="template-card"
-                href={`/templates/${style}`}
-                key={name}
-              >
-                <div className={`template-art ${style}`}>
-                  <div className="tiny-nav">
-                    {name.toLowerCase()}. <span>Menu ↗</span>
-                  </div>
-                  <h3>
-                    {style === "studio"
-                      ? "Ideas worth bringing to life."
-                      : style === "atelier"
-                        ? "Objects for everyday living."
-                        : "A clearer view of what’s next."}
-                  </h3>
-                  <span className="template-line" />
-                  <span className="template-line short" />
-                  <div className="template-button">Discover more ↗</div>
-                  <img
-                    className="template-cover"
-                    src={starterImage(templateIndustry[style], "hero")}
-                    srcSet={photoSourceSet(
-                      starterImage(templateIndustry[style], "hero"),
-                    )}
-                    sizes="(max-width:680px) 100vw, 33vw"
-                    alt=""
-                    width={640}
-                    height={427}
-                    loading="lazy"
-                  />
-                </div>
-                <div className="template-meta">
-                  <div>
-                    <h3>{name}</h3>
-                    <p>{desc}</p>
-                  </div>
-                  <ArrowUpRight size={20} />
-                </div>
-              </Link>
-            ))}
-          </div>
+          <TemplateShowcase
+            templates={templates.map((t) => {
+              const image = starterImage(templateIndustry[t.id], "hero");
+              return {
+                id: t.id,
+                name: t.name,
+                type: t.type,
+                headline: t.headline,
+                category: templateManifests[t.id as keyof typeof templateManifests]
+                  .category as "corporate" | "commerce",
+                image,
+                srcSet: photoSourceSet(image),
+              };
+            })}
+          />
         </section>
         <section className="section how-section" id="how-it-works">
           <div>
@@ -333,6 +295,40 @@ export default async function Home() {
             ))}
           </div>
         </section>
+        {testimonials.length > 0 && (
+          <section className="section testimonials-section" aria-labelledby="testimonials-title">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">IN THEIR WORDS</span>
+                <h2 id="testimonials-title">Businesses that run on Omnyvox.</h2>
+              </div>
+            </div>
+            <div className="testimonial-grid">
+              {testimonials.slice(0, 3).map((t) => (
+                <figure className="testimonial-card" key={t.id}>
+                  <blockquote>{plainText(t.data.body)}</blockquote>
+                  <figcaption>
+                    {t.data.image ? (
+                      <img src={t.data.image} alt="" width={48} height={48} />
+                    ) : (
+                      <span className="testimonial-initials" aria-hidden="true">
+                        {t.data.title
+                          .split(/\s+/)
+                          .map((w) => w[0])
+                          .slice(0, 2)
+                          .join("")}
+                      </span>
+                    )}
+                    <span>
+                      <b>{t.data.title}</b>
+                      {t.data.role && <small>{t.data.role}</small>}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="section faq">
           <div>
             <span className="eyebrow">GOOD QUESTIONS</span>
