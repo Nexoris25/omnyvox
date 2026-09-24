@@ -277,6 +277,30 @@ export default async function Home() {
             </p>
           </div>
         </section>
+        <section className="founder-story">
+          <img
+            src="/marketing-founders.webp"
+            alt="Entrepreneurs planning their business at a studio desk"
+            width={1440}
+            height={960}
+          />
+          <div>
+            <span className="eyebrow">MORE TIME FOR YOUR BUSINESS</span>
+            <h2>
+              Bring your ambition.
+              <br />
+              We’ll help you put it online.
+            </h2>
+            <p>
+              Explain what you do, share your expertise and give customers a
+              clear way to buy or get in touch. Keep your website and content
+              together in one workspace.
+            </p>
+            <Link href="/contact" className="button secondary">
+              Talk about your website →
+            </Link>
+          </div>
+        </section>
         <section className="section">
           <div className="section-heading">
             <span className="eyebrow">INSIGHTS & GUIDES</span>
@@ -361,30 +385,6 @@ export default async function Home() {
                 <p>{a}</p>
               </details>
             ))}
-          </div>
-        </section>
-        <section className="founder-story">
-          <img
-            src="/marketing-founders.webp"
-            alt="Entrepreneurs planning their business at a studio desk"
-            width={1440}
-            height={960}
-          />
-          <div>
-            <span className="eyebrow">MORE TIME FOR YOUR BUSINESS</span>
-            <h2>
-              Bring your ambition.
-              <br />
-              We’ll help you put it online.
-            </h2>
-            <p>
-              Explain what you do, share your expertise and give customers a
-              clear way to buy or get in touch. Keep your website and content
-              together in one workspace.
-            </p>
-            <Link href="/contact" className="button secondary">
-              Talk about your website →
-            </Link>
           </div>
         </section>
         <section className="final-cta">

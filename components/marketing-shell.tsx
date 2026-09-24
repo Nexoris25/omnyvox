@@ -26,11 +26,22 @@ export async function MarketingShell({
       {children}
       <footer className="marketing-footer">
         <div className="footer-intro">
-          <Brand />
+          <Brand onDark />
           <p className="footer-description">
             Professionally designed websites and online stores for Nigerian
             businesses, with hosting, security and support included.
           </p>
+          {(settings.contact?.email || settings.contact?.phone) && (
+            <p className="footer-contact-line">
+              {settings.contact?.email && (
+                <a href={`mailto:${settings.contact.email}`}>{settings.contact.email}</a>
+              )}
+              {settings.contact?.email && settings.contact?.phone && " · "}
+              {settings.contact?.phone && (
+                <a href={`tel:${settings.contact.phone.replace(/[^\d+]/g, "")}`}>{settings.contact.phone}</a>
+              )}
+            </p>
+          )}
           <SocialLinks links={settings.socials} businessName="Omnyvox" />
           <Link href="/register" className="button small footer-cta">
             Start your website
@@ -56,6 +67,7 @@ export async function MarketingShell({
           <strong>Company</strong>
           <Link href="/about">About Omnyvox</Link>
           <Link href="/professional-services">Professional services</Link>
+          <Link href="/security">Security & privacy</Link>
           <Link href="/contact">Contact us</Link>
           <Link href="/login">Sign in</Link>
           <Link href="/register">Create an account</Link>

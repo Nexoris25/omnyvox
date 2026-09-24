@@ -46,7 +46,7 @@ import { ContentHistory } from "./content-history";
 import { FormRouting } from "./form-routing";
 import { LegalChecklist } from "./legal-checklist";
 import { BusinessProfile } from "./business-profile";
-import type { Module } from "@/lib/industry";
+import { buildModules, noSiteModules, type Module } from "@/lib/modules";
 import { SectionEditor } from "./section-editor";
 import { RichTextEditor } from "./rich-text-editor";
 import { MediaLibrary } from "./media-library";
@@ -71,7 +71,7 @@ import {
   templateOptions,
 } from "./template-picker";
 import { Site, limits, entitled } from "@/lib/model";
-import { previewSite } from "@/lib/industry-kits";
+import { kitFor, pageSections, previewSite } from "@/lib/industry-kits";
 const nav = [
   ["overview", "Overview", LayoutDashboard],
   ["websites", "My websites", Globe2],
@@ -93,6 +93,24 @@ const nav = [
   ["templates", "Templates", LayoutTemplate],
   ["billing", "Subscription & billing", CreditCard],
 ] as const;
+const recordNouns: Record<string, string> = {
+  pages: "page",
+  articles: "article",
+  products: "product",
+  authors: "author",
+  categories: "category",
+  legal: "policy",
+  support: "support ticket",
+  services: "setup request",
+  offerings: "service",
+  projects: "project",
+  people: "person",
+  properties: "property",
+  facilities: "facility",
+  programmes: "programme",
+  locations: "location",
+};
+const recordNoun = (section: string) => recordNouns[section] || "item";
 const demoSite: Site = {
   id: "demo",
   owner_id: "demo",
@@ -685,7 +703,7 @@ export function Dashboard({ section }: { section: string }) {
   return (
     <div className="workspace">
       <aside className={`sidebar ${menu ? "open" : ""}`}>
-        <Brand />
+        <Brand onDark />
         <div className="workspace-switcher">
           <span className="workspace-avatar">{account.name.charAt(0)}</span>
           <div>
@@ -702,31 +720,44 @@ export function Dashboard({ section }: { section: string }) {
             </button>
           )}
         </div>
-        <div className="nav-group">WORKSPACE</div>
-        <nav>
-          {(demo || !site
-            ? nav.map(([key, label]) => ({
-                key,
-                label,
-                state: "enabled" as const,
-              }))
-            : modules
-          ).map(({ key, label, state }) => {
-            const Icon = nav.find((n) => n[0] === key)?.[2] || FileText;
-            return (
-              <Link
-                href={href(key)}
-                className={section === key ? "active" : ""}
-                key={key}
-                onClick={() => setMenu(false)}
-              >
-                <Icon />
-                {label}
-                {state === "upgrade" && <small>Growth+</small>}
-              </Link>
-            );
-          })}
-        </nav>
+        {(() => {
+          // Same rules as the server: website type, plan and team role.
+          const list: Module[] = demo
+            ? buildModules(
+                { category: demoSite.category, tier: demoSite.tier },
+                { offerings: "Services", projects: "Portfolio" },
+              )
+            : !site
+              ? noSiteModules
+              : modules.length
+                ? modules
+                : noSiteModules;
+          const groups = [...new Set(list.map((m) => m.group))];
+          return groups.map((group) => (
+            <div key={group}>
+              <div className="nav-group">{group.toUpperCase()}</div>
+              <nav aria-label={group}>
+                {list
+                  .filter((m) => m.group === group)
+                  .map(({ key, label, state }) => {
+                    const Icon = nav.find((n) => n[0] === key)?.[2] || FileText;
+                    return (
+                      <Link
+                        href={href(key)}
+                        className={section === key ? "active" : ""}
+                        key={key}
+                        onClick={() => setMenu(false)}
+                      >
+                        <Icon />
+                        {label}
+                        {state === "upgrade" && <small>Growth+</small>}
+                      </Link>
+                    );
+                  })}
+              </nav>
+            </div>
+          ));
+        })()}
         <div className="sidebar-bottom">
           <Link href="/account/security">Account security</Link>
           <Link href="/account/team">Organisation & team</Link>
@@ -1688,8 +1719,44 @@ export function Dashboard({ section }: { section: string }) {
                                   ? "Request setup"
                                   : section === "support"
                                     ? "New ticket"
-                                    : `Add ${section === "articles" ? "article" : section === "products" ? "product" : "page"}`}
+                                    : `Add ${recordNoun(section)}`}
                               </button>
+                            )}
+                            {section === "pages" && site && (
+                              entitled(site.tier, "faqPage") ? (
+                                <button
+                                  className="button secondary small"
+                                  disabled={busy || rows.some((r) => r.data.slug === "faq")}
+                                  title={rows.some((r) => r.data.slug === "faq") ? "Your website already has an FAQ page" : undefined}
+                                  onClick={() =>
+                                    action(async () => {
+                                      const kit = kitFor(site.industry_id, site.category);
+                                      const data = {
+                                        title: "Frequently asked questions",
+                                        slug: "faq",
+                                        body: "",
+                                        status: "draft",
+                                        category: "general",
+                                        description: `Answers to common questions about ${site.data.brand.name}.`,
+                                        sections: pageSections(kit, "FAQ"),
+                                      };
+                                      if (demo) {
+                                        setRows([{ id: crypto.randomUUID(), data: data as Row["data"], created_at: new Date().toISOString() }, ...rows]);
+                                      } else {
+                                        await api(`sites/${site.id}/pages`, "POST", data);
+                                        setRows(await api(`sites/${site.id}/pages`));
+                                      }
+                                      setMessage("FAQ page created as a draft. Replace the sample questions with your own, then publish.");
+                                    })
+                                  }
+                                >
+                                  <Plus size={13} /> Add FAQ page
+                                </button>
+                              ) : (
+                                <span className="locked-feature" title="Available on the Advanced plan">
+                                  FAQ page · Advanced plan
+                                </span>
+                              )
                             )}
                           </div>
                           {rows.length > 0 ? (
@@ -1979,16 +2046,7 @@ export function Dashboard({ section }: { section: string }) {
           >
             <div className="modal-header">
               <h2>
-                {editRow ? "Edit" : "Create"}{" "}
-                {section === "products"
-                  ? "product"
-                  : section === "articles"
-                    ? "article"
-                    : section === "support"
-                      ? "support ticket"
-                      : section === "services"
-                        ? "setup request"
-                        : "page"}
+                {editRow ? "Edit" : "Create"} {recordNoun(section)}
               </h2>
               <button
                 className="icon-button"

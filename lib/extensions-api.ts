@@ -210,6 +210,14 @@ export async function extensionsApi(
               .optional(),
             index: z.boolean().default(true),
             follow: z.boolean().default(true),
+            contact: z
+              .object({
+                email: z.email().or(z.literal("")).default(""),
+                phone: z.string().trim().max(40).default(""),
+                address: z.string().trim().max(300).default(""),
+                hours: z.string().trim().max(120).default(""),
+              })
+              .optional(),
             robots: z.string().max(4000).default(""),
           })
           .parse(await req.json());

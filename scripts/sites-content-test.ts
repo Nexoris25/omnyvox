@@ -122,12 +122,60 @@ try {
   await query("UPDATE sites SET tier='basic' WHERE id=$1", [site.id]);
   check((await page(`/sites/${slug}/insights`)).status === 404, "Insights are unavailable on Basic");
 
+  // Dashboard modules follow website type, plan and role.
+  const { buildModules } = await import("../lib/modules");
+  const keys = (m: { key: string }[]) => m.map((x) => x.key);
+  const corporate = keys(buildModules({ category: "corporate", tier: "advanced" }, { people: "People" }));
+  const storeModules = keys(buildModules({ category: "commerce", tier: "advanced" }));
+  check(
+    !["products", "orders", "fulfilment", "merchant"].some((k) => corporate.includes(k)) && corporate.includes("people"),
+    "Business websites get their industry collections and no store tools",
+  );
+  check(["products", "orders", "fulfilment", "merchant"].every((k) => storeModules.includes(k)) && !storeModules.includes("people"), "Stores get store tools");
+  const editor = keys(buildModules({ category: "commerce", tier: "advanced", role: "editor" }));
+  check(!["billing", "merchant", "domains", "business", "orders", "editor"].some((k) => editor.includes(k)) && editor.includes("articles"), "Editors only see content tools");
+  const manager = keys(buildModules({ category: "commerce", tier: "advanced", role: "store_manager" }));
+  check(manager.includes("orders") && manager.includes("products") && !manager.includes("pages") && !manager.includes("billing"), "Store managers only see store tools");
+
+  // API gates for plan features, using the site owner's session.
+  const { createHash, randomBytes } = await import("node:crypto");
+  const token = randomBytes(32).toString("hex");
+  await query("INSERT INTO sessions(token,user_id,expires,mfa_verified) VALUES($1,$2,now()+interval '1 day',true)", [createHash("sha256").update(token).digest("hex"), owner.id]);
+  const api = async (path: string, method: string, body?: unknown) => {
+    const r = await fetch(`${base}/api/${path}`, {
+      method,
+      headers: { Cookie: `omnyvox_session=${token}`, Origin: base, ...(body ? { "Content-Type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return r.status;
+  };
+  check((await api(`sites/${site.id}/authors`, "POST", { title: "Basic Author", slug: "basic-author", status: "draft" })) === 403, "Basic websites cannot create author profiles");
+  check((await api(`sites/${site.id}/categories`, "POST", { title: "Basic Cat", slug: "basic-cat", status: "draft" })) === 403, "Basic business websites cannot create insight categories");
+  await query("UPDATE sites SET tier='growth' WHERE id=$1", [site.id]);
+  const faqPage = { title: "Frequently asked questions", slug: "faq", body: "", status: "draft", category: "general" };
+  check((await api(`sites/${site.id}/pages`, "POST", faqPage)) === 403, "FAQ pages need the Advanced plan");
+  await query("UPDATE sites SET tier='advanced' WHERE id=$1", [site.id]);
+  const created = await api(`sites/${site.id}/pages`, "POST", faqPage);
+  check([200, 201].includes(created), "Advanced websites can add an FAQ page");
+  await query(
+    "UPDATE records SET data=data||$2::jsonb WHERE site_id=$1 AND kind='pages' AND data->>'slug'='faq'",
+    [site.id, JSON.stringify({ status: "published", sections: [{ id: "q", type: "faq", title: "FAQ", body: "", visible: true, faqs: [{ question: "Do you offer free consultations?", answer: "Yes, the first meeting is free." }] }] })],
+  );
+  const faqHtml = (await page(`/sites/${slug}/faq`)).html;
+  check(faqHtml.includes('"@type":"FAQPage"') && faqHtml.includes("Do you offer free consultations?"), "Advanced FAQ pages publish FAQPage structured data");
+  await query("UPDATE sites SET tier='growth' WHERE id=$1", [site.id]);
+  check(!(await page(`/sites/${slug}/faq`)).html.includes('"@type":"FAQPage"'), "FAQ structured data is an Advanced feature");
+
   // Template previews are multi-page with working legal links.
   const preview = await page("/templates/trust");
   check(preview.status === 200 && preview.html.includes('href="/templates/trust/about"'), "Template previews link to real inner pages");
   check(preview.html.includes('href="/templates/trust/legal/privacy"'), "Template preview footers link to real legal pages");
   for (const p of ["about", "contact", "insights", "legal/terms", "legal/privacy"])
     check((await page(`/templates/trust/${p}`)).status === 200, `Template preview page /${p} loads`);
+  const people = await page("/templates/trust/people");
+  check(people.status === 200 && people.html.includes("What you can expect from us"), "Preview inner pages use purpose-built sections, not a placeholder");
+  const sizes = await page("/templates/atelier/size-guide");
+  check(sizes.status === 200 && sizes.html.includes("Find your size") && sizes.html.includes("<table"), "Store guide pages include real guidance");
   const store = await page("/templates/glow/shop");
   check(store.status === 200 && store.html.includes("All products"), "Store template previews include a Shop page");
   check((await page("/templates/trust/not-a-page")).status === 404, "Unknown preview pages return 404");

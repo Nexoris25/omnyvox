@@ -1028,8 +1028,12 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
       );
     }
     if (!kinds.includes(kind)) return fail("Not found", 404);
-    if (kind === "articles" && !entitled(site.tier, "blog"))
-      return fail("Blog publishing is available on Growth and Advanced.", 403);
+    if (
+      (["articles", "authors"].includes(kind) ||
+        (kind === "categories" && site.category !== "commerce")) &&
+      !entitled(site.tier, "blog")
+    )
+      return fail("Insights, authors and categories are available on Growth and Advanced.", 403);
     if (kind === "products" && site.category !== "commerce")
       return fail("Products require an e-Commerce website.", 403);
     if (method === "GET")
@@ -1087,6 +1091,13 @@ async function handle(req: NextRequest, ctx: Context): Promise<Response> {
         !b.policyReviewed
       )
         return fail("Review and accept this policy before publishing.");
+      if (
+        kind === "pages" &&
+        method === "POST" &&
+        b.slug === "faq" &&
+        !entitled(site.tier, "faqPage")
+      )
+        return fail("FAQ pages are available on the Advanced plan.", 403);
       if (kind === "pages" && reservedSlugs.has(b.slug))
         return fail("This URL is reserved for a system page");
       if (

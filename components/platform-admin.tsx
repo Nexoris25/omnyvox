@@ -447,9 +447,34 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
                   index: f.get("index") === "on",
                   follow: f.get("follow") === "on",
                   robots: f.get("robots"),
+                  contact: {
+                    email: String(f.get("contactEmail") || ""),
+                    phone: String(f.get("contactPhone") || ""),
+                    address: String(f.get("contactAddress") || ""),
+                    hours: String(f.get("contactHours") || ""),
+                  },
                 });
               }}
             >
+              <h2>Company contact details</h2>
+              <p className="admin-note">Shown on the Contact page and in the website footer. Leave a field empty to hide it.</p>
+              {(
+                [
+                  ["contactEmail", "Support email", "email", "email"],
+                  ["contactPhone", "Phone or WhatsApp", "tel", "phone"],
+                  ["contactAddress", "Office address", "text", "address"],
+                  ["contactHours", "Support hours", "text", "hours"],
+                ] as const
+              ).map(([name, label, type, key]) => (
+                <label key={name} className="field">
+                  {label}
+                  <input
+                    name={name}
+                    type={type}
+                    defaultValue={((settings.contact as Record<string, string>) || {})[key] || ""}
+                  />
+                </label>
+              ))}
               <h2>Social links & search visibility</h2>
               {[
                 "facebook",

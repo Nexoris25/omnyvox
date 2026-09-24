@@ -1,18 +1,20 @@
-import Image from "next/image";
 import Link from "next/link";
-export function Brand({ compact = false }: { compact?: boolean }) {
+
+/** The Omnyvox logo. Use `onDark` on dark backgrounds (footer, sidebar) for
+ * the white-lettered variant; both variants have transparent backgrounds.
+ * Served as plain images: they are tiny and already optimised. */
+export function Brand({
+  compact = false,
+  onDark = false,
+}: {
+  compact?: boolean;
+  onDark?: boolean;
+}) {
+  const suffix = onDark ? "-on-dark" : "";
   return (
     <Link href="/" className="brand" aria-label="Omnyvox home">
-      <Image src="/brand-icon.webp" width={36} height={34} alt="" priority />
-      {!compact && (
-        <Image
-          src="/wordmark.webp"
-          width={142}
-          height={25}
-          alt="Omnyvox"
-          priority
-        />
-      )}
+      <img src={`/brand-icon${suffix}.webp`} width={36} height={33} alt="" />
+      {!compact && <img src={`/wordmark${suffix}.webp`} width={142} height={24} alt="Omnyvox" />}
     </Link>
   );
 }

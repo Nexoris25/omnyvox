@@ -255,6 +255,25 @@ export default async function Page({ params, searchParams }: Props) {
           ...(facts.hours ? { openingHours: facts.hours } : {}),
         }
       : null;
+  // FAQ rich results are an Advanced feature; built from the page's own
+  // visible FAQ sections so the markup always matches what visitors see.
+  const faqItems = entitled(site.tier, "faqPage")
+    ? (record ? record.data.sections || [] : !path.length ? site.view.sections : [])
+        .filter((s) => s.visible && s.type === "faq")
+        .flatMap((s) => s.faqs || [])
+        .filter((f) => f.question?.trim() && f.answer?.trim())
+    : [];
+  const faqSchema = faqItems.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: plainText(f.answer) },
+        })),
+      }
+    : null;
   const serviceSchema =
     site.category === "corporate" && record?.kind === "offerings"
       ? {
@@ -582,6 +601,12 @@ export default async function Page({ params, searchParams }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(localBusiness) }}
+        />
+      )}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }}
         />
       )}
       {serviceSchema && (

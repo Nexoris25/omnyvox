@@ -1,289 +1,462 @@
-export const marketingPages: Record<
-  string,
-  {
-    title: string;
-    description: string;
-    sections: { title: string; body: string }[];
-  }
-> = {
+/**
+ * Content for the Omnyvox marketing pages. Facts here must match the
+ * product: plan limits come from lib/model.ts, and nothing is promised that
+ * the platform does not do today.
+ */
+export type MarketingPage = {
+  title: string;
+  description: string;
+  sections: { title: string; body: string; points?: string[] }[];
+  /** Related pages, shown as cards under the content. */
+  links?: { href: string; label: string; text: string }[];
+  cta?: { title: string; body: string; primary: [string, string]; secondary?: [string, string] };
+};
+
+const startCta: MarketingPage["cta"] = {
+  title: "Ready when you are.",
+  body: "Pick a template, add your details and preview your website before you pay for anything.",
+  primary: ["Start your website", "/register"],
+  secondary: ["Compare plans", "/pricing"],
+};
+
+export const marketingPages: Record<string, MarketingPage> = {
   "corporate-websites": {
-    title: "A clear home for your business.",
+    title: "A professional website for your business.",
     description:
-      "Explain your work, share your expertise and make it easy for people to get in touch.",
+      "For firms, clinics, schools, studios and companies that win work through trust. Show what you do, prove you are real and make it easy to get in touch.",
     sections: [
       {
-        title: "Built around your industry",
-        body: "Choose your business type so the workspace shows relevant collections: practice areas for a law firm, programmes for a school, or projects for a construction business.",
+        title: "Made for your kind of business",
+        body: "Tell us your industry and your website starts with the right pages already in place, written in a sensible first draft you can rewrite in your own words.",
+        points: [
+          "Law firms get practice areas and people profiles",
+          "Clinics get medical services and facilities",
+          "Schools get programmes and admissions",
+          "Builders, solar and logistics firms get projects, solutions and coverage",
+        ],
       },
       {
-        title: "Your content, your brand",
-        body: "Edit pages, images, menus, contact details and approved colour choices. Save changes as a draft and review them before publishing.",
+        title: "Your brand, not a generic look",
+        body: "Choose from six business templates, each with its own design style. Add your logo, colours, photos and wording; every page adapts to phones automatically.",
       },
       {
-        title: "Enquiries with a proper home",
-        body: "Verify the inbox you want to receive enquiries in. Submissions are also kept in your website workspace, so email is not your only copy.",
+        title: "Enquiries you won’t miss",
+        body: "Visitors contact you through a form with spam protection and a clear consent checkbox. Messages go to the email address you verify and are kept in your workspace too, so your inbox is never the only copy.",
+      },
+      {
+        title: "Trust built in",
+        body: "Verify your business with its CAC registration number and it appears in your website footer, a small detail customers notice. Industry-appropriate privacy, cookie and terms pages come as drafts for you to complete.",
       },
     ],
+    links: [
+      { href: "/templates?type=corporate", label: "Business templates", text: "Six designs for different industries." },
+      { href: "/features/insights", label: "Insights & blogging", text: "Publish articles with author profiles." },
+      { href: "/features/domains", label: "Your own domain", text: "Use your .com.ng or .com address." },
+    ],
+    cta: startCta,
   },
   "ecommerce-websites": {
-    title: "Your products. Your online store.",
+    title: "An online store that feels like your brand.",
     description:
-      "Build a store with your own identity and a direct route from product discovery to payment.",
+      "Sell to customers across Nigeria with your own storefront, secure Paystack checkout, delivery and pickup options, and orders in one place.",
     sections: [
       {
-        title: "A catalogue customers can explore",
-        body: "Organise real products by category, add descriptions and images, set prices and stock, and help customers search your range.",
+        title: "Products shown properly",
+        body: "Add photos, descriptions and prices, group products into categories and let customers search and sort your catalogue.",
+        points: [
+          "Options such as size and colour, each with its own stock, price and SKU",
+          "A clear stock status so customers know what is available",
+          "Product pages that search engines understand",
+        ],
       },
       {
-        title: "Payments connected to your business",
-        body: "Connect an approved merchant account for checkout. Customer purchases and your Omnyvox subscription use separate payment records.",
+        title: "A checkout customers trust",
+        body: "Customers add items to a cart that remembers them, choose delivery or pickup and pay through Paystack. Payments go straight to your own Paystack account; Omnyvox adds no commission.",
       },
       {
-        title: "Start with the essentials",
-        body: "Basic supports a product catalogue and guest checkout. Compare published product allowances and website features before choosing a plan. Configure your actual delivery and return policies before launch.",
+        title: "Delivery your way",
+        body: "Set a fee for each area you deliver to, add pickup locations with opening hours, or run collection only. The fee is calculated for the customer at checkout.",
+      },
+      {
+        title: "Orders without the spreadsheets",
+        body: "See every order with the items, options, delivery method and customer note. Move orders from processing to delivered, and we flag any payment that needs a second look.",
       },
     ],
+    links: [
+      { href: "/templates?type=ecommerce", label: "Store templates", text: "Four designs for different kinds of shops." },
+      { href: "/features/ecommerce", label: "Store features", text: "Everything included for selling online." },
+      { href: "/pricing/ecommerce", label: "Store plans", text: "Compare product allowances and features." },
+    ],
+    cta: { ...startCta!, title: "Open your store." },
   },
   features: {
-    title: "The tools behind your website.",
+    title: "Everything you need to run your website.",
     description:
-      "Manage content, branding and enquiries from one business workspace.",
+      "Editing, publishing, selling, blogging and customer enquiries, all in one workspace that only shows the tools your business actually uses.",
     sections: [
       {
-        title: "Website editor",
-        body: "Use structured sections and a reusable rich text editor. Update images, text, links, FAQs and calls to action without editing code.",
+        title: "Edit without breaking anything",
+        body: "Change text, photos, buttons and whole sections in a guided editor. Homepage and brand edits save automatically, and nothing goes live until you publish.",
       },
       {
-        title: "Search and sharing",
-        body: "Published pages include canonical addresses, metadata and appropriate structured data. Add your own search title, description and social image.",
+        title: "Built to be found",
+        body: "Clean page addresses, search titles and descriptions, social sharing images, a sitemap and structured data come as standard.",
       },
       {
-        title: "A workspace that fits",
-        body: "Industry-specific menus keep unrelated tools out of the way. Relevant features that require another plan are clearly labelled.",
+        title: "A workspace that fits your business",
+        body: "A business website never shows store tools, and a store never shows tools it doesn’t need. Features from a higher plan are clearly labelled rather than hidden away.",
+      },
+      {
+        title: "Your team, your rules",
+        body: "Invite colleagues as administrators, editors, store managers or analysts. Each role only sees what it is allowed to change.",
       },
     ],
+    links: [
+      { href: "/features/website-editor", label: "Website editor", text: "Sections, rich text, autosave and previews." },
+      { href: "/features/ecommerce", label: "Online store", text: "Products, cart, checkout and delivery." },
+      { href: "/features/insights", label: "Insights & blogging", text: "Articles, categories and author profiles." },
+      { href: "/features/seo", label: "SEO", text: "Search-friendly pages from day one." },
+      { href: "/features/domains", label: "Domains", text: "Connect your own web address." },
+      { href: "/features/integrations", label: "Integrations", text: "Payments, WhatsApp and social profiles." },
+      { href: "/features/ai-content-setup", label: "Writing assistant", text: "Optional help with a first draft." },
+      { href: "/security", label: "Security & privacy", text: "How we protect your business and customers." },
+    ],
+    cta: startCta,
   },
   "features/website-editor": {
     title: "Edit your website with confidence.",
-    description:
-      "A guided editor keeps the layout consistent while you make the content your own.",
+    description: "A guided editor keeps your design consistent while you make every word and photo your own.",
     sections: [
       {
-        title: "Structure without guesswork",
-        body: "Arrange up to 15 supported sections, choose approved layouts, add images and write clear calls to action.",
+        title: "Sections that just work",
+        body: "Build pages from ready-made sections: banners, services, highlights, process steps, team, gallery, FAQs, calls to action and contact details. Reorder or hide them in a click.",
       },
       {
-        title: "Draft, preview, publish",
-        body: "Work on your draft, check the mobile preview and publish deliberately. Advanced includes content history for supported content types.",
+        title: "Writing made simple",
+        body: "The rich text editor covers headings, lists, links, tables, quotes, images with descriptions and, on Growth and Advanced, embedded YouTube or Cloudinary videos.",
+      },
+      {
+        title: "Your work is always saved",
+        body: "Homepage and brand edits save a few seconds after you stop typing, with a copy kept on your device until it is safely stored. If someone else saves at the same time, you choose which version to keep.",
+      },
+      {
+        title: "Preview, then publish",
+        body: "See your pages at phone, tablet and desktop sizes before they go live. Advanced keeps a history of earlier versions you can restore.",
       },
     ],
+    cta: startCta,
+  },
+  "features/insights": {
+    title: "Share what you know.",
+    description: "Publish articles that answer your customers’ questions and show your expertise, on Growth and Advanced.",
+    sections: [
+      {
+        title: "A proper home for your articles",
+        body: "Your Insights page lists every article with its category, date and author, and visitors can filter by the categories you create.",
+      },
+      {
+        title: "Always fresh on your homepage",
+        body: "Your three newest articles appear on your homepage automatically, so returning visitors always see something new.",
+      },
+      {
+        title: "Real people behind the words",
+        body: "Add author profiles with a photo, role and short biography. Each article shows an About the author card and links to the author’s page.",
+        points: [
+          "Growth: up to 3 author profiles",
+          "Advanced: up to 25 profiles, with website, LinkedIn and X links",
+        ],
+      },
+      {
+        title: "FAQ pages that stand out in search",
+        body: "On Advanced, add a dedicated FAQ page. We mark it up so search engines can understand your questions and answers.",
+      },
+    ],
+    cta: startCta,
   },
   "features/ai-content-setup": {
     title: "A helping hand with the first draft.",
-    description:
-      "Optional writing assistance uses your confirmed business facts and leaves you in control.",
+    description: "Optional writing help that starts from the facts you confirm about your business and leaves every decision to you.",
     sections: [
       {
-        title: "Local and optional",
-        body: "When enabled by Nexoris after server readiness checks, the assistant runs on the Omnyvox server. There is no hosted AI fallback. Manual editing is always available.",
+        title: "Private by design",
+        body: "The assistant runs on Omnyvox’s own servers, not a third-party AI service, and is switched on by our team once it is ready for your account.",
       },
       {
-        title: "Review every suggestion",
-        body: "Request a homepage headline, introduction or About-section draft. Review facts and wording before accepting it. Acceptance changes a saved draft; it does not publish your website.",
+        title: "You stay in charge",
+        body: "Ask for a homepage headline, an introduction or an About section. Read it, change it or discard it. Nothing is published until you choose to publish.",
+      },
+      {
+        title: "Never a dependency",
+        body: "Your website, forms and checkout work the same whether or not the assistant is available.",
       },
     ],
   },
   "features/domains": {
     title: "Give your business its own address.",
-    description:
-      "Start with an Omnyvox address, then connect a domain on an eligible plan.",
+    description: "Every website starts on a free Omnyvox address. On Growth and Advanced, connect a domain you own.",
     sections: [
       {
-        title: "Bring a domain you own",
-        body: "Growth and Advanced support a custom domain. Follow the DNS instructions, verify ownership and complete activation with Nexoris.",
+        title: "Connect in a few steps",
+        body: "Add your domain, copy the records we show you into your domain provider’s settings and we confirm when it’s verified. Our team then switches it on with a secure certificate.",
       },
       {
-        title: "Clear ownership",
-        body: "Domain registration and renewal are separate from the website subscription. Contact Nexoris if you need procurement or configuration assistance.",
+        title: "Your domain stays yours",
+        body: "You buy and renew your domain with a registrar of your choice, so it stays in your name whatever happens. Contact us if you would like help choosing or setting one up.",
       },
     ],
   },
   "features/seo": {
-    title: "Make each page easier to understand.",
-    description:
-      "Search metadata and clear content structure are part of your website workflow.",
+    title: "Help customers find you.",
+    description: "Search-friendly structure comes as standard, with the controls you need for each page.",
     sections: [
       {
-        title: "Page-by-page control",
-        body: "Set search titles, descriptions, image descriptions, indexing choices and social sharing images. Choose whether article URLs include their category.",
+        title: "Control every page",
+        body: "Set the search title, description and sharing image for each page, product and article, and choose whether a page should appear in search results.",
       },
       {
-        title: "Built into publication",
-        body: "Eligible published content appears in the sitemap. Organisation, article, product and breadcrumb markup describe the corresponding content; private previews are not intended for indexing.",
+        title: "The technical parts, done for you",
+        body: "Published pages appear in your sitemap automatically, with clean addresses and structured data that describes your business, products, articles and breadcrumbs.",
+      },
+      {
+        title: "Local businesses, found locally",
+        body: "Add your address and opening hours once and we describe your business as a local business to search engines. On Advanced, FAQ pages get FAQ markup too.",
       },
     ],
   },
   "features/ecommerce": {
-    title: "From product page to checkout.",
-    description: "The core tools for a merchant-owned online store.",
+    title: "From product page to paid order.",
+    description: "Everything a growing shop needs to sell online, without plugins or extra fees.",
     sections: [
       {
-        title: "Know what you are selling",
-        body: "Maintain product prices, descriptions, stock, images and useful details such as dimensions or materials.",
+        title: "Catalogue",
+        body: "Products with photos, descriptions, categories and prices.",
+        points: ["Up to 3 options per product, such as size and colour", "Each combination has its own SKU, stock, price and photo", "Sold-out combinations are clearly marked"],
       },
       {
-        title: "Keep orders together",
-        body: "Guest checkout creates a store order, verifies the payment through the payment provider and tracks payment separately from fulfilment.",
+        title: "Cart and checkout",
+        body: "A cart that remembers items between visits and syncs across tabs, and a checkout with clear totals, delivery or pickup and your store policies linked.",
+      },
+      {
+        title: "Delivery and pickup",
+        body: "Delivery areas with their own fees and delivery times, pickup locations with hours and instructions, or collection only.",
+      },
+      {
+        title: "Payments and orders",
+        body: "Payments go to your own Paystack account and are confirmed automatically. Stock is held while a customer pays and released if they don’t. Any payment that can’t be confirmed is flagged for you to review.",
       },
     ],
+    cta: { ...startCta!, title: "Start selling." },
   },
   "features/integrations": {
-    title: "Connect the essentials first.",
-    description:
-      "Use the connections currently supported by your website and plan.",
+    title: "Connected where it counts.",
+    description: "The connections your customers expect, set up in minutes.",
     sections: [
       {
-        title: "Contact and payments",
-        body: "Add social profile links, opt into WhatsApp click-to-chat, verify an enquiry recipient and connect an approved store payment account.",
+        title: "Payments",
+        body: "Connect your Paystack account to take payments in your store using the methods Paystack offers, such as card, bank transfer and USSD.",
       },
       {
-        title: "Additional connections",
-        body: "Speak with Nexoris about analytics, logistics or other integration requirements. Availability depends on a working supported connector, your plan and the agreed scope.",
+        title: "Conversations",
+        body: "Add WhatsApp click-to-chat and link your Instagram, Facebook, LinkedIn, X, TikTok and YouTube profiles.",
+      },
+      {
+        title: "Need something else?",
+        body: "Tell us about the analytics, logistics or other tools you use. We’ll let you know honestly whether we can connect them and what that would involve.",
       },
     ],
   },
   "how-it-works": {
-    title: "From business details to a working website.",
-    description: "Take the setup one clear step at a time.",
+    title: "From sign-up to published in three steps.",
+    description: "No code, no guesswork. Here’s what happens between creating your account and going live.",
     sections: [
       {
-        title: "1. Choose a starting point",
-        body: "Select your website type, industry, plan and compatible template. Your workspace provisions relevant pages and policy drafts.",
+        title: "1. Create your account and verify your business",
+        body: "Confirm your email, then enter your CAC registration number. We look up your registered business name automatically; you just confirm it’s you. Stores need this before they can take payments.",
       },
       {
-        title: "2. Add what makes it yours",
-        body: "Provide accurate business facts, your logo, images, text and products. Verify the enquiry inbox and review your policies.",
+        title: "2. Choose a template and make it yours",
+        body: "Pick your industry and a template. Your website arrives with the right pages and starter wording. Replace it with your own words, photos and products.",
       },
       {
         title: "3. Review and publish",
-        body: "Check desktop and mobile views, resolve the publication checklist, activate the subscription and publish. Store owners also complete merchant approval.",
+        body: "Preview on phone and desktop, work through the short checklist (real content, reviewed policies, a verified enquiry inbox), choose your plan and publish.",
       },
     ],
+    cta: startCta,
   },
   "website-setup": {
-    title: "A little help getting online.",
-    description:
-      "Set up your website yourself or ask Nexoris to help with a defined scope.",
+    title: "Set it up yourself, or let us help.",
+    description: "Most businesses are ready in an afternoon. If you’d rather hand it over, we can do it for you.",
     sections: [
       {
-        title: "Self-service setup",
-        body: "Use the editor to add your business content and branding at your own pace. You can return to your saved draft whenever you need.",
+        title: "Do it yourself",
+        body: "The editor guides you through each page, and a checklist shows what still needs attention before you publish. Your draft is saved as you go, so you can come back any time.",
       },
       {
-        title: "Professional setup",
-        body: "Share your pages, catalogue, images and requirements with Nexoris. Pricing, scope and delivery dates must be agreed before work begins; setup assistance is separate from your subscription.",
+        title: "Done for you",
+        body: "Send us your content, photos and product list and our team will set up your website. We agree the scope, price and timeline with you before any work starts. Setup is a one-off service, separate from your subscription.",
       },
     ],
+    cta: { title: "Want a hand?", body: "Tell us what you need and we’ll reply with a clear quote.", primary: ["Request setup help", "/contact"], secondary: ["Start on your own", "/register"] },
   },
   "professional-services": {
-    title: "Practical support for your website.",
-    description:
-      "Get help with setup, content preparation or an agreed customisation.",
+    title: "Expert help when you need it.",
+    description: "Setup, content writing, product uploads and moving from another website, with the scope and price agreed up front.",
     sections: [
       {
-        title: "A clear scope",
-        body: "Explain the outcome you need. Nexoris reviews the request and agrees the work, required assets, fees and approval process with you.",
+        title: "What we can help with",
+        body: "",
+        points: ["Setting up your pages and branding", "Writing or polishing your website copy", "Uploading your product catalogue and photos", "Moving your content from an old website"],
       },
       {
-        title: "Your subscription stays clear",
-        body: "Buying setup assistance does not automatically change your plan or permanently unlock higher-plan capabilities.",
+        title: "How it works",
+        body: "Tell us the result you want. We confirm what’s included, what we need from you, the fee and the timeline before we start, and you approve the work before it goes live.",
+      },
+      {
+        title: "Your plan stays the same",
+        body: "Buying a service doesn’t change your subscription or unlock features from another plan.",
       },
     ],
+    links: [{ href: "/professional-services/migration", label: "Moving from another website", text: "Bring your pages, products and links with you." }],
+    cta: { title: "Tell us about your project.", body: "We aim to reply within one working day.", primary: ["Contact us", "/contact"] },
   },
   "professional-services/migration": {
-    title: "Bring your content with you.",
-    description:
-      "Discuss a planned move from your existing website to Omnyvox.",
+    title: "Moving from another website?",
+    description: "We’ll help you bring your content across and keep the links people already use.",
     sections: [
       {
-        title: "Start with an inventory",
-        body: "List the pages, articles, products, media, domains and important existing links you need to preserve.",
+        title: "Start with a list",
+        body: "Note the pages, articles, products, images and domain you want to keep, and any links that matter, such as pages shared on social media or printed on flyers.",
       },
       {
-        title: "Agree the migration plan",
-        body: "Nexoris reviews compatibility, content allowances, redirects and launch requirements before confirming scope. Keep backups of your original website throughout the move.",
+        title: "Agree the plan",
+        body: "We check what moves across cleanly, what fits your plan’s allowances and which old links should redirect to new pages. Keep your old website running until the new one is live.",
       },
     ],
+    cta: { title: "Plan your move.", body: "Share your current website address and we’ll take a look.", primary: ["Contact us", "/contact"] },
   },
   about: {
     title: "Websites for businesses doing real work.",
-    description:
-      "Omnyvox is a website service operated by Nexoris Technologies Ltd.",
+    description: "Omnyvox is built by Nexoris Technologies Ltd to give Nigerian businesses a professional website without the cost and hassle of a custom build.",
     sections: [
       {
-        title: "One platform, your identity",
-        body: "We are building a shared platform that lets businesses maintain their own websites and online stores without managing a separate application.",
+        title: "Why we built Omnyvox",
+        body: "Too many good businesses rely on a social media page or an outdated website because a proper one felt expensive, slow or complicated. We think every registered business deserves a website it’s proud to share.",
       },
       {
-        title: "Made for everyday use",
-        body: "Clear editing, relevant business tools and straightforward subscription choices guide the product. Tell us what your business needs through the contact page.",
+        title: "What we believe",
+        body: "",
+        points: [
+          "Verified businesses make the internet more trustworthy, so we check registrations against the CAC register",
+          "Good design shouldn’t need a designer every time you change a word",
+          "Your customers’ data deserves care, so we collect only what’s needed",
+          "Prices and plan limits should be clear before you pay",
+        ],
+      },
+      {
+        title: "Who we are",
+        body: "Omnyvox is a product of Nexoris Technologies Ltd, a Nigerian technology company. We’d love to hear what your business needs.",
       },
     ],
+    cta: { title: "Say hello.", body: "Questions, ideas or partnerships: we read every message.", primary: ["Contact us", "/contact"], secondary: ["See templates", "/templates"] },
   },
   help: {
-    title: "A good place to start.",
-    description:
-      "Practical guidance for setting up and maintaining your Omnyvox website.",
+    title: "How can we help?",
+    description: "Answers to the most common questions about setting up and running your website.",
     sections: [
       {
-        title: "Before publishing",
-        body: "Confirm your email and business facts, replace instructional content, verify the enquiry recipient, review policies and complete the subscription requirements.",
+        title: "Before you publish",
+        body: "Your website can go live once these are done:",
+        points: ["Your email address is verified", "Sample text and photos are replaced with your own", "Your legal pages are completed and reviewed", "An enquiry inbox is verified", "Your subscription is active"],
       },
       {
-        title: "If something is unavailable",
-        body: "A plan restriction, missing setup step and a temporary service issue are different problems. Read the message in your workspace; contact support with the website name and the action you were trying to complete.",
+        title: "If something isn’t available",
+        body: "Some features belong to a higher plan, some need a setup step first, and occasionally a service is briefly unavailable. The message in your workspace tells you which. If you’re still stuck, contact us with your website name and what you were trying to do.",
       },
+      {
+        title: "Account security",
+        body: "Turn on two-step verification in Account security. If you lose access to your email or authenticator, use Account recovery on the sign-in page.",
+      },
+    ],
+    links: [
+      { href: "/guides", label: "Launch checklist", text: "Make your website useful from day one." },
+      { href: "/faq", label: "FAQs", text: "Quick answers about plans and setup." },
+      { href: "/contact", label: "Contact support", text: "Talk to a person." },
     ],
   },
   guides: {
     title: "Make your website useful from day one.",
-    description:
-      "A short checklist for accurate content and clear visitor journeys.",
+    description: "A short checklist for clear content and smooth customer journeys.",
     sections: [
       {
-        title: "Write for the next step",
-        body: "Explain what you do, who it is for and how to enquire or buy. Use specific, verified information and a clear call to action.",
+        title: "Write for your customer’s next step",
+        body: "Say what you do, who it’s for and how to get started, in the first few lines. Finish every page with one clear action, such as book, call or buy.",
       },
       {
-        title: "Prepare your images",
-        body: "Use images you own or have permission to publish. Add meaningful descriptions, avoid repeated decorative pictures and check the mobile crop.",
+        title: "Use photos that are yours",
+        body: "Real photos of your work, team and premises build trust faster than stock images. Add a short description to each one and check how it crops on a phone.",
       },
       {
-        title: "Check the whole journey",
-        body: "Test menus, inner pages, forms, policies and checkout where enabled. A homepage alone is not a complete website.",
+        title: "Test the whole journey",
+        body: "Click through your menu, inner pages, contact form and, for stores, a test order. A homepage on its own isn’t a complete website.",
+      },
+      {
+        title: "Keep it current",
+        body: "Update prices, hours and policies when they change, and publish an article when you have something useful to share.",
       },
     ],
+    cta: startCta,
   },
   faq: {
     title: "Questions before you start?",
-    description: "A few useful answers about plans and setup.",
+    description: "Quick answers about plans, setup and your website.",
+    sections: [
+      { title: "Do I need to know how to code?", body: "No. Everything is edited through a guided editor: text, photos, colours, sections and products." },
+      { title: "Can I use my own logo and colours?", body: "Yes. Upload your logo and set your brand colours. We check colour contrast so your text stays readable." },
+      { title: "How many websites can I have?", body: "Basic and Growth include one website. Advanced includes up to three under one subscription." },
+      { title: "Why do you verify my business?", body: "Verifying every business with its CAC registration keeps Omnyvox trustworthy for your customers. We look up your registered name automatically from your CAC number." },
+      { title: "Can I use my own domain?", body: "Yes, on Growth and Advanced. Every plan includes a free Omnyvox address." },
+      { title: "Do you take a cut of my sales?", body: "No. Store payments go to your own Paystack account. Paystack’s standard fees apply." },
+      { title: "Can I change plans later?", body: "Yes. Upgrades apply straight away, and you only pay the difference for the rest of your billing period. Downgrades apply at the end of the period you’ve paid for." },
+      { title: "Does the writing assistant need to be on?", body: "No. It’s optional. Your website, forms and checkout work the same without it." },
+    ],
+    links: [{ href: "/pricing", label: "Pricing", text: "Plans and billing questions." }, { href: "/help", label: "Help centre", text: "Setup and troubleshooting." }],
+  },
+  security: {
+    title: "Security and privacy, taken seriously.",
+    description: "How we protect your account, your business and your customers’ information.",
     sections: [
       {
-        title: "Can I use my own colours and logo?",
-        body: "Yes. Upload your logo and choose a palette or accessible brand colours. The template controls the responsive layout.",
+        title: "Your account",
+        body: "",
+        points: [
+          "Passwords are stored using a strong one-way hash, never in plain text",
+          "Two-step verification with an authenticator app, plus one-time recovery codes",
+          "Staff accounts must use two-step verification to reach administration tools",
+          "Sign-in sessions can be ended, and suspicious accounts can be locked by our team",
+        ],
       },
       {
-        title: "Can Basic receive enquiries at another email address?",
-        body: "Yes. Every plan supports a chosen primary enquiry recipient after verification of that inbox.",
+        title: "Payments",
+        body: "Card details never touch Omnyvox. Store and subscription payments are handled by Paystack, and we keep only payment references and status.",
       },
       {
-        title: "How many websites can I create?",
-        body: "Basic and Growth allow one website. Advanced allows up to three websites under its subscription.",
+        title: "Your customers’ information",
+        body: "Enquiries and orders are visible only to the website owner and the team members they choose. Forms ask for consent, and we collect only what’s needed to reply or fulfil an order. We use only essential cookies, with no advertising trackers.",
       },
       {
-        title: "Does AI need to be available to use my website?",
-        body: "No. Manual editing, published pages, forms and checkout work independently of the optional writing assistant.",
+        title: "Verified businesses",
+        body: "Businesses verify their CAC registration with us, and stores must be verified before they can take payments. This helps keep impersonation and fraud off the platform. Our Acceptable use policy sets out what isn’t allowed.",
       },
+      {
+        title: "Your rights",
+        body: "We follow the Nigeria Data Protection Act. You can ask to see, correct or delete your information through our contact page.",
+      },
+    ],
+    links: [
+      { href: "/legal/privacy", label: "Privacy notice", text: "What we collect and why." },
+      { href: "/legal/cookies", label: "Cookie policy", text: "The essential storage we use." },
+      { href: "/legal/acceptable-use", label: "Acceptable use policy", text: "What isn’t allowed on Omnyvox." },
     ],
   },
 };

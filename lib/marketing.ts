@@ -29,6 +29,7 @@ export async function marketingSettings() {
   const [s] = await query<{
     data: {
       socials?: Record<string, string>;
+      contact?: { email?: string; phone?: string; address?: string; hours?: string };
       index?: boolean;
       follow?: boolean;
       robots?: string;

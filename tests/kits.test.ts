@@ -101,6 +101,27 @@ test("specialised families are the default for their industries", () => {
     assert.equal(industryKits[industry].template, template, industry);
 });
 
+test("FAQ is no longer a default page", () => {
+  assert.match(
+    readFileSync("infrastructure/migrations/021-faq-page-advanced.sql", "utf8"),
+    /core_pages - 'FAQ'/,
+  );
+});
+
+test("every default page of every industry gets a purpose-built blueprint", () => {
+  for (const i of seeded) {
+    const kit = industryKits[i.id];
+    for (const page of i.pages.filter((p) => p !== "FAQ")) {
+      const sections = pageSections(kit, page);
+      assert.ok(sections.length >= 2, `${i.id} ${page}: at least two sections`);
+      assert.ok(!sections.some((s) => s.id.startsWith("intro-")), `${i.id} ${page}: not the generic fallback`);
+      for (const s of sections) assert.ok(sectionSchema.safeParse(s).success, `${i.id} ${page}: ${s.type} validates`);
+      assert.deepEqual(ineligibleSections(kit.template, sections), [], `${i.id} ${page}: eligible sections`);
+      assert.ok(sections.every((s) => s.sample), `${i.id} ${page}: flagged for review`);
+    }
+  }
+});
+
 test("kit palettes meet WCAG contrast for text, buttons and controls", () => {
   for (const [id, { palette: p }] of Object.entries(industryKits)) {
     assert.ok(contrast(p.text, p.background) >= 4.5, `${id} text`);
@@ -133,7 +154,7 @@ test("kit links only point to pages or routes the site will have", () => {
     const kit = industryKits[i.id];
     const routes = new Set([
       "/",
-      ...i.pages.map((p) => "/" + slug(p)),
+      ...i.pages.filter((p) => p !== "FAQ").map((p) => "/" + slug(p)),
       ...(i.category === "commerce" ? ["/shop"] : []),
       ...[...reservedSlugs].map((r) => "/" + r),
     ]);

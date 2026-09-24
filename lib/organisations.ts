@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { pool, query } from './db';
 import { limits } from './model';
 import { memberRoles } from './permissions';
+/** Store roles only make sense where the workspace has an online store. */
+const hasStore = async (ownerId: string) =>
+  (await query("SELECT 1 FROM sites WHERE owner_id=$1 AND category='commerce' LIMIT 1", [ownerId])).length > 0;
 const hash = (token: string) => createHash('sha256').update(token).digest('hex');
 const json = (b: unknown,status=200) => NextResponse.json(b,{status,headers:{'Cache-Control':'no-store'}});
 type Account = {id:string;email:string;email_verified:boolean};
@@ -34,7 +37,7 @@ export async function organisationApi(req:NextRequest,u:Account,id?:string,actio
   if(!org) return json({error:'Organisation not found.'},404);
   if(req.method==='GET') {
     if(org.role!=='owner') return json({id:org.id,name:org.name,role:org.role});
-    return json({...org,...await seatCapacity(pool,id!),members:await query('SELECT m.user_id,m.role,u.name,u.email FROM organisation_members m JOIN users u ON u.id=m.user_id WHERE m.organisation_id=$1 ORDER BY m.joined_at',[id]),invitations:await query('SELECT id,email,role,expires_at FROM organisation_invitations WHERE organisation_id=$1 AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at>now()',[id])});
+    return json({...org,hasStore:await hasStore(org.owner_id),...await seatCapacity(pool,id!),members:await query('SELECT m.user_id,m.role,u.name,u.email FROM organisation_members m JOIN users u ON u.id=m.user_id WHERE m.organisation_id=$1 ORDER BY m.joined_at',[id]),invitations:await query('SELECT id,email,role,expires_at FROM organisation_invitations WHERE organisation_id=$1 AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at>now()',[id])});
   }
   if(org.role!=='owner') return json({error:'Only the organisation owner can manage membership.'},403);
   if(req.method!=='POST') return json({error:'Method not allowed'},405);
@@ -44,6 +47,7 @@ export async function organisationApi(req:NextRequest,u:Account,id?:string,actio
     await client.query('BEGIN');await client.query('SELECT id FROM organisations WHERE id=$1 FOR UPDATE',[id]);
     if(action==='invite') {
       if(!u.email_verified || !b.email || !b.role) {await client.query('ROLLBACK');return json({error:'Verify your email and provide an invitation email and role.'},400);}
+      if(b.role==='store_manager' && !(await hasStore(org.owner_id))) {await client.query('ROLLBACK');return json({error:'The store manager role is only available for workspaces with an online store.'},400);}
       const capacity=await seatCapacity(client,id!);
       if(capacity.members+capacity.pending>=capacity.limit) {await client.query('ROLLBACK');return json({error:`This plan has ${capacity.limit} team seat(s), including the owner and pending invitations.`},409);}
       const {rows}=await client.query("SELECT 1 FROM organisation_members m JOIN users u ON u.id=m.user_id WHERE m.organisation_id=$1 AND lower(u.email)=$2 UNION ALL SELECT 1 FROM organisation_invitations WHERE organisation_id=$1 AND email=$2 AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at>now()",[id,b.email]);
@@ -56,7 +60,8 @@ export async function organisationApi(req:NextRequest,u:Account,id?:string,actio
       await client.query('UPDATE organisation_invitations SET revoked_at=now() WHERE id=$1 AND organisation_id=$2 AND accepted_at IS NULL',[b.invitationId,id]);
     } else if(['remove','role'].includes(action||'') && b.userId) {
       if(b.userId===org.owner_id) {await client.query('ROLLBACK');return json({error:'The owner cannot be removed or demoted.'},409);}
-      if(action==='role' && b.role) await client.query('UPDATE organisation_members SET role=$3 WHERE organisation_id=$1 AND user_id=$2',[id,b.userId,b.role]);
+      if(action==='role' && b.role==='store_manager' && !(await hasStore(org.owner_id))) {await client.query('ROLLBACK');return json({error:'The store manager role is only available for workspaces with an online store.'},400);}
+            if(action==='role' && b.role) await client.query('UPDATE organisation_members SET role=$3 WHERE organisation_id=$1 AND user_id=$2',[id,b.userId,b.role]);
       else if(action==='remove') await client.query('DELETE FROM organisation_members WHERE organisation_id=$1 AND user_id=$2',[id,b.userId]);
       else {await client.query('ROLLBACK');return json({error:'Choose a role.'},400);}
     } else if(action==='rename' && b.name) await client.query('UPDATE organisations SET name=$2 WHERE id=$1',[id,b.name]);

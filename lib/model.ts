@@ -36,7 +36,7 @@ export const limits = {
 export function entitled(tier: Tier, feature: string) {
   return feature === "blog" || feature === "domains" || feature === "video"
     ? tier !== "basic"
-    : feature === "integrations" || feature === "authorLinks"
+    : feature === "integrations" || feature === "authorLinks" || feature === "faqPage"
       ? tier === "advanced"
       : true;
 }
