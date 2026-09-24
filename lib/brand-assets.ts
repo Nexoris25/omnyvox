@@ -113,5 +113,5 @@ export const photoAlt: Record<string, string> = {
   "beauty-hero":
     "Drops of facial oil and cream beside green leaves on a blush background — sample image",
   "beauty-about":
-    "Spoonful of natural butter beside a fresh coconut and palm leaves — sample image",
+    "Spoonful of solid coconut oil beside halved coconuts and palm leaves — sample image",
 };

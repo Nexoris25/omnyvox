@@ -1486,9 +1486,9 @@ export const industryKits: Record<string, IndustryKit> = {
       eyebrow: "Why choose us",
       title: "A working relationship you can rely on.",
       items: [
-        ["Clear communication", "We keep you informed from start to finish."],
-        ["Quality work", "We take care over every detail."],
-        ["Fair pricing", "Quotes agreed before work begins."],
+        ["Plain-spoken advice", "Straight answers and recommendations you can act on."],
+        ["Practical, not theoretical", "Plans shaped around your people, budget and pace."],
+        ["Agreed before we begin", "Scope, timing and fees set out in a written proposal."],
       ],
     },
     steps: {
@@ -1500,12 +1500,12 @@ export const industryKits: Record<string, IndustryKit> = {
           "Share your priorities, your challenges and what you would like to change.",
         ],
         [
-          "Receive a quote",
-          "Review a clear scope, timeline and quote before deciding to go ahead.",
+          "Agree the scope",
+          "Review a written proposal with the scope, timeline and fees before deciding to go ahead.",
         ],
         [
-          "We deliver",
-          "Work through the agreed plan together, with regular check-ins along the way.",
+          "Work together",
+          "Put the plan into practice with regular check-ins and a clear record of progress.",
         ],
       ],
     },
@@ -1524,13 +1524,13 @@ export const industryKits: Record<string, IndustryKit> = {
       ],
     ],
     cta: {
-      title: "Let’s get started",
-      body: "Send us a message and we’ll respond promptly.",
+      title: "Ready to plan your next step?",
+      body: "Tell us where your business is today and where you want it to be. We’ll suggest a sensible place to start.",
       button: ["Get in touch", "/contact"],
     },
     contact: {
       title: "Start a conversation.",
-      body: "We’re happy to answer your questions.",
+      body: "Share a little about your business and what you would like to change, and we’ll come back to you with a suggested next step.",
     },
   }),
 
@@ -2300,7 +2300,11 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       pick("team") || pick("gallery"),
       pick("cta"),
     ]);
-  if (key === "faq") return fresh([pick("faq"), pick("cta")]);
+  if (key === "faq") {
+    // The page heading already says "Frequently asked questions".
+    const faq = pick("faq");
+    return fresh([faq && { ...faq, eyebrow: "", title: "Common questions" }, pick("cta")]);
+  }
   if (
     offers &&
     (key === (offers.eyebrow || "").toLowerCase() ||

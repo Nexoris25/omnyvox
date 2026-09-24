@@ -151,6 +151,37 @@ reviewing agent); production authentication was not changed.
     (28) suites pass against the rebuilt server, 53 unit tests pass, and the
     production build succeeds.
 
+## Batch 7 — handoff follow-ups
+
+- **Photo ledger:** I checked all 32 entries against Unsplash's own photo
+  records.
+  - Two photos credited to Francis Odeyemi had the wrong profile handle; it is
+    `@cutinamoment`, now corrected.
+  - `@disruptxn` (Desola Lanre-Ologun) currently shows the display name "X",
+    now noted in the ledger.
+  - None of the 32 photos is Unsplash+ or premium.
+  - The beauty-about Unsplash slug says "tomato", but the photo shows solid
+    coconut oil. The alt text now says so.
+- **Subscriber record pages:** I checked 11 real published test-site record
+  pages at 320, 375 and 1440px: custom pages, FAQ, articles, authors,
+  categories and legal. None overflow, each has one h1, and the text is
+  readable.
+  - Fixed: the "Add FAQ page" blueprint repeated "Frequently asked questions"
+    under the page heading. Its section is now titled "Common questions".
+- **Sitemap bug found and fixed:**
+  - The platform sitemap listed published websites that have no published
+    snapshot. The public route refuses to serve those, so they returned 404.
+    The sitemap now uses the same rule as the public route.
+  - Homepages with an Insights article that had no category crashed with a
+    500 error. `categoryName` now falls back to "Insights".
+  - All 154 subscriber URLs in the sitemap now return 200.
+- **General business sample copy:** reworded the advisory kit's reasons,
+  steps, CTA and contact copy. It now says "written proposal" and "suggested
+  next step" rather than generic "quality work / respond promptly" wording,
+  with no promised response time.
+- **Checks passed:** build, unit tests (53), and the sites-content (46),
+  amendment (41) and launch-readiness (38) suites.
+
 ## Remaining review coverage (continuing)
 
 - Every family: Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow,

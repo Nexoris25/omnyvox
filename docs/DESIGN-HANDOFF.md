@@ -10,8 +10,7 @@ hierarchy, specific service sections and enquiry flow; do not copy its assets.
 
 Start from the work on **dev**, not from the older main branch. Commit and push
 small, verified batches to **dev**. Do not merge or push this redesign to main
-without a subsequent instruction. The user paused implementation to request
-this checkpoint and a handoff note; the comprehensive redesign is unfinished.
+without a subsequent instruction.
 
 Use real, relevant photographs with verified licences and accurate alt text;
 do not repeat one photograph across unrelated sections. Use Lucide icons for
@@ -19,52 +18,63 @@ UI and the existing brand-icon library for social platforms. Retain Omnyvox's
 primary `#540CDA`, but preserve subscriber-controlled colours and each template's
 identity. Configuration preview is 375px; verify actual layouts down to 320px.
 
-## Committed checkpoint
+## Committed checkpoint (updated after batch 7)
 
-- Main baseline: `a3761c6`.
-- `a56652a`: shared subscriber/preview page headers, active navigation, mobile
-  menu icon, section refinements and Modern Company sample copy/photography.
-- `24baad4`: marketing editorial navigation, process sections, FAQ accordions,
-  pricing controls and comparison refinements, contact support explanation, and
-  five distinct licensed marketing photographs, including Nigerian workspaces.
-- Both implementation commits were successfully pushed to `origin/dev`.
-- Local working branch is `codex/design-review`. Untracked `.claude/` existed
-  before this work and is unrelated; do not stage it.
+- Main baseline: `a3761c6`. All design work below is on `origin/dev` only.
+- `a56652a`, `24baad4`: batches 1–2 (shared subscriber/preview headers;
+  marketing editorial system and licensed marketing photography).
+- `5f69be4` (batch 3): private workspaces and account journeys. This
+  covers grouped admin navigation with a phone picker, records tables that
+  stack on phones, editor overflow, the `inert` preview, the form title as
+  the visible h1 in `AuthForm`, and recovery/onboarding headings. The CSS
+  layer is `app/workspace-refinement.css`, imported last.
+- `327a210` (batch 4): all 19 industry kits use distinct licensed photos, and
+  about 130 editor-directed starter strings are now fictional sample copy
+  written for visitors (roles, not names; project types, not clients).
+- `9d17199` (batch 5): marketing detail pass. It adds a 12px type floor,
+  36–48px targets and `aria-hidden` template miniatures, swept on 67 routes
+  at 320/375/1440px.
+- `dff4801` (batch 6): workspace and admin at 320px (17 destinations and 22
+  admin tabs).
+- Batch 7: the handoff follow-ups. It verifies the photo ledger, fixes the
+  FAQ page double heading, a sitemap bug listing unservable sites, and an
+  Insights crash on articles without a category, and refines the general
+  business copy.
+- Detail and exact coverage per batch: `DESIGN-REVIEW-2026-09-24.md`.
+- Local working branch is `codex/design-review` (pushed with
+  `git push origin HEAD:dev`). Untracked `.claude/` is unrelated; do not stage it.
 
-## Next work, in order
+## Status of the original five priorities
 
-1. **Review the private workspaces.** This is the exact point implementation
-   reached. Inspect every subscriber navigation destination and internal admin
-   tab at desktop and mobile widths, including forms, tables, empty/loading/error
-   states, media library and rich-text editor. Improve navigation grouping,
-   action hierarchy, spacing, labels and responsive tables without changing
-   authorization, billing, KYB or publishing behaviour.
-2. **Finish account journeys.** Review sign-in, registration, verification,
-   onboarding, forgotten/reset password, assisted recovery, security, team,
-   invoices and order status. A concrete issue already found: `AuthForm` places
-   its sole h1 in the decorative story panel (hidden on mobile), while the actual
-   form title is h2. Make the form's purpose the visible h1 and adjust CSS that
-   currently targets `.auth-story h1` / `.auth-form h2`. Retain password reveal,
-   requirements, confirmation, consent and MFA flows.
-3. **Art-direct every template and inner page.** Shared improvements are in
-   place, but structural route checks are not a completed visual review. Check
-   Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow, Catalogue and
-   Essentials, including legal, contact, Insights/article, guide and store pages.
-   Several kits still contain editor-directed starter wording and generated
-   imagery/illustrations. Replace these thoughtfully with coherent, explicitly
-   fictional sample copy and distinct licensed photographs where appropriate.
-   Never invent real credentials, clients, testimonials or staff identities.
-   Keep sample-content review/publishing gates intact.
-4. **Complete marketing detail review.** Inspect all feature subpages, solution
-   pages, setup, professional services/migration, about, security, help, guides,
-   pricing categories, template gallery, Insights/articles/authors and legal
-   pages. Homepage and the shared editorial system received changes, but not
-   every page has received individual screenshot review. Verify photo crops,
-   sticky navigation, keyboard focus, links and empty-content handling.
-5. **Run final regression and responsive checks.** Build, run relevant tests,
-   inspect 1440px, 375px and 320px, exercise menus, FAQs, filters, pricing controls,
-   form validation and safe test-account journeys. Push each coherent batch to
-   dev and update the review log with exact coverage and remaining limitations.
+All five priorities have been worked through. What remains is depth, not
+coverage:
+
+1. **Private workspaces:** done at 375px (batch 3) and 320px (batch 6).
+   These were checked by automated measurement plus spot screenshots.
+   Empty/loading/error states and the media library were not exercised with
+   seeded edge-case data.
+2. **Account journeys:** the auth h1 is fixed, with recovery/onboarding
+   headings and type floor. Not walked end to end: MFA enrolment, team
+   invitations, invoices and order status.
+3. **Templates:** photos and copy are done for every kit. Legal pages keep
+   deliberate `[Required: …]` markers for the owner's adviser. Previews show
+   only each family's primary industry; the other industries were checked by
+   mapping, not visually.
+4. **Marketing:** a layout sweep of all sitemap routes is done. It was not a
+   page-by-page copy re-read, and keyboard focus order was not audited.
+5. **Regression:** build, 53 unit tests and the integration suites
+   (integration, organisation, admin-ops, sites-content, amendment,
+   launch-readiness) pass against `omnyvox_test`.
+
+## Suggested next work
+
+- A keyboard-only pass (focus order, visible focus, skip link) on marketing,
+  auth, the editor and the admin.
+- Seed empty/error states in `omnyvox_test` and review them (no records, a
+  failed upload, an expired subscription, a pending KYB).
+- A visual review of non-primary industries by creating test sites per
+  industry in `omnyvox_test` (not the ordinary database).
+- A real MFA sign-in walkthrough with the design accounts (see cautions below).
 
 ## Implementation map
 
@@ -120,31 +130,39 @@ identity. Configuration preview is 375px; verify actual layouts down to 320px.
   It reads the ordinary local database: use it for read-only UI checks. Ports
   3000/3001 may show older builds. Inspect active processes before restarting;
   do not assume a server survived the interrupted turn.
-- `omnyvox_test` exists and current schema/migrations were successfully applied
-  there for this review. A command to seed dedicated
-  `design-admin@example.invalid` and `design-owner@example.invalid` accounts
-  was interrupted by the user: **verify whether it completed before retrying**.
-  Never reset passwords or seed fake data in the ordinary application database.
-- For private UI QA, run a separate server with DATABASE_URL explicitly pointing
-  at `omnyvox_test`, its own matching APP_URL and external delivery disabled.
-  Use normal sign-in/MFA UI; do not weaken production authentication to inspect
-  admin screens. Existing `scripts/seed-test-accounts.ts` takes SEED_PASSWORD and
-  email overrides. Do not commit passwords or environment files.
-- No isolated QA server was confirmed running at handoff. The 3003 server is
-  **not** the isolated test server.
+- `omnyvox_test` (127.0.0.1:55432) holds current migrations and the QA accounts
+  `design-owner@example.invalid` and `design-admin@example.invalid` (seeding
+  completed). Their passwords are not recorded anywhere; if you need them, re-run
+  `scripts/seed-test-accounts.ts` with your own SEED_PASSWORD **against
+  `omnyvox_test` only**. Never reset passwords or seed fake data in the ordinary
+  application database.
+- Isolated QA server used in batches 3–7 (production build, test DB, sandbox KYB,
+  no external delivery credentials):
+  `KYB_PROVIDER=sandbox DATABASE_URL=postgresql://omnyvox@127.0.0.1:55432/omnyvox_test
+  APP_URL=http://localhost:3010 PLATFORM_DOMAIN=localhost ENCRYPTION_KEY=<test key>
+  node node_modules/next/dist/bin/next start -p 3010`. Integration scripts in
+  `scripts/*-test.*` also need `TEST_DATABASE_URL` and
+  `TEST_BASE_URL=http://localhost:3010`. It was stopped at the end of batch 7.
+- **Deviation to be aware of:** in batches 3 and 6 the agent could not type
+  passwords, so it created sessions for the two QA accounts directly in
+  `omnyvox_test` and set the session cookie in the browser pane. This did not
+  touch production data or weaken authentication, but it is not the "normal
+  sign-in/MFA UI" route. Prefer a real sign-in next time, and repeat the MFA
+  walkthrough.
+- The 3003 server (if running) uses `.env.local` and the ordinary database; use
+  it for read-only checks only.
 - Browser skill is available. Use its browser runtime and documented UI tools;
   do not inspect browser storage/cookies. Prior handles are not guaranteed to
   survive a new agent/session. Reset viewport overrides after checks.
 
-## Small follow-ups noticed
+## Small follow-ups
 
-- Confirm photographer profile URLs in the new licence ledger against the
-  source pages; some handles were transcribed during sourcing. The source photo
-  URLs and photographer names are the primary evidence.
-- Check subscriber `record-pages` spacing on a real test website: the new
-  header is applied there, but most visual verification used template previews.
-- General business sample CTA/contact copy still has some older generic wording;
-  refine consistently with its new advisory positioning.
+- Done in batch 7: the photographer URLs were verified against Unsplash (two
+  handles corrected), record-page spacing was checked on real test sites, and
+  the general business copy was refined.
+- Test fixtures in `omnyvox_test` include published sites without a snapshot
+  (`launch-*`, `ashford-ui`); they are now excluded from the sitemap. That is
+  expected, not a regression.
 - Earlier functional backlog requests exist, but this checkpoint concerns the
   latest comprehensive design request. Do not replace the design task with an
   unrelated engineering expansion or revert newer main-branch security work.

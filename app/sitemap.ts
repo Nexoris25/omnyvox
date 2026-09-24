@@ -36,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
   }
   const sites = await query<Site>(
-    "SELECT * FROM effective_sites WHERE status='published' AND subscription='active' AND service_until>now()",
+    "SELECT * FROM effective_sites WHERE status='published' AND subscription='active' AND service_until>now() AND published IS NOT NULL",
   );
   for (const site of sites) {
     if (site.published?.brand.robots?.index === false) continue;

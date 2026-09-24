@@ -14,9 +14,11 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export const categoryName = (slug: string, categories: Content[]) =>
-  categories.find((c) => c.data.slug === slug)?.data.title ||
-  slug.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+export const categoryName = (slug: string | undefined, categories: Content[]) =>
+  !slug
+    ? "Insights"
+    : categories.find((c) => c.data.slug === slug)?.data.title ||
+      slug.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
 /** Article cards shared by the homepage section and the Insights page. */
 export function ArticleGrid({
