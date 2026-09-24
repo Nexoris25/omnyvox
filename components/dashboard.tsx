@@ -112,6 +112,50 @@ const recordNouns: Record<string, string> = {
   locations: "location",
 };
 const recordNoun = (section: string) => recordNouns[section] || "item";
+/** One line under each workspace heading saying what the screen is for. */
+const sectionIntros: Record<string, string> = {
+  overview: "Here’s where your website stands and what’s left before it goes live.",
+  websites: "Every website in your workspace, with its plan and status.",
+  editor: "Edit your homepage sections, preview on any screen size, then publish.",
+  pages: "The pages in your menu, such as About, Services and Contact.",
+  branding: "Your logo, colours, fonts, menu and social links.",
+  media: "Photos and files you can use anywhere on your website.",
+  legal: "Your privacy, cookie and terms pages. Complete and review each one before publishing.",
+  seo: "How your website appears in search results and when it’s shared.",
+  templates: "Switch your website’s design. Your content stays where it is.",
+  articles: "Articles for your Insights page. The newest three also appear on your homepage.",
+  authors: "The people who write your articles, shown on each article they publish.",
+  categories: "Group your articles or products so visitors can filter them.",
+  products: "Everything you sell, with prices, options and stock.",
+  orders: "Orders from your store, from payment to delivery.",
+  fulfilment: "Where you deliver, what it costs and where customers can collect.",
+  merchant: "Connect your Paystack account to take payments.",
+  enquiries: "Messages from your website’s contact forms and where they’re sent.",
+  business: "The facts your website and assistant rely on: what you do, where and how to reach you.",
+  domains: "Connect your own web address.",
+  billing: "Your plan, payments, invoices and renewal.",
+  services: "Ask our team to help set up or improve your website.",
+  support: "Get help from the Omnyvox team.",
+  offerings: "The services you offer, each with its own page.",
+  projects: "Work you’ve completed, shown on your website.",
+  people: "Your team members and their profiles.",
+  properties: "Properties you list on your website.",
+  facilities: "Your facilities, rooms and spaces.",
+  programmes: "The programmes and courses you offer.",
+  locations: "The places you operate or deliver to.",
+};
+const statusLabels: Record<string, string> = {
+  draft: "Draft",
+  published: "Published",
+  scheduled: "Scheduled",
+  archived: "Archived",
+  new: "New",
+  in_progress: "In progress",
+  resolved: "Resolved",
+};
+const statusLabel = (s?: string) => statusLabels[s || ""] || (s ? s.replaceAll("_", " ") : "—");
+const shortDate = (v: string) =>
+  new Date(v).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
 const demoSite: Site = {
   id: "demo",
   owner_id: "demo",
@@ -885,15 +929,7 @@ export function Dashboard({ section }: { section: string }) {
                       ? `Welcome ${demo ? "back, Alex" : account.name === "Your workspace" ? "to Omnyvox" : account.name.split(" ")[0]}.`
                       : title}
                   </h1>
-                  <p>
-                    {section === "overview"
-                      ? "A little progress today. A bigger possibility tomorrow."
-                      : section === "branding"
-                        ? "Make every detail feel unmistakably like your business."
-                        : section === "editor"
-                          ? "Make changes, preview your website, and publish when you’re ready."
-                          : "Everything you need, right where you need it."}
-                  </p>
+                  <p>{sectionIntros[section] || "Manage this part of your website."}</p>
                 </div>
                 {["overview", "websites"].includes(section) ? (
                   <button className="button" onClick={() => setModal(true)}>
@@ -1774,7 +1810,7 @@ export function Dashboard({ section }: { section: string }) {
                                 />
                               </div>
                               <div className="table-wrap">
-                                <table className="data-table">
+                                <table className="data-table records-table">
                                   <thead>
                                     <tr>
                                       <th>
@@ -1800,7 +1836,7 @@ export function Dashboard({ section }: { section: string }) {
                                       )
                                       .map((r) => (
                                         <tr key={r.id}>
-                                          <td>
+                                          <td data-label={section === "enquiries" ? "Name" : "Title"}>
                                             <b>{r.data.title || r.data.name}</b>
                                             <br />
                                             <small className="muted">
@@ -1810,12 +1846,12 @@ export function Dashboard({ section }: { section: string }) {
                                               <p>{r.data.message}</p>
                                             )}
                                           </td>
-                                          <td>
-                                            <span className="badge">
-                                              {r.data.status}
+                                          <td data-label="Status">
+                                            <span className={`badge status-${r.data.status || "new"}`}>
+                                              {statusLabel(r.data.status)}
                                             </span>
                                           </td>
-                                          <td>
+                                          <td data-label={section === "products" ? "Price" : "Updated"}>
                                             {section === "products"
                                               ? new Intl.NumberFormat("en-NG", {
                                                   style: "currency",
@@ -1823,14 +1859,16 @@ export function Dashboard({ section }: { section: string }) {
                                                 }).format(
                                                   (r.data.price || 0) / 100,
                                                 )
-                                              : new Date(
-                                                  r.created_at,
-                                                ).toLocaleDateString()}
+                                              : shortDate(
+                                                  (r.data as { updatedAt?: string }).updatedAt || r.created_at,
+                                                )}
                                           </td>
-                                          <td>
+                                          <td data-label="Actions" className="record-actions">
                                             {section !== "enquiries" && (
                                               <>
                                                 <button
+                                                  className="button secondary small"
+                                                  aria-label={`Edit ${r.data.title || recordNoun(section)}`}
                                                   onClick={() => {
                                                     setEditRow(r);
                                                     setRecordModal(true);
@@ -1839,6 +1877,8 @@ export function Dashboard({ section }: { section: string }) {
                                                   Edit
                                                 </button>
                                                 <button
+                                                  className="link-danger"
+                                                  aria-label={`Delete ${r.data.title || recordNoun(section)}`}
                                                   onClick={() => {
                                                     if (
                                                       !confirm(

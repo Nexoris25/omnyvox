@@ -17,8 +17,6 @@ photography and enquiry paths; its assets and copy are not copied.
 - Validation: production build and 53 unit tests; desktop and 375px browser
   inspection of Modern Company and its About page; mobile menu expansion.
 
-## Remaining review coverage
-
 ## Batch 2 — marketing pages
 
 - Editorial layouts with in-page navigation, semantic icons, numbered process
@@ -32,6 +30,37 @@ photography and enquiry paths; its assets and copy are not copied.
 - All ten template homepages and 115 linked template routes inspected at 320px:
   one main heading, no page overflow, no failed loaded images detected. This is
   structural coverage, not a claim that every screenshot has been art-directed.
+
+## Batch 3 — private workspaces and account journeys
+
+Reviewed on an isolated server against `omnyvox_test` with the seeded
+`design-owner@example.invalid` and `design-admin@example.invalid` accounts.
+Sessions were created in the test database (passwords are not typed by the
+reviewing agent); production authentication was not changed.
+
+- Subscriber workspace: scripted audit of all 20 sidebar destinations at 375px
+  (clipping, tap targets, text size, accessible names, labels, headings).
+- Fixed: 9–11px text across the workspace (new 12px floor, 14px body/buttons);
+  the generic "Everything you need…" subtitle replaced by a specific line per
+  section; records tables (pages, articles, products, collections) become
+  stacked cards on phones with readable dates, status colours and labelled
+  Edit/Delete buttons; section editor overflowed the phone width (grid tracks
+  now shrink); live preview is `inert`, so its headings and links no longer
+  duplicate the page's h1 or enter the tab order; larger touch targets for the
+  rich-text toolbar and menu editor on touch screens.
+- Internal admin: all 22 tabs audited at 375px. Navigation grouped into
+  Overview, Customers, Payments, Operations and Marketing website; phones get a
+  single grouped "Go to" picker instead of a sideways strip. Stat labels
+  enlarged; duplicate "Staff permissions" heading renamed.
+- Account journeys: sign-in and registration now have the form title as the
+  visible h1 ("Sign in to Omnyvox", "Create your Omnyvox account"); forgot,
+  reset and verify pages gained an h1; onboarding has its own page title.
+  Password reveal, requirements, consent and MFA flows unchanged.
+- Validation: production build, 53 unit tests, and integration, extensions,
+  organisation, site-content and admin-ops suites (186 checks) passed.
+- Limits: screenshots in the in-app browser were intermittently partial, so
+  layout was verified with measurements plus spot screenshots. Desktop
+  widths were measured rather than visually reviewed in full.
 
 ## Remaining review coverage (continuing)
 
@@ -47,3 +76,6 @@ photography and enquiry paths; its assets and copy are not copied.
 - Responsive review: 1440px desktop, 375px configuration preview and 320px.
 
 This is a work log, not a declaration that the entire redesign is complete.
+
+Next agent: start with [DESIGN-HANDOFF.md](DESIGN-HANDOFF.md) for the current
+checkpoint, remaining priorities and test-environment cautions.

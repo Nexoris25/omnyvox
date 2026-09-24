@@ -71,6 +71,14 @@ const tabs = [
   ["settings", "Marketing settings"],
 ];
 const cms = ["pages", "articles", "categories", "authors", "legal", "testimonials"];
+/** Admin navigation groups; every tab id appears exactly once. */
+const adminGroups: [string, string[]][] = [
+  ["Overview", ["overview"]],
+  ["Customers", ["users", "subscriptions", "kyb", "recovery", "support", "requests"]],
+  ["Payments", ["payments", "merchants"]],
+  ["Operations", ["domains", "emails", "storage", "ai", "staff"]],
+  ["Marketing website", ["articles", "pages", "categories", "authors", "testimonials", "legal", "media", "settings"]],
+];
 export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
   const allowedTabs = tabs.filter(([key])=>canInternal(role,key==='overview'?['admin']:key==='kyb'?['kyb-admin']:cms.includes(key)||['media','settings'].includes(key)?['marketing',key]:['platform-admin',key],'GET'));
   const [tab, setTab] = useState(allowedTabs[0]?.[0] || "overview"),
@@ -403,15 +411,42 @@ export function PlatformAdmin({role = "super_admin"}:{role?:string}) {
       </header>
       <div className="admin-layout">
         <nav aria-label="Admin navigation">
-          {allowedTabs.map(([id, label]) => (
-            <button
-              key={id}
-              className={tab === id ? "active" : ""}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
+          {/* Phones: one grouped picker instead of a long sideways strip. */}
+          <label className="admin-nav-select">
+            <span>Go to</span>
+            <select value={tab} onChange={(e) => setTab(e.target.value)}>
+              {adminGroups.map(([group, ids]) => {
+                const items = allowedTabs.filter(([id]) => ids.includes(id));
+                return items.length ? (
+                  <optgroup key={group} label={group}>
+                    {items.map(([id, label]) => (
+                      <option key={id} value={id}>
+                        {label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null;
+              })}
+            </select>
+          </label>
+          {adminGroups.map(([group, ids]) => {
+            const items = allowedTabs.filter(([id]) => ids.includes(id));
+            return items.length ? (
+              <div className="admin-nav-group" key={group}>
+                <span className="admin-nav-heading">{group}</span>
+                {items.map(([id, label]) => (
+                  <button
+                    key={id}
+                    className={tab === id ? "active" : ""}
+                    aria-current={tab === id ? "page" : undefined}
+                    onClick={() => setTab(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : null;
+          })}
         </nav>
         <main id="main">
           <h1>{tabs.find((t) => t[0] === tab)?.[1]}</h1>

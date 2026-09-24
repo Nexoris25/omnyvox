@@ -1838,7 +1838,7 @@ summary:focus-visible {
   justify-content: center;
   position: relative;
 }
-.auth-story h1 {
+.auth-story .auth-story-title {
   font-size: 54px;
   max-width: 490px;
   line-height: 1.12;
@@ -1868,7 +1868,7 @@ summary:focus-visible {
   width: 100%;
   max-width: 360px;
 }
-.auth-form h2 {
+.auth-form h1 {
   font-size: 29px;
   margin-bottom: 9px;
 }
@@ -2092,7 +2092,7 @@ summary:focus-visible {
   .auth-story {
     padding: 40px;
   }
-  .auth-story h1 {
+  .auth-story .auth-story-title {
     font-size: 43px;
   }
   .auth-form-wrap {
@@ -2648,7 +2648,7 @@ summary:focus-visible {
   .auth-form-wrap {
     padding: 30px 18px;
   }
-  .auth-form h2 {
+  .auth-form h1 {
     font-size: 27px;
   }
   .form-actions .button {

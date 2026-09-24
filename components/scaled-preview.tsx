@@ -22,8 +22,10 @@ export function ScaledPreview({
     return () => observer.disconnect();
   }, [width]);
   return (
-    <div ref={ref} className="scaled-preview">
-      <div className="scaled-preview-frame" style={{ width, zoom: scale }}>
+    <div ref={ref} className="scaled-preview" role="group" aria-label={`Preview at ${width}px wide`}>
+      {/* A visual mirror of the editor: not focusable, and its headings and
+          links stay out of the page's accessibility tree. */}
+      <div className="scaled-preview-frame" style={{ width, zoom: scale }} inert>
         {children}
       </div>
       {scale < 1 && (

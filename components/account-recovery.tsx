@@ -37,13 +37,13 @@ export function AccountRecovery({
           }
         }}
       >
-        <h2>
+        <h1>
           {mode === "verify"
-            ? "Confirm your email."
+            ? "Verify your email"
             : mode === "forgot"
-              ? "Let’s get you back in."
-              : "Choose a new password."}
-        </h2>
+              ? "Reset your password"
+              : "Choose a new password"}
+        </h1>
         <p>
           {mode === "verify"
             ? "Confirm your email to unlock website publishing."

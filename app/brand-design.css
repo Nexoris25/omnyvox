@@ -495,7 +495,7 @@ body {
 .auth-story .eyebrow {
   color: #ddcaff;
 }
-.auth-story h1 {
+.auth-story .auth-story-title {
   font-size: clamp(36px, 4.2vw, 64px);
   letter-spacing: -0.045em;
 }
@@ -553,7 +553,7 @@ body {
 .auth-form {
   max-width: 420px;
 }
-.auth-form h2 {
+.auth-form h1 {
   font-size: clamp(27px, 3vw, 36px);
   letter-spacing: -0.04em;
   margin: 12px 0;
@@ -1066,3 +1066,9 @@ input.locked {
 .contact-selfhelp { font-size: 14px; color: var(--muted); }
 .contact-selfhelp a { color: var(--primary); text-decoration: underline; }
 .footer-contact-line { margin: 0; font-size: 13px; }
+.auth-story .auth-story-title {
+  font-weight: 700;
+  color: #fff;
+  margin: 18px 0 20px;
+  font-family: inherit;
+}

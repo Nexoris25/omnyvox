@@ -52,10 +52,10 @@ export function AuthForm({ register = false }: { register?: boolean }) {
     <main id="main" className="auth-layout">
       <section className="auth-story">
         <span className="eyebrow">YOUR BUSINESS. YOUR NEXT CHAPTER.</span>
-        <h1>
+        <p className="auth-story-title">
           Your ambition.
           <br />A website to match.
-        </h1>
+        </p>
         <p>
           A professional website, a connected store and a simpler way to manage
           it all. Built around your business.
@@ -94,13 +94,11 @@ export function AuthForm({ register = false }: { register?: boolean }) {
           <span className="eyebrow">
             {register ? "GET STARTED" : "YOUR OMNYVOX WORKSPACE"}
           </span>
-          <h2>
-            {register ? "Build your next chapter." : "Good to see you again."}
-          </h2>
+          <h1>{register ? "Create your Omnyvox account" : "Sign in to Omnyvox"}</h1>
           <p>
             {register
-              ? "Create your account and find your starting point."
-              : "Sign in to manage your website, store and customers."}
+              ? "It’s free to start. Build and preview your website, then choose a plan when you’re ready to publish."
+              : "Good to see you again. Manage your website, store and customers."}
           </p>
           {error && (
             <div className="notice error" role="alert">
