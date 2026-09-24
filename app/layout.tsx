@@ -7,6 +7,7 @@ import "./template-families.css";
 import "./editor-design.css";
 import "./brand-design.css";
 import "./store-design.css";
+import "./design-refinement.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: {

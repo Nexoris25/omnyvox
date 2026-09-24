@@ -1,5 +1,6 @@
 /** One original photograph per image-led section. Keep fictional samples identifiable. */
 export const photoIndustries = [
+  "general",
   "creative",
   "legal",
   "healthcare",
@@ -45,6 +46,10 @@ export function photoSourceSet(src: string) {
     : undefined;
 }
 export const photoAlt: Record<string, string> = {
+  "general-hero":
+    "Colleagues discussing a business brief around a meeting table — sample photograph",
+  "general-about":
+    "A team reviewing their work together in a bright meeting room — sample photograph",
   "creative-hero":
     "Designers arranging a chair and ceramics in a sunlit creative studio — illustrative sample",
   "creative-about":
@@ -77,8 +82,7 @@ export const photoAlt: Record<string, string> = {
     "Resort pool lined with palm trees beside white guest buildings — sample image",
   "hospitality-about":
     "Bright restaurant dining room with wooden tables and pendant lights — sample image",
-  "property-hero":
-    "Modern two-storey home lit warmly at dusk — sample image",
+  "property-hero": "Modern two-storey home lit warmly at dusk — sample image",
   "property-about":
     "Furnished living room with a grey sofa, armchair and plants — sample image",
   "beauty-hero":

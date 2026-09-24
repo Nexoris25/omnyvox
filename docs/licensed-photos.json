@@ -64,5 +64,60 @@
     "license": "Unsplash License (https://unsplash.com/license)",
     "downloaded": "2026-09-23",
     "bytes": 87664
+  },
+  {
+    "key": "general-hero",
+    "url": "/samples/general-hero-photo.webp",
+    "small": "/samples/general-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/business-people-in-a-meeting-around-a-table-fQf9XTYNmQU",
+    "photographer": "Vitaly Gariev",
+    "photographerUrl": "https://unsplash.com/@silverkblack",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 47736
+  },
+  {
+    "key": "general-about",
+    "url": "/samples/general-about-photo.webp",
+    "small": "/samples/general-about-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-group-of-people-sitting-around-a-conference-table-rHe6nD1iMU0",
+    "photographer": "Walls.io",
+    "photographerUrl": "https://unsplash.com/@walls_io",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 109754
+  },
+  {
+    "key": "general-insight-planning",
+    "url": "/samples/general-insight-planning-photo.webp",
+    "small": "/samples/general-insight-planning-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-notebook-with-a-planner-and-pen-on-top-of-it-3G9rmIuj3Hc",
+    "photographer": "2H Media",
+    "photographerUrl": "https://unsplash.com/@2hmedia",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 93458
+  },
+  {
+    "key": "general-insight-operations",
+    "url": "/samples/general-insight-operations-photo.webp",
+    "small": "/samples/general-insight-operations-photo-small.webp",
+    "source": "https://unsplash.com/photos/woman-drawing-a-flowchart-on-a-whiteboard-46G4xEr122c",
+    "photographer": "Beatriz Cattel",
+    "photographerUrl": "https://unsplash.com/@bicattel",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 62516
+  },
+  {
+    "key": "general-insight-projects",
+    "url": "/samples/general-insight-projects-photo.webp",
+    "small": "/samples/general-insight-projects-photo-small.webp",
+    "source": "https://unsplash.com/photos/four-men-gathered-around-a-whiteboard-with-sticky-notes-MLWk6FFWURU",
+    "photographer": "blue sky",
+    "photographerUrl": "https://unsplash.com/@bluext",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 68394
   }
 ]

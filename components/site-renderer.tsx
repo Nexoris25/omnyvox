@@ -6,7 +6,14 @@ import {
   MapPin,
   Phone,
   Clock,
-  Check,
+  Menu,
+  MessagesSquare,
+  ClipboardCheck,
+  Handshake,
+  Sparkles,
+  PackageCheck,
+  ShieldCheck,
+  Layers,
 } from "lucide-react";
 import type { Site, Section, Brand } from "@/lib/model";
 import { safeHtml } from "@/lib/content";
@@ -161,6 +168,20 @@ function ItemsGrid({
   return (
     <div className={`item-grid item-grid-${variant}`} data-count={items.length}>
       {items.map((item, i) => {
+        const label = item.title.toLowerCase();
+        const FeatureIcon = /communicat|check-in|support|contact/.test(label)
+          ? MessagesSquare
+          : /brief|plan|scope|detail|review/.test(label)
+            ? ClipboardCheck
+            : /deliver|ready|pack/.test(label)
+              ? PackageCheck
+              : /care|safe|secur/.test(label)
+                ? ShieldCheck
+                : /creat|design/.test(label)
+                  ? Sparkles
+                  : /collaborat|partner|team/.test(label)
+                    ? Handshake
+                    : Layers;
         const inner = (
           <>
             {item.image && variant !== "features" && variant !== "steps" && (
@@ -181,16 +202,18 @@ function ItemsGrid({
                   {String(i + 1).padStart(2, "0")}
                 </span>
               )}
-              {variant === "features" && (
+              {(variant === "features" ||
+                (variant === "services" && !item.image)) && (
                 <span className="feature-mark" aria-hidden="true">
-                  <Check size={16} />
+                  <FeatureIcon size={22} strokeWidth={1.6} />
                 </span>
               )}
               {item.title && <h3>{item.title}</h3>}
               {item.text && <p>{item.text}</p>}
               {item.href && (
                 <span className="item-link">
-                  Learn more <ArrowRight size={14} aria-hidden="true" />
+                  Explore {item.title.toLowerCase()}{" "}
+                  <ArrowRight size={14} aria-hidden="true" />
                 </span>
               )}
             </div>
@@ -416,7 +439,9 @@ export function SiteRenderer({
   footerLinks: extraLinks = [],
   registration,
   platformUrl = "https://omnyvox.com",
+  currentPath,
 }: {
+  currentPath?: string;
   data: Site["data"];
   headerExtra?: ReactNode;
   /** System pages (e.g. Insights) added to the footer when not in the menu. */
@@ -461,6 +486,9 @@ export function SiteRenderer({
       .filter((l) => !entries.some((n) => n.href === l.href))
       .map((l) => ({ label: l.label, href: l.href, footer: true })),
   ];
+  const isCurrent = (url: string | undefined) =>
+    !!currentPath && !!url &&
+    url.split(/[?#]/)[0].replace(/\/$/, "") === currentPath.replace(/\/$/, "");
   function menu(mobile: boolean) {
     return primary.map((n, i) => {
       const url = href(n);
@@ -474,12 +502,19 @@ export function SiteRenderer({
             </summary>
             <div className="site-dropdown-panel">
               {url && url !== "#" && (
-                <a href={url}>
+                <a
+                  href={url}
+                  aria-current={isCurrent(url) ? "page" : undefined}
+                >
                   {mobile ? `All ${n.label}` : `${n.label} overview`}
                 </a>
               )}
               {kids.map((c, j) => (
-                <a key={j} href={href(c)}>
+                <a
+                  key={j}
+                  href={href(c)}
+                  aria-current={isCurrent(href(c)) ? "page" : undefined}
+                >
                   {c.label}
                 </a>
               ))}
@@ -487,7 +522,11 @@ export function SiteRenderer({
           </details>
         );
       return url ? (
-        <a key={i} href={url}>
+        <a
+          key={i}
+          href={url}
+          aria-current={isCurrent(url) ? "page" : undefined}
+        >
           {n.label}
         </a>
       ) : null;
@@ -519,7 +558,7 @@ export function SiteRenderer({
       }
     >
       <header className="rendered-nav">
-        <a className="site-logo" href={base || "#"}>
+        <a className="site-logo" href={base || "/"}>
           {brand.logo ? (
             <img src={brand.logo} alt={brand.name} width={130} height={50} />
           ) : (
@@ -536,7 +575,10 @@ export function SiteRenderer({
         )}
         {headerExtra}
         <details className="site-mobile-menu">
-          <summary>Menu</summary>
+          <summary>
+            <Menu size={20} aria-hidden="true" />
+            <span>Menu</span>
+          </summary>
           <nav aria-label="Mobile website navigation">
             {menu(true)}
             {cta && (
@@ -631,7 +673,11 @@ export function SiteRenderer({
           <span>
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
             {registration && (
-              <> Registered with the Corporate Affairs Commission, {registration}.</>
+              <>
+                {" "}
+                Registered with the Corporate Affairs Commission, {registration}
+                .
+              </>
             )}
           </span>
           <a href={platformUrl} target="_blank" rel="noopener">
@@ -642,3 +688,4 @@ export function SiteRenderer({
     </div>
   );
 }
+

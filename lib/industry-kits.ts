@@ -106,7 +106,7 @@ function build(
       items: spec.offers.items.map(([title, text, icon]) => ({
         title,
         text,
-        ...pic(slug(title), icon, `${title} — sample image`),
+        ...(industry === "general" ? {} : pic(slug(title), icon, `${title} — sample image`)),
       })),
       ctas: spec.offers.link
         ? [{ label: spec.offers.link[0], href: spec.offers.link[1] }]
@@ -1440,12 +1440,13 @@ export const industryKits: Record<string, IndustryKit> = {
       text: "#182430",
       font: sans,
     },
-    description: "Professional services for your needs.",
+    description:
+      "Practical business advice, from the first plan to everyday operations.",
     navCta: ["Get in touch", "/contact"],
     hero: {
       eyebrow: "Professional services",
-      title: "Dependable service, done properly.",
-      body: "We help customers get things done with clear communication, fair pricing and a commitment to quality work.",
+      title: "Your next chapter starts with a clear plan.",
+      body: "Bring direction to your business with practical planning, better processes and hands-on project support.",
       cta: [
         ["Get in touch", "/contact"],
         ["Our services", "/services"],
@@ -1454,36 +1455,36 @@ export const industryKits: Record<string, IndustryKit> = {
     },
     offers: {
       eyebrow: "Services",
-      title: "What we offer",
-      body: "Describe the services you provide.",
+      title: "Move your business forward.",
+      body: "Focused support for the decisions, systems and projects that shape your business.",
       link: ["All services", "/services"],
       items: [
         [
-          "Service one",
-          "Describe what it includes and who it is for.",
+          "Business planning",
+          "Turn your priorities into a practical roadmap, with clear milestones and a shared definition of success.",
           "circle-check",
         ],
         [
-          "Service two",
-          "Describe what it includes and who it is for.",
+          "Operations improvement",
+          "Simplify everyday work with clearer responsibilities, more useful processes and fewer unnecessary steps.",
           "circle-check",
         ],
         [
-          "Service three",
-          "Describe what it includes and who it is for.",
+          "Project delivery",
+          "Keep important work moving with a defined scope, coordinated tasks and regular progress reviews.",
           "circle-check",
         ],
       ],
     },
     about: {
       eyebrow: "About us",
-      title: "A business built on trust.",
-      body: "Tell customers who you are, how long you’ve been serving them and what they can expect from you.",
+      title: "Good advice starts with listening.",
+      body: "Every business has its own challenges. We take time to understand yours, agree the work together and keep you involved as it takes shape.",
       art: "users-round",
     },
     features: {
       eyebrow: "Why choose us",
-      title: "Our promise",
+      title: "A working relationship you can rely on.",
       items: [
         ["Clear communication", "We keep you informed from start to finish."],
         ["Quality work", "We take care over every detail."],
@@ -1492,17 +1493,35 @@ export const industryKits: Record<string, IndustryKit> = {
     },
     steps: {
       eyebrow: "How it works",
-      title: "Getting started",
+      title: "From the first conversation to the next step.",
       items: [
-        ["Get in touch", "Tell us what you need."],
-        ["Receive a quote", "We explain the work and the cost."],
-        ["We deliver", "We complete the work and follow up."],
+        [
+          "Get in touch",
+          "Share your priorities, your challenges and what you would like to change.",
+        ],
+        [
+          "Receive a quote",
+          "Review a clear scope, timeline and quote before deciding to go ahead.",
+        ],
+        [
+          "We deliver",
+          "Work through the agreed plan together, with regular check-ins along the way.",
+        ],
       ],
     },
     faqs: [
-      ["Which areas do you serve?", "List the locations you cover."],
-      ["How soon can you start?", "Describe your typical lead time."],
-      ["How do I pay?", "List the payment methods you accept."],
+      [
+        "Which areas do you serve?",
+        "Tell us your location when you enquire so we can discuss the best way to work together.",
+      ],
+      [
+        "How soon can you start?",
+        "We agree availability and a start date after understanding your brief.",
+      ],
+      [
+        "How do I pay?",
+        "Your proposal sets out the payment schedule and available payment options before work begins.",
+      ],
     ],
     cta: {
       title: "Let’s get started",
@@ -1510,7 +1529,7 @@ export const industryKits: Record<string, IndustryKit> = {
       button: ["Get in touch", "/contact"],
     },
     contact: {
-      title: "Contact us",
+      title: "Start a conversation.",
       body: "We’re happy to answer your questions.",
     },
   }),
@@ -2087,7 +2106,7 @@ export function sampleArticles(kit: IndustryKit) {
       `How we approach ${item.title.toLowerCase()}`,
     ][i % 3],
     category: ["Guides", "Advice", "Updates"][i % 3],
-    image: item.image,
+    image: kit === industryKits.general ? `/samples/general-insight-${["planning", "operations", "projects"][i]}-photo.webp` : item.image,
     excerpt: item.text || kit.description,
     body: `<p>${item.text || kit.description}</p><h2>Start with what matters to you</h2><p>This is sample article content for a template preview. On your website, articles are written and published by your team from your workspace.</p><h2>Questions to ask</h2><ul><li>What is included, and what is not?</li><li>How long does it usually take?</li><li>What will you need from me?</li></ul><p>Contact the business to discuss your needs.</p>`,
   }));
@@ -2117,7 +2136,11 @@ export function previewSite(
       const page = /contact/.test(href) ? "Contact" : findPage(href);
       return page ? `/${pageSlug(page)}` : "/#services";
     }
-    return /contact/.test(href) ? "#contact" : /about/.test(href) ? "#about" : "#services";
+    return /contact/.test(href)
+      ? "#contact"
+      : /about/.test(href)
+        ? "#about"
+        : "#services";
   };
   const services = kit.sections.find((s) => s.id === "services");
   const sections = kit.sections.map((s) => ({
@@ -2146,7 +2169,9 @@ export function previewSite(
                 }
               : {}),
           })),
-        ...(category === "commerce" ? [] : [{ label: "Insights", href: "/insights", footer: false }]),
+        ...(category === "commerce"
+          ? []
+          : [{ label: "Insights", href: "/insights", footer: false }]),
         { label: "Contact", href: "/contact", footer: false },
       ]
     : [
@@ -2213,7 +2238,15 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
     id: string,
     type: Section["type"],
     parts: Partial<Section> & { title: string },
-  ): Section => ({ id, type, body: "", visible: true, sample: true, items: undefined, ...parts });
+  ): Section => ({
+    id,
+    type,
+    body: "",
+    visible: true,
+    sample: true,
+    items: undefined,
+    ...parts,
+  });
   const cta = (title: string, body: string, label: string, href = "/contact") =>
     section("cta", "cta", { title, body, ctas: [{ label, href }] });
   const faq = (id: string, pairs: [string, string][]) =>
@@ -2229,9 +2262,18 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       title: "The team you will work with",
       body: "Introduce the people customers will deal with. Use real names, roles and photos, and only list qualifications each person holds.",
       items: [
-        { title: "Full name", text: "Role — a line about their experience and what they look after." },
-        { title: "Full name", text: "Role — a line about their experience and what they look after." },
-        { title: "Full name", text: "Role — a line about their experience and what they look after." },
+        {
+          title: "Full name",
+          text: "Role — a line about their experience and what they look after.",
+        },
+        {
+          title: "Full name",
+          text: "Role — a line about their experience and what they look after.",
+        },
+        {
+          title: "Full name",
+          text: "Role — a line about their experience and what they look after.",
+        },
       ],
     });
   const work = (title: string) =>
@@ -2240,15 +2282,37 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       eyebrow: title,
       title: "Selected work",
       body: "Show recent work you are proud of. Add a short caption with the client type, location and what you delivered.",
-      items: offerItems.slice(0, 6).map((i) => ({ title: i.title, text: "Project name, location", image: i.image, imageAlt: i.imageAlt })),
+      items: offerItems
+        .slice(0, 6)
+        .map((i) => ({
+          title: i.title,
+          text: "Project name, location",
+          image: i.image,
+          imageAlt: i.imageAlt,
+        })),
     });
 
   if (key === "contact") return fresh([pick("contact"), pick("faq")]);
   if (key === "about")
-    return fresh([pick("about"), pick("features"), pick("team") || pick("gallery"), pick("cta")]);
+    return fresh([
+      pick("about"),
+      pick("features"),
+      pick("team") || pick("gallery"),
+      pick("cta"),
+    ]);
   if (key === "faq") return fresh([pick("faq"), pick("cta")]);
-  if (offers && (key === (offers.eyebrow || "").toLowerCase() ||
-      ["services", "solutions", "practice areas", "medical services", "programmes", "properties"].includes(key)))
+  if (
+    offers &&
+    (key === (offers.eyebrow || "").toLowerCase() ||
+      [
+        "services",
+        "solutions",
+        "practice areas",
+        "medical services",
+        "programmes",
+        "properties",
+      ].includes(key))
+  )
     return fresh([
       { ...offers, eyebrow: "", title: offers.title, ctas: undefined },
       pick("steps"),
@@ -2259,7 +2323,11 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
     return fresh([
       work(title),
       pick("steps"),
-      cta("Have a project in mind?", "Tell us what you are planning and we will get back to you with next steps.", "Start a conversation"),
+      cta(
+        "Have a project in mind?",
+        "Tell us what you are planning and we will get back to you with next steps.",
+        "Start a conversation",
+      ),
     ]);
   if (["team", "people", "faculty", "professionals"].includes(key))
     return fresh([
@@ -2268,12 +2336,25 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         eyebrow: "How we work",
         title: "What you can expect from us",
         items: [
-          { title: "Clear communication", text: "You always know who is handling your matter and what happens next." },
-          { title: "Straightforward advice", text: "We explain your options in plain language, including costs." },
-          { title: "Care in the detail", text: "Work is reviewed before it reaches you." },
+          {
+            title: "Clear communication",
+            text: "You always know who is handling your matter and what happens next.",
+          },
+          {
+            title: "Straightforward advice",
+            text: "We explain your options in plain language, including costs.",
+          },
+          {
+            title: "Care in the detail",
+            text: "Work is reviewed before it reaches you.",
+          },
         ],
       }),
-      cta("Speak with our team", "Tell us what you need and the right person will get in touch.", "Contact us"),
+      cta(
+        "Speak with our team",
+        "Tell us what you need and the right person will get in touch.",
+        "Contact us",
+      ),
     ]);
   if (key === "admissions")
     return fresh([
@@ -2286,11 +2367,23 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         eyebrow: "How to apply",
         title: "The admissions process",
         items: [
-          { title: "Enquire", text: "Contact us or complete the enquiry form." },
+          {
+            title: "Enquire",
+            text: "Contact us or complete the enquiry form.",
+          },
           { title: "Visit", text: "Book a tour and meet our staff." },
-          { title: "Apply", text: "Submit the application form and required documents." },
-          { title: "Assessment", text: "Your child meets us for a friendly assessment, where applicable." },
-          { title: "Offer", text: "We confirm a place and share the next steps." },
+          {
+            title: "Apply",
+            text: "Submit the application form and required documents.",
+          },
+          {
+            title: "Assessment",
+            text: "Your child meets us for a friendly assessment, where applicable.",
+          },
+          {
+            title: "Offer",
+            text: "We confirm a place and share the next steps.",
+          },
         ],
       }),
       section("admissions-documents", "text", {
@@ -2300,10 +2393,20 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       }),
       faq("admissions-faq", [
         ["When can we apply?", "State your admission periods and deadlines."],
-        ["Is there an entrance assessment?", "Explain whether you assess new pupils and what it involves."],
-        ["How are fees paid?", "Describe your payment schedule and accepted payment methods."],
+        [
+          "Is there an entrance assessment?",
+          "Explain whether you assess new pupils and what it involves.",
+        ],
+        [
+          "How are fees paid?",
+          "Describe your payment schedule and accepted payment methods.",
+        ],
       ]),
-      cta("Book a school visit", "See our classrooms and meet the team.", "Arrange a visit"),
+      cta(
+        "Book a school visit",
+        "See our classrooms and meet the team.",
+        "Arrange a visit",
+      ),
     ]);
   if (key === "impact")
     return fresh([
@@ -2315,7 +2418,9 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       section("impact-areas", "features", {
         eyebrow: "Where we focus",
         title: "Our areas of work",
-        items: offerItems.slice(0, 3).map((i) => ({ title: i.title, text: i.text || "" })),
+        items: offerItems
+          .slice(0, 3)
+          .map((i) => ({ title: i.title, text: i.text || "" })),
       }),
       work("Impact"),
       section("impact-reports", "text", {
@@ -2323,7 +2428,11 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         title: "Reports and accounts",
         body: "<p>Link to your annual reports, audited accounts or impact reports so supporters can see how funds are used.</p>",
       }),
-      cta("Support our work", "Find out how you can give, volunteer or partner with us.", "Get involved"),
+      cta(
+        "Support our work",
+        "Find out how you can give, volunteer or partner with us.",
+        "Get involved",
+      ),
     ]);
   if (key === "rooms" || key === "rooms & facilities")
     return fresh([
@@ -2332,27 +2441,61 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         title: "Rooms and suites",
         body: "Describe each room type, who it suits and what is included. Add a clear photo of every room.",
         items: [
-          { title: "Standard room", text: "Comfortable room with a queen bed, air conditioning, Wi-Fi and a work desk.", image: offerItems[0]?.image, imageAlt: offerItems[0]?.imageAlt },
-          { title: "Deluxe room", text: "More space, a king bed and a seating area for longer stays.", image: offerItems[1]?.image, imageAlt: offerItems[1]?.imageAlt },
-          { title: "Executive suite", text: "A separate lounge, generous storage and room to work or unwind.", image: offerItems[2]?.image, imageAlt: offerItems[2]?.imageAlt },
+          {
+            title: "Standard room",
+            text: "Comfortable room with a queen bed, air conditioning, Wi-Fi and a work desk.",
+            image: offerItems[0]?.image,
+            imageAlt: offerItems[0]?.imageAlt,
+          },
+          {
+            title: "Deluxe room",
+            text: "More space, a king bed and a seating area for longer stays.",
+            image: offerItems[1]?.image,
+            imageAlt: offerItems[1]?.imageAlt,
+          },
+          {
+            title: "Executive suite",
+            text: "A separate lounge, generous storage and room to work or unwind.",
+            image: offerItems[2]?.image,
+            imageAlt: offerItems[2]?.imageAlt,
+          },
         ],
       }),
       section("amenities", "features", {
         eyebrow: "In every room",
         title: "Amenities",
         items: [
-          { title: "Reliable power", text: "Say how power is supplied, for example 24-hour supply with backup." },
+          {
+            title: "Reliable power",
+            text: "Say how power is supplied, for example 24-hour supply with backup.",
+          },
           { title: "Wi-Fi", text: "Free wireless internet throughout." },
-          { title: "Breakfast", text: "State whether breakfast is included or available." },
+          {
+            title: "Breakfast",
+            text: "State whether breakfast is included or available.",
+          },
           { title: "Security", text: "Describe on-site security and parking." },
         ],
       }),
       faq("rooms-faq", [
-        ["What are check-in and check-out times?", "State your check-in and check-out times and any early or late options."],
-        ["Can I cancel a booking?", "Summarise your cancellation terms and link to your booking policy."],
-        ["Do you have parking?", "Explain parking availability and any charges."],
+        [
+          "What are check-in and check-out times?",
+          "State your check-in and check-out times and any early or late options.",
+        ],
+        [
+          "Can I cancel a booking?",
+          "Summarise your cancellation terms and link to your booking policy.",
+        ],
+        [
+          "Do you have parking?",
+          "Explain parking availability and any charges.",
+        ],
       ]),
-      cta("Plan your stay", "Send your dates and we will confirm availability and rates.", "Request a booking"),
+      cta(
+        "Plan your stay",
+        "Send your dates and we will confirm availability and rates.",
+        "Request a booking",
+      ),
     ]);
   if (key === "coverage")
     return fresh([
@@ -2365,14 +2508,27 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         eyebrow: "Service areas",
         title: "Areas we cover",
         items: [
-          { title: "Lagos", text: "Same-day and next-day delivery across the mainland and island." },
+          {
+            title: "Lagos",
+            text: "Same-day and next-day delivery across the mainland and island.",
+          },
           { title: "Abuja", text: "Scheduled deliveries within the FCT." },
-          { title: "Port Harcourt", text: "Regular runs within the city and nearby." },
-          { title: "Other states", text: "Interstate delivery through our partner network." },
+          {
+            title: "Port Harcourt",
+            text: "Regular runs within the city and nearby.",
+          },
+          {
+            title: "Other states",
+            text: "Interstate delivery through our partner network.",
+          },
         ],
       }),
       pick("steps"),
-      cta("Need a delivery quote?", "Share pickup and drop-off locations and what you are sending.", "Get a quote"),
+      cta(
+        "Need a delivery quote?",
+        "Share pickup and drop-off locations and what you are sending.",
+        "Get a quote",
+      ),
     ]);
   const guide = (
     heading: string,
@@ -2382,14 +2538,22 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
     questions: [string, string][],
   ) =>
     fresh([
-      section("guide-intro", "text", { eyebrow: title, title: heading, body: `<p>${intro}</p>${table}` }),
+      section("guide-intro", "text", {
+        eyebrow: title,
+        title: heading,
+        body: `<p>${intro}</p>${table}`,
+      }),
       section("guide-tips", "steps", {
         eyebrow: "Step by step",
         title: "How to choose",
         items: tips.map(([t, text]) => ({ title: t, text })),
       }),
       faq("guide-faq", questions),
-      cta("Still not sure?", "Send us a message and we will help you choose.", "Ask us"),
+      cta(
+        "Still not sure?",
+        "Send us a message and we will help you choose.",
+        "Ask us",
+      ),
     ]);
   if (key === "size guide")
     return guide(
@@ -2397,13 +2561,25 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       "Measurements are in centimetres. If you are between sizes, choose the larger size for a relaxed fit. Replace this table with your own size chart.",
       "<table><thead><tr><th>Size</th><th>Chest</th><th>Waist</th><th>Hips</th></tr></thead><tbody><tr><td>S</td><td>86–91</td><td>71–76</td><td>89–94</td></tr><tr><td>M</td><td>94–99</td><td>79–84</td><td>97–102</td></tr><tr><td>L</td><td>102–107</td><td>86–91</td><td>104–109</td></tr><tr><td>XL</td><td>109–114</td><td>94–99</td><td>112–117</td></tr></tbody></table>",
       [
-        ["Measure your chest", "Measure around the fullest part, keeping the tape level."],
+        [
+          "Measure your chest",
+          "Measure around the fullest part, keeping the tape level.",
+        ],
         ["Measure your waist", "Measure around your natural waistline."],
-        ["Compare with the chart", "Match your measurements to the size chart above."],
+        [
+          "Compare with the chart",
+          "Match your measurements to the size chart above.",
+        ],
       ],
       [
-        ["What if it doesn’t fit?", "Summarise your exchange and returns process and link to your refund policy."],
-        ["Do sizes run small?", "Tell customers how your items fit compared with standard sizes."],
+        [
+          "What if it doesn’t fit?",
+          "Summarise your exchange and returns process and link to your refund policy.",
+        ],
+        [
+          "Do sizes run small?",
+          "Tell customers how your items fit compared with standard sizes.",
+        ],
       ],
     );
   if (key === "measurements")
@@ -2413,12 +2589,21 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       "<table><thead><tr><th>Item</th><th>Allow around it</th></tr></thead><tbody><tr><td>Sofa</td><td>60 cm walkway in front</td></tr><tr><td>Dining table</td><td>90 cm behind each chair</td></tr><tr><td>Bed</td><td>60 cm on each side</td></tr></tbody></table>",
       [
         ["Measure the space", "Note the width, depth and height available."],
-        ["Measure the way in", "Check doorways, stairs and corridors on the delivery route."],
+        [
+          "Measure the way in",
+          "Check doorways, stairs and corridors on the delivery route.",
+        ],
         ["Compare with the product", "Use the dimensions on the product page."],
       ],
       [
-        ["Do you assemble on delivery?", "Explain whether assembly is included or can be booked."],
-        ["Can I return large items?", "Summarise returns for furniture and link to your refund policy."],
+        [
+          "Do you assemble on delivery?",
+          "Explain whether assembly is included or can be booked.",
+        ],
+        [
+          "Can I return large items?",
+          "Summarise returns for furniture and link to your refund policy.",
+        ],
       ],
     );
   if (key === "buying guide")
@@ -2427,13 +2612,28 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       "Not sure what to buy? These pointers help you compare options. Replace them with guidance for the products you sell.",
       "",
       [
-        ["Decide what you need it for", "Everyday use, work, gaming or study all call for different specifications."],
-        ["Check the essentials", "Compare storage, memory, battery life and screen size."],
-        ["Confirm the warranty", "Look at the warranty period and what it covers."],
+        [
+          "Decide what you need it for",
+          "Everyday use, work, gaming or study all call for different specifications.",
+        ],
+        [
+          "Check the essentials",
+          "Compare storage, memory, battery life and screen size.",
+        ],
+        [
+          "Confirm the warranty",
+          "Look at the warranty period and what it covers.",
+        ],
       ],
       [
-        ["Are your products genuine?", "Explain where your stock comes from and how you guarantee authenticity."],
-        ["What warranty do you offer?", "State the warranty period and how to make a claim."],
+        [
+          "Are your products genuine?",
+          "Explain where your stock comes from and how you guarantee authenticity.",
+        ],
+        [
+          "What warranty do you offer?",
+          "State the warranty period and how to make a claim.",
+        ],
       ],
     );
   if (key === "product guide")
@@ -2442,13 +2642,25 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
       "Every skin and hair type is different. Use this guide to narrow down your options, and check ingredient lists on each product page. Replace this with your own guidance.",
       "",
       [
-        ["Know your skin or hair type", "Dry, oily, combination or sensitive — each responds differently."],
+        [
+          "Know your skin or hair type",
+          "Dry, oily, combination or sensitive — each responds differently.",
+        ],
         ["Start simple", "Introduce one new product at a time."],
-        ["Patch test first", "Try a small amount on your skin before full use."],
+        [
+          "Patch test first",
+          "Try a small amount on your skin before full use.",
+        ],
       ],
       [
-        ["Are your products suitable for sensitive skin?", "Say which products suit sensitive skin and advise a patch test."],
-        ["Are your products original?", "Explain how you source your products and guarantee authenticity."],
+        [
+          "Are your products suitable for sensitive skin?",
+          "Say which products suit sensitive skin and advise a patch test.",
+        ],
+        [
+          "Are your products original?",
+          "Explain how you source your products and guarantee authenticity.",
+        ],
       ],
     );
   if (key === "facilities")
@@ -2457,10 +2669,16 @@ export function pageSections(kit: IndustryKit, title: string): Section[] {
         eyebrow: "Facilities",
         title: "Our facilities",
         body: "Describe the spaces and equipment available and who can use them.",
-        items: offerItems.slice(0, 4).map((i) => ({ title: i.title, text: i.text || "" })),
+        items: offerItems
+          .slice(0, 4)
+          .map((i) => ({ title: i.title, text: i.text || "" })),
       }),
       work("Facilities"),
-      cta("Arrange a visit", "See our facilities in person and ask any questions.", "Book a visit"),
+      cta(
+        "Arrange a visit",
+        "See our facilities in person and ask any questions.",
+        "Book a visit",
+      ),
     ]);
   return fresh([
     section("intro", "text", {
