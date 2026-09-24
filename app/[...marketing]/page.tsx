@@ -6,6 +6,7 @@ import { MarketingShell } from "@/components/marketing-shell";
 import { marketingMetadata } from "@/lib/marketing";
 import { query } from "@/lib/db";
 import { safeHtml } from "@/lib/content";
+import { MarketingEditorial } from "@/components/marketing-editorial";
 type Props = { params: Promise<{ marketing: string[] }> };
 const eyebrows: Record<string, string> = {
   "corporate-websites": "Business websites",
@@ -67,34 +68,35 @@ export default async function Page({ params }: Props) {
     : ["Compare plans", "/pricing"];
   return (
     <MarketingShell>
-      <main id="main" className="marketing-page">
-        <header className="page-intro">
-          <span className="eyebrow">{eyebrows[key.split("/")[0]] || "Omnyvox"}</span>
+      <main id="main" className="marketing-page editorial-page">
+        <header className="page-intro editorial-intro">
+          <span className="eyebrow">
+            {eyebrows[key.split("/")[0]] || "Omnyvox"}
+          </span>
           <h1>{override?.data.title || page.title}</h1>
           <p>{override?.data.description || page.description}</p>
+          <div className="hero-actions">
+            <Link className="button" href={page.cta?.primary[1] || "/contact"}>
+              {page.cta?.primary[0] || "Contact our team"}
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </Link>
+            <a
+              className="editorial-read"
+              href={override ? "#page-content" : "#detail-1"}
+            >
+              {key === "faq" ? "Find an answer" : "Take a closer look"}
+              <span aria-hidden="true">↓</span>
+            </a>
+          </div>
         </header>
         {override ? (
           <article
+            id="page-content"
             className="rich-content panel panel-body"
             dangerouslySetInnerHTML={{ __html: safeHtml(override.data.body) }}
           />
         ) : (
-          <div className="feature-editorial">
-            {page.sections.map((sec, i) => (
-              <section key={sec.title}>
-                <span className="eyebrow">{String(i + 1).padStart(2, "0")}</span>
-                <h2>{sec.title}</h2>
-                {sec.body && <p>{sec.body}</p>}
-                {sec.points && (
-                  <ul className="feature-points">
-                    {sec.points.map((pt) => (
-                      <li key={pt}>{pt}</li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
-          </div>
+          <MarketingEditorial page={page} pageKey={key} />
         )}
         {!!page.links?.length && (
           <nav className="marketing-related" aria-label="Related pages">
@@ -109,9 +111,15 @@ export default async function Page({ params }: Props) {
         )}
         <section className="marketing-cta">
           <h2>{page.cta?.title || "Find the right starting point."}</h2>
-          <p>{page.cta?.body || "Explore the templates, compare plans or talk to our team."}</p>
+          <p>
+            {page.cta?.body ||
+              "Explore the templates, compare plans or talk to our team."}
+          </p>
           <div className="section-ctas">
-            <Link className="button" href={page.cta?.primary[1] || "/templates"}>
+            <Link
+              className="button"
+              href={page.cta?.primary[1] || "/templates"}
+            >
               {page.cta?.primary[0] || "Explore templates"}
             </Link>
             {secondary && (

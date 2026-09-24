@@ -28,12 +28,14 @@ export function PricingComparison({
         <div role="group" aria-label="Website type">
           <button
             className={category === "corporate" ? "active" : ""}
+            aria-pressed={category === "corporate"}
             onClick={() => setCategory("corporate")}
           >
             Business website
           </button>
           <button
             className={category === "commerce" ? "active" : ""}
+            aria-pressed={category === "commerce"}
             onClick={() => setCategory("commerce")}
           >
             Online store

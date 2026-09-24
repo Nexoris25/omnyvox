@@ -36,13 +36,13 @@ export function BrandHero() {
       </div>
       <figure className="brand-hero-visual">
         <img
-          src="/marketing-hero-v2.webp"
-          srcSet="/marketing-hero-v2-small.webp 640w, /marketing-hero-v2.webp 1440w"
+          src="/marketing-hero-photo.webp"
+          srcSet="/marketing-hero-photo-small.webp 640w, /marketing-hero-photo.webp 1440w"
           sizes="(max-width:680px) 100vw, 50vw"
           width={1440}
           height={960}
           fetchPriority="high"
-          alt="Fashion entrepreneur considering fabric samples in a sunlit studio"
+          alt="A man at his laptop in a Lagos workspace"
         />
         <figcaption>
           <Globe2 size={28} />

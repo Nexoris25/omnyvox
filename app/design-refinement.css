@@ -1,4 +1,355 @@
 /* Design review, batch 1: shared website primitives retain each subscriber's tokens. */
+/* Marketing editorial system: navigable, readable pages instead of text grids. */
+.marketing-site {
+  --reading-width: 68ch;
+}
+.marketing-site .contact-next { margin-top:30px; padding:28px; border:1px solid var(--line); background:var(--surface); border-radius:18px; }
+.marketing-site .contact-next svg { color:var(--primary); }
+.marketing-site .contact-next h2 { font-size:21px; margin:16px 0 12px; }
+.marketing-site .contact-next p { font-size:14px; line-height:1.8; color:var(--muted); }
+.brand-hero-visual > img { object-position:center 38%; }
+.marketing-site a:focus-visible,
+.marketing-site button:focus-visible,
+.marketing-site summary:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 5px;
+}
+.marketing-site .marketing-links {
+  font-size: 13px;
+}
+.marketing-site .page-intro {
+  padding-block: 68px 54px;
+}
+.marketing-site .page-intro h1 {
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+}
+.editorial-page .editorial-intro {
+  text-align: left;
+  max-width: none;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 56px;
+  background: radial-gradient(ellipse at right top, #f0eafe 0, transparent 65%);
+}
+.editorial-intro h1 {
+  max-width: 17ch;
+  margin-inline: 0;
+  font-size: clamp(38px, 5vw, 70px);
+}
+.editorial-intro > p {
+  margin-inline: 0;
+  max-width: 66ch;
+  font-size: 18px;
+  line-height: 1.8;
+}
+.editorial-intro .hero-actions {
+  justify-content: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.editorial-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 650;
+  min-height: 44px;
+}
+.editorial-layout {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 72px;
+  align-items: start;
+}
+.editorial-index {
+  min-width: 0;
+  position: sticky;
+  top: 110px;
+}
+.editorial-index > .eyebrow {
+  display: block;
+  margin-bottom: 18px;
+}
+.editorial-index nav {
+  display: grid;
+  gap: 3px;
+}
+.editorial-index nav a {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  border-radius: 8px;
+  color: var(--muted);
+}
+.editorial-index nav a:hover {
+  background: var(--brand-tint);
+  color: var(--primary);
+}
+.editorial-index nav a > span {
+  font-size: 10px;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.editorial-help {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding: 24px 10px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.editorial-help b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  margin-top: 6px;
+  font-size: 13px;
+}
+.editorial-sections > section {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 24px;
+  padding: 8px 0 42px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 120px;
+}
+.editorial-sections h2 {
+  margin: 4px 0 16px;
+  font-size: clamp(24px, 2.5vw, 34px);
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.editorial-sections p,
+.editorial-faq p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.85;
+  max-width: var(--reading-width);
+}
+.editorial-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--brand-tint);
+  color: var(--primary);
+}
+.editorial-steps .editorial-icon {
+  background: var(--ink);
+  color: var(--brand-mint);
+  font-size: 18px;
+  font-weight: 650;
+}
+.editorial-points {
+  padding: 0;
+  margin: 24px 0 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.editorial-points li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.editorial-points svg {
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 5px;
+}
+.editorial-faq details {
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 120px;
+  padding: 4px 0;
+}
+.editorial-faq summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  cursor: pointer;
+  min-height: 76px;
+  padding: 18px 0;
+}
+.editorial-faq summary::-webkit-details-marker {
+  display: none;
+}
+.editorial-faq summary h2 {
+  font-size: 19px;
+  line-height: 1.5;
+  margin: 0;
+}
+.editorial-faq summary svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.editorial-faq details[open] summary svg {
+  transform: rotate(180deg);
+}
+.editorial-faq details > div {
+  padding-bottom: 22px;
+}
+.marketing-site .marketing-related {
+  margin-block: 64px;
+}
+.marketing-site .marketing-related a {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 26px;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.marketing-site .marketing-related a:hover {
+  background: #faf8ff;
+  border-color: #b6a0e2;
+}
+.marketing-site .marketing-cta {
+  background: var(--ink);
+  color: white;
+  border-radius: 24px;
+  padding: clamp(32px, 6vw, 70px);
+  text-align: left;
+}
+.marketing-site .marketing-cta h2 {
+  color: white;
+  max-width: 20ch;
+  font-size: clamp(30px, 4vw, 46px);
+  letter-spacing: -0.045em;
+}
+.marketing-site .marketing-cta p {
+  color: #d9d2e6;
+  max-width: 58ch;
+  font-size: 16px;
+}
+.marketing-site .marketing-cta .section-ctas {
+  justify-content: flex-start;
+}
+.marketing-site .marketing-cta .button.secondary {
+  color: white;
+  border-color: #716580;
+  background: transparent;
+}
+.marketing-site .plan-card {
+  padding: 32px;
+  border-radius: 18px;
+}
+.marketing-site .plan-card.recommended {
+  border: 2px solid var(--primary);
+  box-shadow: 0 16px 40px #540cda0d;
+}
+.marketing-site .plan-card > p {
+  min-height: 64px;
+}
+.marketing-site .plan-card li {
+  padding-block: 7px;
+  line-height: 1.5;
+}
+.marketing-site .comparison {
+  scroll-margin-top: 110px;
+}
+.marketing-site .comparison th:first-child {
+  position: sticky;
+  left: 0;
+  background: white;
+  min-width: 160px;
+}
+.marketing-site .comparison tbody tr:nth-child(even) td,
+.marketing-site .comparison tbody tr:nth-child(even) th {
+  background: #faf9fc;
+}
+.marketing-site .comparison .table-scroll {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.marketing-site .contact-grid {
+  gap: clamp(28px, 6vw, 88px);
+  align-items: start;
+}
+.marketing-site .contact-grid h1 {
+  font-size: clamp(38px, 4.4vw, 62px);
+  letter-spacing: -0.05em;
+  line-height: 1.12;
+}
+.marketing-site .insights-grid .insight-card {
+  border-radius: 18px;
+  overflow: hidden;
+}
+.marketing-site .marketing-footer {
+  margin-top: 80px;
+  padding-top: 64px;
+}
+.marketing-site .marketing-footer nav > a {
+  padding-block: 6px;
+  line-height: 1.5;
+}
+@media (max-width: 850px) {
+  .editorial-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .editorial-index {
+    position: static;
+  }
+  .editorial-index nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+  .editorial-index nav a {
+    min-width: 190px;
+    border: 1px solid var(--line);
+    align-items: flex-start;
+  }
+  .editorial-help {
+    display: none;
+  }
+  .editorial-page .editorial-intro {
+    margin-bottom: 32px;
+  }
+}
+@media (max-width: 480px) {
+  .marketing-site .page-intro {
+    padding-block: 38px;
+  }
+  .editorial-intro > p {
+    font-size: 16px;
+  }
+  .editorial-sections > section {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+  }
+  .editorial-index nav a {
+    min-width: 170px;
+  }
+  .editorial-faq summary h2 {
+    font-size: 17px;
+  }
+  .marketing-site .plan-card {
+    padding: 24px;
+  }
+  .marketing-site .plan-card > p {
+    min-height: 0;
+  }
+  .marketing-site .marketing-footer {
+    margin-top: 48px;
+  }
+}
 .rendered-site {
   --site-max: 1200px;
 }
@@ -25,7 +376,9 @@
   min-height: 44px;
 }
 .rendered-site .site-mobile-menu > summary::before,
-.rendered-site .site-page-header .site-breadcrumbs > * + *::before { content:none; }
+.rendered-site .site-page-header .site-breadcrumbs > * + *::before {
+  content: none;
+}
 .rendered-site .site-dropdown-panel {
   box-shadow: 0 16px 40px #00000012;
   padding: 10px;

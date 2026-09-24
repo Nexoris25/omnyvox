@@ -1,7 +1,7 @@
 import { marketingMetadata } from "@/lib/marketing";
 import { MarketingShell } from "@/components/marketing-shell";
 import Link from "next/link";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, Phone, MessagesSquare } from "lucide-react";
 import { ContactForm } from "@/components/contact-form";
 import { marketingSettings } from "@/lib/marketing";
 export async function generateMetadata() {
@@ -56,13 +56,12 @@ export default async function Page() {
               Looking for a quick answer? Try the <Link href="/help">Help centre</Link>{" "}
               or <Link href="/faq">FAQs</Link>.
             </p>
-            <img
-              className="editorial-photo"
-              src="/marketing-contact.webp"
-              alt="A business support specialist ready to help"
-              width={1440}
-              height={960}
-            />
+            <aside className="contact-next">
+              <MessagesSquare size={26} strokeWidth={1.5} aria-hidden="true"/>
+              <h2>What happens next?</h2>
+              <p>Your message goes directly to our support team. We will reply to the email address you provide.</p>
+              <p>Already have a website? Include its name and the page you need help with so we can get straight to the issue.</p>
+            </aside>
           </div>
           <ContactForm />
         </div>

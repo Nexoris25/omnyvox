@@ -100,10 +100,10 @@ export default async function Home() {
               </div>
               <img
                 className="solution-photo"
-                src="/marketing-corporate-v2.webp"
-                srcSet="/marketing-corporate-v2-small.webp 640w, /marketing-corporate-v2.webp 1440w"
+                src="/marketing-corporate-photo.webp"
+                srcSet="/marketing-corporate-photo-small.webp 640w, /marketing-corporate-photo.webp 1440w"
                 sizes="(max-width:680px) 100vw, 50vw"
-                alt="Consultant discussing a project with a small business team"
+                alt="A man working at a laptop in Abuja"
                 width={1440}
                 height={960}
                 loading="lazy"
@@ -132,10 +132,10 @@ export default async function Home() {
               </div>
               <img
                 className="solution-photo"
-                src="/marketing-commerce-v2.webp"
-                srcSet="/marketing-commerce-v2-small.webp 640w, /marketing-commerce-v2.webp 1440w"
+                src="/marketing-commerce-photo.webp"
+                srcSet="/marketing-commerce-photo-small.webp 640w, /marketing-commerce-photo.webp 1440w"
                 sizes="(max-width:680px) 100vw, 50vw"
-                alt="Online store owner packing a ceramic mug for delivery"
+                alt="A shop worker packing a record for dispatch"
                 width={1440}
                 height={960}
                 loading="lazy"
@@ -195,10 +195,10 @@ export default async function Home() {
           <div className="steps">
             <img
               className="brand-process-photo"
-              src="/marketing-setup-v2.webp"
-              srcSet="/marketing-setup-v2-small.webp 640w, /marketing-setup-v2.webp 1440w"
+              src="/marketing-setup-photo.webp"
+              srcSet="/marketing-setup-photo-small.webp 640w, /marketing-setup-photo.webp 1440w"
               sizes="(max-width:680px) 100vw, 50vw"
-              alt="Business owner planning website content at a laptop"
+              alt="Colleagues reviewing work on a laptop in Yaba, Lagos"
               width={1440}
               height={960}
               loading="lazy"
@@ -279,10 +279,13 @@ export default async function Home() {
         </section>
         <section className="founder-story">
           <img
-            src="/marketing-founders.webp"
-            alt="Entrepreneurs planning their business at a studio desk"
+            src="/marketing-founders-photo.webp"
+            srcSet="/marketing-founders-photo-small.webp 640w, /marketing-founders-photo.webp 1440w"
+            sizes="(max-width:680px) 100vw, 50vw"
+            alt="Two people looking at a laptop together in Lagos"
             width={1440}
             height={960}
+            loading="lazy"
           />
           <div>
             <span className="eyebrow">MORE TIME FOR YOUR BUSINESS</span>

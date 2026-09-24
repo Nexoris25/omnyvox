@@ -19,6 +19,22 @@ photography and enquiry paths; its assets and copy are not copied.
 
 ## Remaining review coverage
 
+## Batch 2 — marketing pages
+
+- Editorial layouts with in-page navigation, semantic icons, numbered process
+  sections, expandable FAQs and early, explicit calls to action.
+- Pricing selection announces its state; comparison tables retain row labels
+  while scrolling. Contact page explains the support handoff.
+- Five distinct licensed photographs replace generated marketing scenes; no
+  stock portrait is presented as an Omnyvox employee or customer testimonial.
+- Production build passed. Browser checks at 320px covered the revised homepage,
+  features, FAQ, contact and pricing; tested FAQ expansion and store/yearly pricing.
+- All ten template homepages and 115 linked template routes inspected at 320px:
+  one main heading, no page overflow, no failed loaded images detected. This is
+  structural coverage, not a claim that every screenshot has been art-directed.
+
+## Remaining review coverage (continuing)
+
 - Every family: Studio, Trust, Care, Build, Haven, Horizon, Atelier, Glow,
   Catalogue and Essentials. Inspect each linked core, legal and Insights page.
 - Marketing: home, solution pages, features, process, about, setup, services,

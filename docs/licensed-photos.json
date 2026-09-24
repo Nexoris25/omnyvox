@@ -119,5 +119,60 @@
     "license": "Unsplash License (https://unsplash.com/license)",
     "downloaded": "2026-09-24",
     "bytes": 68394
+  },
+  {
+    "key": "marketing-hero",
+    "url": "/marketing-hero-photo.webp",
+    "small": "/marketing-hero-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-man-sitting-in-front-of-a-laptop-computer-9ewfCZmObeM",
+    "photographer": "Francis Odeyemi",
+    "photographerUrl": "https://unsplash.com/@francis_odeyemi",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 185818
+  },
+  {
+    "key": "marketing-corporate",
+    "url": "/marketing-corporate-photo.webp",
+    "small": "/marketing-corporate-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-man-sitting-at-a-table-using-a-laptop-computer-uABuB3onLW0",
+    "photographer": "Kagou Dicko",
+    "photographerUrl": "https://unsplash.com/@kagou_dicko",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 77234
+  },
+  {
+    "key": "marketing-commerce",
+    "url": "/marketing-commerce-photo.webp",
+    "small": "/marketing-commerce-photo-small.webp",
+    "source": "https://unsplash.com/photos/man-in-black-jacket-holding-brown-cardboard-box-R99qruYcodE",
+    "photographer": "The Retro Store",
+    "photographerUrl": "https://unsplash.com/@theretrostoreuk",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 175342
+  },
+  {
+    "key": "marketing-founders",
+    "url": "/marketing-founders-photo.webp",
+    "small": "/marketing-founders-photo-small.webp",
+    "source": "https://unsplash.com/photos/a-man-and-a-woman-looking-at-a-laptop-5WOySQOZ2t4",
+    "photographer": "Francis Odeyemi",
+    "photographerUrl": "https://unsplash.com/@francis_odeyemi",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 155892
+  },
+  {
+    "key": "marketing-setup",
+    "url": "/marketing-setup-photo.webp",
+    "small": "/marketing-setup-photo-small.webp",
+    "source": "https://unsplash.com/photos/woman-using-laptop-computer-beside-person-wearing-hat-BVr3XaBiWLU",
+    "photographer": "Desola Lanre-Ologun",
+    "photographerUrl": "https://unsplash.com/@disruptxn",
+    "license": "Unsplash License (https://unsplash.com/license)",
+    "downloaded": "2026-09-24",
+    "bytes": 61826
   }
 ]
