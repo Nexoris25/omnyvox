@@ -54,6 +54,7 @@ import { WebsiteOperations } from "./website-operations";
 import { FulfilmentSettings } from "./fulfilment-settings";
 import { ProductVariants } from "./product-variants";
 import { useAutosave } from "./use-autosave";
+import { PublishChecklist } from "./publish-checklist";
 import { ConflictBanner, RestoreBanner, SaveStatus } from "./save-status";
 import { Brand } from "./brand";
 import { SiteRenderer } from "./site-renderer";
@@ -999,6 +1000,7 @@ export function Dashboard({ section }: { section: string }) {
                 <>
                   {section === "overview" && site && (
                     <>
+                      {!demo && site.status !== "published" && <PublishChecklist site={site.id} compact />}
                       <div className="overview-grid">
                         {[
                           [
@@ -1594,6 +1596,7 @@ export function Dashboard({ section }: { section: string }) {
                           <Smartphone size={13} /> 375px mobile
                         </button>
                       </div>
+                      {!demo && <PublishChecklist key={site.id} site={site.id} />}
                       <div className="editor-grid">
                         <SectionEditor
                           sections={site.data.sections}

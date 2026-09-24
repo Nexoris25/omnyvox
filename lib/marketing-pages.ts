@@ -45,7 +45,7 @@ export const marketingPages: Record<string, MarketingPage> = {
       },
       {
         title: "Trust built in",
-        body: "Verify your business with its CAC registration number and it appears in your website footer, a small detail customers notice. Industry-appropriate privacy, cookie and terms pages come as drafts for you to complete.",
+        body: "Every business is verified with its CAC registration before its website goes live, and your registration number appears in your website footer, a small detail customers notice. Industry-appropriate privacy, cookie and terms pages come as drafts for you to complete.",
       },
     ],
     links: [
@@ -271,7 +271,7 @@ export const marketingPages: Record<string, MarketingPage> = {
     sections: [
       {
         title: "1. Create your account and verify your business",
-        body: "Confirm your email, then enter your CAC registration number. We look up your registered business name automatically; you just confirm it’s you. Stores need this before they can take payments.",
+        body: "Confirm your email, then enter your CAC registration number. We look up your registered business name automatically; you just confirm it’s you. This is needed before your website can go live.",
       },
       {
         title: "2. Choose a template and make it yours",
@@ -347,7 +347,7 @@ export const marketingPages: Record<string, MarketingPage> = {
         title: "What we believe",
         body: "",
         points: [
-          "Verified businesses make the internet more trustworthy, so we check registrations against the CAC register",
+          "Verified businesses make the internet more trustworthy, so every business is checked against the CAC register before its website goes live",
           "Good design shouldn’t need a designer every time you change a word",
           "Your customers’ data deserves care, so we collect only what’s needed",
           "Prices and plan limits should be clear before you pay",
@@ -367,7 +367,7 @@ export const marketingPages: Record<string, MarketingPage> = {
       {
         title: "Before you publish",
         body: "Your website can go live once these are done:",
-        points: ["Your email address is verified", "Sample text and photos are replaced with your own", "Your legal pages are completed and reviewed", "An enquiry inbox is verified", "Your subscription is active"],
+        points: ["Your email address is verified", "Your business is verified with its CAC registration number", "Sample text and photos are replaced with your own", "Your legal pages are completed and reviewed", "An enquiry inbox is verified", "Your subscription is active"],
       },
       {
         title: "If something isn’t available",
@@ -414,7 +414,7 @@ export const marketingPages: Record<string, MarketingPage> = {
       { title: "Do I need to know how to code?", body: "No. Everything is edited through a guided editor: text, photos, colours, sections and products." },
       { title: "Can I use my own logo and colours?", body: "Yes. Upload your logo and set your brand colours. We check colour contrast so your text stays readable." },
       { title: "How many websites can I have?", body: "Basic and Growth include one website. Advanced includes up to three under one subscription." },
-      { title: "Why do you verify my business?", body: "Verifying every business with its CAC registration keeps Omnyvox trustworthy for your customers. We look up your registered name automatically from your CAC number." },
+      { title: "Why do you verify my business?", body: "Every website on Omnyvox belongs to a verified business, which keeps Omnyvox trustworthy for your customers. We look up your registered name automatically from your CAC number, and you can build and preview your website while it’s being checked." },
       { title: "Can I use my own domain?", body: "Yes, on Growth and Advanced. Every plan includes a free Omnyvox address." },
       { title: "Do you take a cut of my sales?", body: "No. Store payments go to your own Paystack account. Paystack’s standard fees apply." },
       { title: "Can I change plans later?", body: "Yes. Upgrades apply straight away, and you only pay the difference for the rest of your billing period. Downgrades apply at the end of the period you’ve paid for." },
@@ -446,7 +446,7 @@ export const marketingPages: Record<string, MarketingPage> = {
       },
       {
         title: "Verified businesses",
-        body: "Businesses verify their CAC registration with us, and stores must be verified before they can take payments. This helps keep impersonation and fraud off the platform. Our Acceptable use policy sets out what isn’t allowed.",
+        body: "Every business is verified against the CAC register before its website goes live. This helps keep impersonation and fraud off the platform. Our Acceptable use policy sets out what isn’t allowed.",
       },
       {
         title: "Your rights",

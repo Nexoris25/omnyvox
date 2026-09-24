@@ -7,6 +7,18 @@ import { pageReadiness } from "./page-readiness";
 import { compatibleTemplate } from "./templates";
 export async function readiness(site: Site) {
   const issues: string[] = [];
+  // Every website belongs to a business verified against the CAC register
+  // before it can go live. Verification belongs to the account owner.
+  const [kyb] = await query<{ status: string }>(
+    "SELECT status FROM business_verifications WHERE user_id=$1",
+    [site.owner_id],
+  );
+  if (kyb?.status !== "verified")
+    issues.push(
+      kyb?.status === "pending"
+        ? "Your business verification is being reviewed. You can publish as soon as it is approved."
+        : "Verify your business with its CAC registration number.",
+    );
   const industry = await industryFor(site);
   const records = await query<{
     id: string;

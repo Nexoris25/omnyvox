@@ -26,10 +26,10 @@ Follows `QA-AUDIT-2026-09-24.md`. Everything marked **Fixed** is in the build an
 | Contact | No response-time expectation, no other ways to reach us | Clear expectation, links to Help and FAQs, and company email/phone/address/hours (set in Platform admin → Marketing settings; hidden until filled in). |
 | Footer | Wrong logo variant | Correct logo, contact line when set, Security link. |
 
-Copy rules applied: second person, short sentences, no jargon, no claims the product cannot back up (for example, business verification is described as required for **store payments**, not for publishing, because publishing does not check it today).
+Copy rules applied: second person, short sentences, no jargon, no claims the product cannot back up.
 
 **Recommended next:**
-1. **Decide whether business verification should be required to publish.** Today it is only required to take store payments. Requiring it for every website strengthens the "verified businesses" promise but delays launch when the registry is slow; if you choose it, add it to the publishing checklist and update the copy.
+1. ~~Decide whether business verification should be required to publish~~ — **done 24 September 2026.** Every website now needs a verified business (the account owner's CAC verification) before it can be published. It is the first item in the new publishing checklist on the dashboard and editor, and the server refuses to publish without it. Customers can still build and preview freely.
 2. Fill in company contact details in Marketing settings.
 3. Add real testimonials once customers consent, and case studies later.
 4. Have counsel review the five platform policies.

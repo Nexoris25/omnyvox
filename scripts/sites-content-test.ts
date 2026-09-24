@@ -122,6 +122,21 @@ try {
   await query("UPDATE sites SET tier='basic' WHERE id=$1", [site.id]);
   check((await page(`/sites/${slug}/insights`)).status === 404, "Insights are unavailable on Basic");
 
+  // Business verification is required to publish.
+  const { readiness } = await import("../lib/readiness");
+  const kybIssue = (issues: string[]) => issues.find((i) => /verify your business|verification is being reviewed/i.test(i));
+  const [siteRow] = await query<import("../lib/model").Site>("SELECT * FROM effective_sites WHERE id=$1", [site.id]);
+  check(!kybIssue((await readiness(siteRow)).issues), "A verified business has no verification item in its publishing checklist");
+  await query("UPDATE business_verifications SET status='pending' WHERE user_id=$1", [owner.id]);
+  check(/being reviewed/.test(kybIssue((await readiness(siteRow)).issues) || ""), "A pending verification blocks publishing with a clear message");
+  await query("DELETE FROM business_verifications WHERE user_id=$1", [owner.id]);
+  const blocked = await readiness(siteRow);
+  check(!blocked.ready && /CAC registration number/.test(kybIssue(blocked.issues) || ""), "An unverified business cannot publish");
+  await query(
+    "INSERT INTO business_verifications(user_id,business_name,cac_number,status,registered_name,verified_via) VALUES($1,'QA LIMITED','RC1234567','verified','QA LIMITED','registry')",
+    [owner.id],
+  );
+
   // Dashboard modules follow website type, plan and role.
   const { buildModules } = await import("../lib/modules");
   const keys = (m: { key: string }[]) => m.map((x) => x.key);
